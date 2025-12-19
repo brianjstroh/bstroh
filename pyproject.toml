@@ -51,8 +51,12 @@ warn_unused_ignores = true
 strict = true
 
 [[tool.mypy.overrides]]
-module = ["aws_cdk.*", "constructs.*"]
+module = ["aws_cdk.*", "constructs.*", "jsii.*"]
 ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["infrastructure.*"]
+disallow_subclassing_any = false
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

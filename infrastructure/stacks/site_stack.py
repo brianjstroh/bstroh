@@ -1,5 +1,7 @@
 """CDK stack for a single static website."""
 
+from typing import Any
+
 import aws_cdk as cdk
 from constructs import Construct
 
@@ -16,7 +18,7 @@ class StaticSiteStack(cdk.Stack):
     id: str,
     *,
     site_config: SiteConfig,
-    **kwargs: object,
+    **kwargs: Any,
   ) -> None:
     super().__init__(scope, id, **kwargs)
 

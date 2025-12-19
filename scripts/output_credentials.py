@@ -4,8 +4,9 @@
 import argparse
 import json
 import sys
+from typing import cast
 
-import boto3
+import boto3  # type: ignore[import-not-found]
 
 
 def get_credentials(stack_name: str, region: str = "us-east-1") -> dict[str, str]:
@@ -34,7 +35,7 @@ def get_credentials(stack_name: str, region: str = "us-east-1") -> dict[str, str
   )
   credentials["AWS_SECRET_ACCESS_KEY"] = secret_response["Parameter"]["Value"]
 
-  return credentials
+  return cast(dict[str, str], credentials)
 
 
 def main() -> None:
