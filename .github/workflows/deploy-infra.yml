@@ -1,0 +1,51 @@
+name: Deploy Infrastructure
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "infrastructure/**"
+      - "sites.yaml"
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - name: Set up Python
+        run: uv python install 3.11
+
+      - name: Install dependencies
+        run: uv sync --all-extras
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Install CDK
+        run: npm install -g aws-cdk
+
+      - name: CDK Bootstrap (if needed)
+        env:
+          JSII_SILENCE_WARNING_UNTESTED_NODE_VERSION: "1"
+        run: |
+          uv run cdk bootstrap || true
+
+      - name: CDK Deploy
+        env:
+          JSII_SILENCE_WARNING_UNTESTED_NODE_VERSION: "1"
+        run: |
+          uv run cdk deploy --all --require-approval never

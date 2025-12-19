@@ -1,0 +1,13 @@
+# Static Website Configuration
+# Each site in this list will have its own CloudFormation stack
+
+defaults:
+  region: us-east-1
+  include_www: true
+  enable_invalidation: true
+  sync_nameservers: true  # Auto-sync NS for Route 53-registered domains
+
+sites:
+  - domain: bstroh.com
+    owner: Brian Stroh
+    email: brianjstroh@gmail.com
