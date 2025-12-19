@@ -7,6 +7,7 @@ from .certificate import DnsValidatedCertificate
 from .deployment_user import DeploymentUser
 from .distribution import CloudFrontDistribution
 from .dns import DnsRecords
+from .initial_content import InitialContent
 from .invalidation import InvalidationHandler
 from .nameserver_sync import NameserverSync
 from .storage import StorageBucket
@@ -23,6 +24,7 @@ class StaticSiteConstruct(Construct):
   - Lambda for CloudFront invalidation on S3 changes
   - IAM user with credentials stored in SSM Parameter Store
   - (Optional) Custom Resource to sync nameservers for Route 53-registered domains
+  - (Optional) Initial template content deployment
   """
 
   def __init__(
@@ -35,6 +37,7 @@ class StaticSiteConstruct(Construct):
     include_www: bool = True,
     enable_invalidation: bool = True,
     sync_nameservers: bool = True,
+    deploy_initial_content: bool = True,
     removal_policy: RemovalPolicy = RemovalPolicy.RETAIN,
   ) -> None:
     super().__init__(scope, id)
@@ -49,6 +52,15 @@ class StaticSiteConstruct(Construct):
       bucket_name=domain_name,  # S3 bucket name must match domain
       removal_policy=removal_policy,
     )
+
+    # Initial content deployment (template files)
+    if deploy_initial_content:
+      self.initial_content = InitialContent(
+        self,
+        f"{stack_name}-initial-content",
+        bucket=self.bucket.bucket,
+        resource_prefix=stack_name,
+      )
 
     # DNS Hosted Zone (create or import)
     self.dns = DnsRecords(

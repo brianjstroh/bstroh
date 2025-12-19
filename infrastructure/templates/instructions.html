@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Website Instructions</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #f8f9fa;
+      color: #333;
+      line-height: 1.7;
+    }
+
+    header {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      color: #fff;
+      padding: 3rem 1rem;
+      text-align: center;
+    }
+
+    header h1 {
+      font-size: 2rem;
+      font-weight: 400;
+      margin-bottom: 0.5rem;
+    }
+
+    header p {
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    main {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 2rem 1rem;
+    }
+
+    section {
+      background: #fff;
+      border-radius: 12px;
+      padding: 2rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    h2 {
+      color: #1a1a2e;
+      font-size: 1.4rem;
+      margin-bottom: 1.5rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 2px solid #e9ecef;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    h2 .step-number {
+      background: #0f3460;
+      color: #fff;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+
+    h3 {
+      color: #16213e;
+      font-size: 1.1rem;
+      margin: 1.5rem 0 0.75rem 0;
+    }
+
+    p {
+      margin-bottom: 1rem;
+    }
+
+    ol {
+      margin: 1rem 0;
+      padding-left: 0;
+      list-style: none;
+      counter-reset: step-counter;
+    }
+
+    ol li {
+      margin-bottom: 1rem;
+      padding-left: 2.5rem;
+      position: relative;
+      counter-increment: step-counter;
+    }
+
+    ol li::before {
+      content: counter(step-counter);
+      position: absolute;
+      left: 0;
+      top: 0;
+      background: #e9ecef;
+      color: #495057;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .highlight {
+      background: #fff3cd;
+      padding: 0.15em 0.4em;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+
+    .button-look {
+      background: #0d6efd;
+      color: #fff;
+      padding: 0.2em 0.5em;
+      border-radius: 4px;
+      font-weight: 500;
+      font-size: 0.9em;
+    }
+
+    .folder-name {
+      background: #e7f1ff;
+      color: #0d6efd;
+      padding: 0.15em 0.4em;
+      border-radius: 4px;
+      font-family: monospace;
+      font-weight: 500;
+    }
+
+    .tip {
+      background: #d1ecf1;
+      border-left: 4px solid #0dcaf0;
+      padding: 1rem 1.25rem;
+      margin: 1.5rem 0;
+      border-radius: 0 8px 8px 0;
+    }
+
+    .tip strong {
+      color: #0c5460;
+    }
+
+    .warning {
+      background: #fff3cd;
+      border-left: 4px solid #ffc107;
+      padding: 1rem 1.25rem;
+      margin: 1.5rem 0;
+      border-radius: 0 8px 8px 0;
+    }
+
+    .warning strong {
+      color: #856404;
+    }
+
+    .visual-guide {
+      background: #f8f9fa;
+      border: 1px solid #e9ecef;
+      border-radius: 8px;
+      padding: 1.25rem;
+      margin: 1rem 0;
+    }
+
+    .visual-guide p {
+      margin-bottom: 0.5rem;
+    }
+
+    .visual-guide .path {
+      font-family: monospace;
+      background: #e9ecef;
+      padding: 0.5rem 0.75rem;
+      border-radius: 4px;
+      display: inline-block;
+      margin-top: 0.5rem;
+    }
+
+    .credentials-box {
+      background: #f8f9fa;
+      border: 2px dashed #dee2e6;
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin: 1rem 0;
+    }
+
+    .credentials-box p {
+      margin-bottom: 0.75rem;
+    }
+
+    .credentials-box p:last-child {
+      margin-bottom: 0;
+    }
+
+    footer {
+      text-align: center;
+      padding: 2rem 1rem;
+      color: #6c757d;
+    }
+
+    footer a {
+      color: #0d6efd;
+      text-decoration: none;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 600px) {
+      header h1 {
+        font-size: 1.5rem;
+      }
+
+      section {
+        padding: 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>How to Manage Your Website</h1>
+    <p>A simple guide to updating your photos and content</p>
+  </header>
+
+  <main>
+    <section>
+      <h2><span class="step-number">1</span> Log In to AWS</h2>
+
+      <ol>
+        <li>Go to <a href="https://aws.amazon.com/console/" target="_blank">aws.amazon.com/console</a></li>
+        <li>Click <span class="button-look">Sign In to the Console</span> (top right)</li>
+        <li>Select <span class="highlight">IAM user</span></li>
+        <li>Enter your Account ID, Username, and Password (these were provided to you)</li>
+        <li>Click <span class="button-look">Sign in</span></li>
+      </ol>
+
+      <div class="credentials-box">
+        <p><strong>Your login details should include:</strong></p>
+        <p>Account ID (12-digit number)</p>
+        <p>IAM Username</p>
+        <p>Password</p>
+      </div>
+    </section>
+
+    <section>
+      <h2><span class="step-number">2</span> Find Your Website's Storage</h2>
+
+      <ol>
+        <li>Once logged in, look for the search bar at the top of the page</li>
+        <li>Type <span class="highlight">S3</span> and click on <strong>S3</strong> in the results</li>
+        <li>You'll see a list of "buckets" (storage folders). Find the one with your website's name</li>
+        <li>Click on your bucket name to open it</li>
+      </ol>
+
+      <div class="visual-guide">
+        <p><strong>Your bucket name is usually your website address:</strong></p>
+        <span class="path">yourwebsite.com</span>
+      </div>
+    </section>
+
+    <section>
+      <h2><span class="step-number">3</span> Upload Photos</h2>
+
+      <p>To add photos to your slideshow:</p>
+
+      <ol>
+        <li>Inside your bucket, click on the <span class="folder-name">photos</span> folder to open it</li>
+        <li>Click the orange <span class="button-look">Upload</span> button</li>
+        <li>Click <span class="button-look">Add files</span> and select photos from your computer<br>
+            <em>Or simply drag and drop photos into the upload area</em></li>
+        <li>Scroll down and click the orange <span class="button-look">Upload</span> button at the bottom</li>
+        <li>Wait for the upload to complete, then click <span class="button-look">Close</span></li>
+      </ol>
+
+      <div class="tip">
+        <strong>Tip:</strong> Your photos will automatically appear in the slideshow! Just refresh your website after uploading. It may take a few minutes for changes to appear.
+      </div>
+
+      <div class="tip">
+        <strong>Photo tips:</strong>
+        <ul style="margin-top: 0.5rem; margin-bottom: 0; padding-left: 1.25rem;">
+          <li>Supported formats: JPG, PNG, GIF, WebP</li>
+          <li>Landscape (horizontal) photos work best</li>
+          <li>Photos display in alphabetical order by filename</li>
+        </ul>
+      </div>
+    </section>
+
+    <section>
+      <h2><span class="step-number">4</span> Delete Photos</h2>
+
+      <ol>
+        <li>Navigate to the <span class="folder-name">photos</span> folder in your bucket</li>
+        <li>Check the box next to the photo(s) you want to remove</li>
+        <li>Click the <span class="button-look">Delete</span> button that appears</li>
+        <li>Type <span class="highlight">permanently delete</span> to confirm</li>
+        <li>Click the orange <span class="button-look">Delete objects</span> button</li>
+      </ol>
+
+      <div class="warning">
+        <strong>Warning:</strong> Deleted photos cannot be recovered. Make sure you have a backup copy on your computer if you might want them later.
+      </div>
+    </section>
+
+    <section>
+      <h2><span class="step-number">5</span> Upload Other Files</h2>
+
+      <p>You can add any files to your website (PDFs, documents, additional web pages):</p>
+
+      <ol>
+        <li>Go to the main level of your bucket (not inside the photos folder)</li>
+        <li>Click <span class="button-look">Upload</span></li>
+        <li>Add your files and click <span class="button-look">Upload</span></li>
+      </ol>
+
+      <div class="visual-guide">
+        <p><strong>Your files will be available at:</strong></p>
+        <span class="path">https://yourwebsite.com/filename.pdf</span>
+      </div>
+    </section>
+
+    <section>
+      <h2>Troubleshooting</h2>
+
+      <h3>Changes not appearing?</h3>
+      <p>Your website uses caching to load faster. Changes may take 5-10 minutes to appear. Try refreshing your browser or waiting a bit longer.</p>
+
+      <h3>Can't find your bucket?</h3>
+      <p>Make sure you're logged into the correct AWS account. The Account ID should match what was provided to you.</p>
+
+      <h3>"Access Denied" errors?</h3>
+      <p>You can only access your own website's bucket. If you see other buckets listed, make sure you're clicking on the correct one.</p>
+
+      <h3>Photos not showing in slideshow?</h3>
+      <ul style="padding-left: 1.25rem;">
+        <li>Make sure photos are inside the <span class="folder-name">photos</span> folder</li>
+        <li>Check that file names end in .jpg, .png, .gif, or .webp</li>
+        <li>Wait a few minutes and refresh your website</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Need More Help?</h2>
+      <p>Contact the person who set up this website for you. They can help with:</p>
+      <ul style="padding-left: 1.25rem;">
+        <li>Password resets</li>
+        <li>Account access issues</li>
+        <li>Website customizations</li>
+        <li>Any questions not covered here</li>
+      </ul>
+    </section>
+  </main>
+
+  <footer>
+    <p><a href="/">Back to Homepage</a></p>
+  </footer>
+</body>
+</html>

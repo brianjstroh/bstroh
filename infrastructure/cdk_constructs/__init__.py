@@ -4,6 +4,7 @@ from .certificate import DnsValidatedCertificate
 from .deployment_user import DeploymentUser
 from .distribution import CloudFrontDistribution
 from .dns import DnsRecords
+from .initial_content import InitialContent
 from .invalidation import InvalidationHandler
 from .nameserver_sync import NameserverSync
 from .static_site import StaticSiteConstruct
@@ -14,6 +15,7 @@ __all__ = [
   "DnsValidatedCertificate",
   "CloudFrontDistribution",
   "DeploymentUser",
+  "InitialContent",
   "InvalidationHandler",
   "NameserverSync",
   "StaticSiteConstruct",

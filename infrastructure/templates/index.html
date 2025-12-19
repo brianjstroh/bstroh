@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welcome</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      min-height: 100vh;
+      color: #fff;
+    }
+
+    header {
+      text-align: center;
+      padding: 2rem 1rem;
+    }
+
+    header h1 {
+      font-size: 2.5rem;
+      font-weight: 300;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.5rem;
+    }
+
+    header p {
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 1.1rem;
+    }
+
+    .slideshow-container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 1rem;
+      position: relative;
+    }
+
+    .slideshow {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 10;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
+
+    .slideshow img {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0;
+      transition: opacity 1s ease-in-out;
+    }
+
+    .slideshow img.active {
+      opacity: 1;
+    }
+
+    .slideshow-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: rgba(255, 255, 255, 0.5);
+      text-align: center;
+      padding: 2rem;
+    }
+
+    .slideshow-placeholder svg {
+      width: 64px;
+      height: 64px;
+      margin-bottom: 1rem;
+      opacity: 0.5;
+    }
+
+    .slideshow-controls {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-top: 1.5rem;
+    }
+
+    .slideshow-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.3);
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    .slideshow-dot.active {
+      background: #fff;
+    }
+
+    .controls {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .controls button {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #fff;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: background 0.3s ease;
+    }
+
+    .controls button:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    footer {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: rgba(255, 255, 255, 0.5);
+    }
+
+    footer a {
+      color: rgba(255, 255, 255, 0.7);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+      transition: color 0.3s ease, border-color 0.3s ease;
+    }
+
+    footer a:hover {
+      color: #fff;
+      border-color: #fff;
+    }
+
+    @media (max-width: 600px) {
+      header h1 {
+        font-size: 1.8rem;
+      }
+
+      .slideshow {
+        aspect-ratio: 4 / 3;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Welcome</h1>
+    <p>A collection of memories</p>
+  </header>
+
+  <main class="slideshow-container">
+    <div class="slideshow" id="slideshow">
+      <div class="slideshow-placeholder" id="placeholder">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+        <p>Upload photos to the <strong>photos</strong> folder to get started</p>
+      </div>
+    </div>
+    <div class="slideshow-controls" id="dots"></div>
+    <div class="controls" id="controlButtons" style="display: none;">
+      <button onclick="prevSlide()">Previous</button>
+      <button onclick="toggleAutoPlay()" id="autoPlayBtn">Pause</button>
+      <button onclick="nextSlide()">Next</button>
+    </div>
+  </main>
+
+  <footer>
+    <p><a href="/instructions.html">How to manage this website</a></p>
+  </footer>
+
+  <script>
+    let photos = [];
+    let currentIndex = 0;
+    let autoPlayInterval = null;
+    let isPlaying = true;
+
+    // Image file extensions to look for
+    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp'];
+
+    async function loadPhotos() {
+      try {
+        // Get the bucket name from the current hostname
+        const bucketName = window.location.hostname.replace('.s3-website-us-east-1.amazonaws.com', '').replace('.s3.amazonaws.com', '');
+
+        // Try to list objects from S3 REST API
+        const s3Url = `https://${bucketName}.s3.amazonaws.com/?list-type=2&prefix=photos/`;
+        const response = await fetch(s3Url);
+
+        if (!response.ok) throw new Error('Could not list bucket');
+
+        const xmlText = await response.text();
+        const parser = new DOMParser();
+        const xml = parser.parseFromString(xmlText, 'text/xml');
+
+        // Extract file keys from the XML response
+        const contents = xml.querySelectorAll('Contents');
+        photos = [];
+
+        contents.forEach(item => {
+          const key = item.querySelector('Key').textContent;
+          // Filter for image files only (skip the folder itself and non-images)
+          const lowerKey = key.toLowerCase();
+          if (key !== 'photos/' && imageExtensions.some(ext => lowerKey.endsWith(ext))) {
+            // Store just the filename part after 'photos/'
+            photos.push(key);
+          }
+        });
+
+        // Sort alphabetically
+        photos.sort();
+
+        if (photos.length > 0) {
+          document.getElementById('placeholder').style.display = 'none';
+          document.getElementById('controlButtons').style.display = 'flex';
+          renderSlideshow();
+          startAutoPlay();
+        }
+      } catch (error) {
+        console.log('Could not auto-discover photos:', error.message);
+        // Keep placeholder visible
+      }
+    }
+
+    function renderSlideshow() {
+      const slideshow = document.getElementById('slideshow');
+      const dots = document.getElementById('dots');
+
+      photos.forEach((photoKey, index) => {
+        const img = document.createElement('img');
+        // Use the full S3 path
+        img.src = `/${photoKey}`;
+        img.alt = `Photo ${index + 1}`;
+        if (index === 0) img.classList.add('active');
+        slideshow.appendChild(img);
+
+        const dot = document.createElement('div');
+        dot.classList.add('slideshow-dot');
+        if (index === 0) dot.classList.add('active');
+        dot.onclick = () => goToSlide(index);
+        dots.appendChild(dot);
+      });
+    }
+
+    function updateSlide() {
+      const images = document.querySelectorAll('.slideshow img');
+      const dots = document.querySelectorAll('.slideshow-dot');
+
+      images.forEach((img, index) => {
+        img.classList.toggle('active', index === currentIndex);
+      });
+
+      dots.forEach((dot, index) => {
+        dot.classList.toggle('active', index === currentIndex);
+      });
+    }
+
+    function nextSlide() {
+      if (photos.length === 0) return;
+      currentIndex = (currentIndex + 1) % photos.length;
+      updateSlide();
+    }
+
+    function prevSlide() {
+      if (photos.length === 0) return;
+      currentIndex = (currentIndex - 1 + photos.length) % photos.length;
+      updateSlide();
+    }
+
+    function goToSlide(index) {
+      currentIndex = index;
+      updateSlide();
+    }
+
+    function startAutoPlay() {
+      if (autoPlayInterval) clearInterval(autoPlayInterval);
+      autoPlayInterval = setInterval(nextSlide, 5000);
+      isPlaying = true;
+      document.getElementById('autoPlayBtn').textContent = 'Pause';
+    }
+
+    function stopAutoPlay() {
+      if (autoPlayInterval) clearInterval(autoPlayInterval);
+      autoPlayInterval = null;
+      isPlaying = false;
+      document.getElementById('autoPlayBtn').textContent = 'Play';
+    }
+
+    function toggleAutoPlay() {
+      if (isPlaying) {
+        stopAutoPlay();
+      } else {
+        startAutoPlay();
+      }
+    }
+
+    // Initialize
+    loadPhotos();
+  </script>
+</body>
+</html>
