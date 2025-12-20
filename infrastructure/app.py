@@ -10,6 +10,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 import aws_cdk as cdk
 
 from infrastructure.config import Config
+from infrastructure.stacks.admin_stack import AdminServerStack
 from infrastructure.stacks.site_stack import StaticSiteStack
 
 
@@ -34,6 +35,27 @@ def main() -> None:
       ),
       description=f"Static website infrastructure for {site.domain}",
     )
+
+  # Create admin server stack
+  # Note: Admin stack uses lookups (VPC, HostedZone) which require account
+  if config.admin:
+    # Find the parent site for hosted zone reference
+    parent_site = next(
+      (s for s in config.sites if s.domain == config.admin.parent_hosted_zone),
+      None,
+    )
+    if parent_site:
+      AdminServerStack(
+        app,
+        "AdminServer",
+        admin_config=config.admin,
+        site_configs=config.sites,
+        env=cdk.Environment(
+          account=app.node.try_get_context("account"),
+          region=config.admin.region,
+        ),
+        description="Admin server for S3 file management",
+      )
 
   app.synth()
 

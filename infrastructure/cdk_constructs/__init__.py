@@ -1,5 +1,6 @@
 """CDK constructs for static website infrastructure."""
 
+from .admin_server import AdminServerConstruct
 from .certificate import DnsValidatedCertificate
 from .deployment_user import DeploymentUser
 from .distribution import CloudFrontDistribution
@@ -11,6 +12,7 @@ from .static_site import StaticSiteConstruct
 from .storage import StorageBucket
 
 __all__ = [
+  "AdminServerConstruct",
   "DnsRecords",
   "DnsValidatedCertificate",
   "CloudFrontDistribution",

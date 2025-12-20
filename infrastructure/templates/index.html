@@ -195,10 +195,11 @@
     async function loadPhotos() {
       try {
         // Get the bucket name from the current hostname
-        const bucketName = window.location.hostname.replace('.s3-website-us-east-1.amazonaws.com', '').replace('.s3.amazonaws.com', '');
+        // For CloudFront/custom domains, the hostname IS the bucket name
+        const bucketName = window.location.hostname;
 
-        // Try to list objects from S3 REST API
-        const s3Url = `https://${bucketName}.s3.amazonaws.com/?list-type=2&prefix=photos/`;
+        // Use path-style S3 URL (required for bucket names with dots like "example.com")
+        const s3Url = `https://s3.amazonaws.com/${bucketName}?list-type=2&prefix=photos/`;
         const response = await fetch(s3Url);
 
         if (!response.ok) throw new Error('Could not list bucket');

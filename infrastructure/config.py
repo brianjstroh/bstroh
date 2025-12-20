@@ -23,10 +23,22 @@ class SiteConfig:
 
 
 @dataclass
+class AdminConfig:
+  """Configuration for the admin server."""
+
+  domain: str = "admin.bstroh.com"
+  parent_hosted_zone: str = "bstroh.com"
+  instance_type: str = "t3.nano"
+  region: str = "us-east-1"
+  app_bucket: str = "bstroh-admin-app"
+
+
+@dataclass
 class Config:
   """Multi-site configuration."""
 
   sites: list[SiteConfig] = field(default_factory=list)
+  admin: AdminConfig = field(default_factory=AdminConfig)
 
   @classmethod
   def from_yaml(cls, path: Path | str = "sites.yaml") -> "Config":
@@ -63,4 +75,14 @@ class Config:
         )
       )
 
-    return cls(sites=sites)
+    # Parse admin configuration
+    admin_data = data.get("admin", {})
+    admin = AdminConfig(
+      domain=admin_data.get("domain", "admin.bstroh.com"),
+      parent_hosted_zone=admin_data.get("parent_hosted_zone", "bstroh.com"),
+      instance_type=admin_data.get("instance_type", "t3.nano"),
+      region=admin_data.get("region", defaults.get("region", "us-east-1")),
+      app_bucket=admin_data.get("app_bucket", "bstroh-admin-app"),
+    )
+
+    return cls(sites=sites, admin=admin)

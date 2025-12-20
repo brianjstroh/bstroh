@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}Login - S3 Admin{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+  <div class="col-md-5 col-lg-4">
+    <div class="card">
+      <div class="card-body p-4">
+        <div class="text-center mb-4">
+          <i class="bi bi-cloud-fill text-primary" style="font-size: 3rem;"></i>
+          <h4 class="mt-2">Website Admin</h4>
+          <p class="text-muted">Manage your website files</p>
+        </div>
+
+        {% if error %}
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+          <i class="bi bi-exclamation-circle"></i> {{ error }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endif %}
+
+        <form method="post">
+          <div class="mb-3">
+            <label class="form-label">Your Domain</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-globe"></i></span>
+              <input type="text" name="domain" class="form-control"
+                     placeholder="example.com" required autofocus>
+            </div>
+            <div class="form-text">Enter your website domain</div>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label">Password</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-lock"></i></span>
+              <input type="password" name="password" class="form-control"
+                     placeholder="Your password" required>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary w-100">
+            <i class="bi bi-box-arrow-in-right"></i> Sign In
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <p class="text-center text-muted mt-3">
+      <small>Need help? Contact your site administrator.</small>
+    </p>
+  </div>
+</div>
+{% endblock %}
