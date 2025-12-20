@@ -122,7 +122,7 @@ class AdminServerConstruct(Construct):
       )
     )
 
-    # Bedrock access for AI content generation (Claude 3.5 Haiku)
+    # Bedrock access for AI content generation (Claude 4.5 Sonnet)
     self.role.add_to_policy(
       iam.PolicyStatement(
         actions=["bedrock:InvokeModel"],

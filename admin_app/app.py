@@ -379,7 +379,7 @@ My request: {user_message}"""
 
   try:
     response = bedrock.invoke_model(
-      modelId="us.anthropic.claude-3-5-haiku-20241022-v1:0",
+      modelId="us.anthropic.claude-sonnet-4-5-20250514-v1:0",
       contentType="application/json",
       accept="application/json",
       body=json.dumps(
