@@ -135,6 +135,14 @@ class AdminServerConstruct(Construct):
       )
     )
 
+    # Marketplace permissions (required for some Bedrock models to verify access)
+    self.role.add_to_policy(
+      iam.PolicyStatement(
+        actions=["aws-marketplace:ViewSubscriptions"],
+        resources=["*"],
+      )
+    )
+
     # User data script
     user_data = ec2.UserData.for_linux()
     user_data.add_commands(self._create_user_data_script(admin_config))
