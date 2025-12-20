@@ -26,7 +26,7 @@ class SiteConfig:
 class AdminConfig:
   """Configuration for the admin server."""
 
-  domain: str = "manage.bstroh.com"
+  domain: str = "edit.bstroh.com"
   parent_hosted_zone: str = "bstroh.com"
   instance_type: str = "t3.nano"
   region: str = "us-east-1"
@@ -78,7 +78,7 @@ class Config:
     # Parse admin configuration
     admin_data = data.get("admin", {})
     admin = AdminConfig(
-      domain=admin_data.get("domain", "manage.bstroh.com"),
+      domain=admin_data.get("domain", "edit.bstroh.com"),
       parent_hosted_zone=admin_data.get("parent_hosted_zone", "bstroh.com"),
       instance_type=admin_data.get("instance_type", "t3.nano"),
       region=admin_data.get("region", defaults.get("region", "us-east-1")),
