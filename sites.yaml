@@ -9,7 +9,7 @@ defaults:
 
 # Admin server for S3 file management web UI
 admin:
-  domain: admin.bstroh.com
+  domain: manage.bstroh.com
   parent_hosted_zone: bstroh.com
   instance_type: t3.nano
   app_bucket: bstroh-admin-app

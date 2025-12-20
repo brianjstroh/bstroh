@@ -9,7 +9,7 @@ This project provides two main components:
 1. **Static Sites** - S3-hosted websites with CloudFront CDN, custom domains, and automatic SSL certificates
 2. **Admin Server** - A lightweight EC2 instance running a Flask web app for easy file management
 
-Site owners can manage their content through a simple web interface at `admin.bstroh.com` - no AWS knowledge required.
+Site owners can manage their content through a simple web interface at `manage.bstroh.com` - no AWS knowledge required.
 
 ## Project Structure
 
@@ -87,7 +87,7 @@ uv run cdk deploy --all
    ```
 
 5. **Share credentials** with site owner:
-   - Admin URL: `https://admin.bstroh.com`
+   - Admin URL: `https://manage.bstroh.com`
    - Domain: `newsite.com`
    - Password: (the one you set)
 
@@ -104,7 +104,7 @@ defaults:
 
 # Admin server configuration
 admin:
-  domain: admin.bstroh.com
+  domain: manage.bstroh.com
   parent_hosted_zone: bstroh.com
   instance_type: t3.nano
   app_bucket: bstroh-admin-app
