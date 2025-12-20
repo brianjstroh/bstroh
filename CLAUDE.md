@@ -33,7 +33,6 @@ admin_app/
   templates/                         # Admin UI (login, file browser)
 scripts/
   set_site_password.py               # Set admin password for a domain
-  output_credentials.py              # Get IAM credentials for a site
 ```
 
 ## Commands
