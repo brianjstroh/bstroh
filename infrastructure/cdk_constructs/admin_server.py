@@ -122,12 +122,15 @@ class AdminServerConstruct(Construct):
       )
     )
 
-    # Bedrock access for AI content generation
+    # Bedrock access for AI content generation (Claude 4.5 Haiku via cross-region)
     self.role.add_to_policy(
       iam.PolicyStatement(
         actions=["bedrock:InvokeModel"],
         resources=[
-          "arn:aws:bedrock:us-east-1:296526136435:inference-profile/us.anthropic.claude-haiku-4-5-20251001-v1:0"
+          # Cross-region inference profile
+          "arn:aws:bedrock:us-east-1:*:inference-profile/us.anthropic.claude-*",
+          # Foundation models (needed for cross-region inference)
+          "arn:aws:bedrock:*::foundation-model/anthropic.claude-*",
         ],
       )
     )
