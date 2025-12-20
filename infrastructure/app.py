@@ -8,10 +8,17 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import aws_cdk as cdk
+import boto3
 
 from infrastructure.config import Config
 from infrastructure.stacks.admin_stack import AdminServerStack
 from infrastructure.stacks.site_stack import StaticSiteStack
+
+
+def get_account_id() -> str:
+  """Get AWS account ID from current credentials."""
+  sts = boto3.client("sts")
+  return sts.get_caller_identity()["Account"]
 
 
 def main() -> None:
@@ -22,6 +29,9 @@ def main() -> None:
   config_path = app.node.try_get_context("config") or "sites.yaml"
   config = Config.from_yaml(Path(config_path))
 
+  # Get account ID from credentials
+  account_id = get_account_id()
+
   # Create a stack for each site
   for site in config.sites:
     stack_name = f"StaticSite-{site.domain.replace('.', '-')}"
@@ -30,14 +40,14 @@ def main() -> None:
       stack_name,
       site_config=site,
       env=cdk.Environment(
+        account=account_id,
         region=site.region,
-        # Account is inferred from credentials
       ),
       description=f"Static website infrastructure for {site.domain}",
     )
 
   # Create admin server stack
-  # Note: Admin stack uses lookups (VPC, HostedZone) which require account
+  # Note: Admin stack uses lookups (VPC, HostedZone) which require explicit account
   if config.admin:
     # Find the parent site for hosted zone reference
     parent_site = next(
@@ -51,7 +61,7 @@ def main() -> None:
         admin_config=config.admin,
         site_configs=config.sites,
         env=cdk.Environment(
-          account=app.node.try_get_context("account"),
+          account=account_id,
           region=config.admin.region,
         ),
         description="Admin server for S3 file management",
