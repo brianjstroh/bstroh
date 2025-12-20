@@ -84,22 +84,6 @@ class TestStaticSiteConstruct:
       },
     )
 
-  def test_creates_iam_user(self, template: Template) -> None:
-    """Verify IAM user is created for deployments."""
-    template.has_resource_properties(
-      "AWS::IAM::User",
-      {"UserName": "TestStack-deployer"},
-    )
-
-  def test_stores_credentials_in_ssm(self, template: Template) -> None:
-    """Verify credentials are stored in SSM Parameter Store."""
-    template.has_resource_properties(
-      "AWS::SSM::Parameter",
-      {
-        "Name": "/TestStack/credentials",
-      },
-    )
-
   def test_creates_eventbridge_rule(self, template: Template) -> None:
     """Verify EventBridge rule for S3 events."""
     template.has_resource_properties(
@@ -221,4 +205,3 @@ class TestStaticSiteResourceCounts:
     template.resource_count_is("AWS::CloudFront::Distribution", 1)
     template.resource_count_is("AWS::CertificateManager::Certificate", 1)
     template.resource_count_is("AWS::Route53::HostedZone", 1)
-    template.resource_count_is("AWS::IAM::User", 1)

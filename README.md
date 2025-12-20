@@ -28,7 +28,6 @@ bstroh/
 │   ├── app.py                    # Main Flask app
 │   └── templates/                # Admin UI templates
 ├── scripts/                      # Helper scripts
-│   ├── output_credentials.py     # Get site IAM credentials
 │   ├── set_site_password.py      # Set admin portal password
 │   └── package_admin_app.py      # Package admin app for deployment
 └── tests/                        # Pytest tests
@@ -145,7 +144,6 @@ uv run mypy infrastructure    # Type check
 
 # Utilities
 uv run python scripts/set_site_password.py <domain> <password>
-uv run python scripts/output_credentials.py <domain>
 ```
 
 ## Architecture

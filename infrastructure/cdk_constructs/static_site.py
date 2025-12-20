@@ -4,7 +4,6 @@ from aws_cdk import CfnOutput, RemovalPolicy, Stack
 from constructs import Construct
 
 from .certificate import DnsValidatedCertificate
-from .deployment_user import DeploymentUser
 from .distribution import CloudFrontDistribution
 from .dns import DnsRecords
 from .initial_content import InitialContent
@@ -22,7 +21,6 @@ class StaticSiteConstruct(Construct):
   - ACM certificate (DNS validated)
   - Route 53 hosted zone with DNS records
   - Lambda for CloudFront invalidation on S3 changes
-  - IAM user with credentials stored in SSM Parameter Store
   - (Optional) Custom Resource to sync nameservers for Route 53-registered domains
   - (Optional) Initial template content deployment
   """
@@ -107,15 +105,6 @@ class StaticSiteConstruct(Construct):
         resource_prefix=stack_name,
       )
 
-    # Deployment User with credentials
-    self.deployment_user = DeploymentUser(
-      self,
-      f"{stack_name}-deployer",
-      bucket=self.bucket.bucket,
-      domain_name=domain_name,
-      resource_prefix=stack_name,
-    )
-
     # Nameserver sync for Route 53-registered domains
     if sync_nameservers and hosted_zone_id is None:
       # Only sync if we created a new hosted zone (not importing existing)
@@ -151,16 +140,4 @@ class StaticSiteConstruct(Construct):
       "HostedZoneId",
       value=self.dns.hosted_zone.hosted_zone_id,
       description="Route 53 hosted zone ID",
-    )
-    CfnOutput(
-      self,
-      "CredentialsParameter",
-      value=self.deployment_user.credentials_parameter.parameter_name,
-      description="SSM parameter name for deployment credentials",
-    )
-    CfnOutput(
-      self,
-      "SecretKeyParameter",
-      value=self.deployment_user.secret_key_parameter.parameter_name,
-      description="SSM parameter name for secret access key",
     )

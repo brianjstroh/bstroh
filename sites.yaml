@@ -26,3 +26,7 @@ sites:
   - domain: garrett.rocks
     owner: Brian Stroh
     email: brianjstroh@gmail.com
+
+  - domain: elliot.rocks
+    owner: Brian Stroh
+    email: brianjstroh@gmail.com
