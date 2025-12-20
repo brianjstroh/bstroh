@@ -136,8 +136,7 @@ class AdminServerConstruct(Construct):
       role=self.role,
       user_data=user_data,
       spot_options=ec2.LaunchTemplateSpotOptions(
-        request_type=ec2.SpotRequestType.PERSISTENT,
-        interruption_behavior=ec2.SpotInstanceInterruption.STOP,
+        request_type=ec2.SpotRequestType.ONE_TIME,
         max_price=0.005,  # ~$3.60/month max
       ),
       block_devices=[

@@ -18,7 +18,7 @@ from infrastructure.stacks.site_stack import StaticSiteStack
 def get_account_id() -> str:
   """Get AWS account ID from current credentials."""
   sts = boto3.client("sts")
-  return sts.get_caller_identity()["Account"]
+  return str(sts.get_caller_identity()["Account"])
 
 
 def main() -> None:
