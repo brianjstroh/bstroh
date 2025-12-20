@@ -16,8 +16,8 @@ class AdminServerConstruct(Construct):
 
   Creates:
   - S3 bucket for Flask app code
-  - IAM instance role with S3 access to all site buckets
-  - Security group with HTTP/HTTPS/SSH
+  - IAM instance role with S3 and Bedrock access
+  - Security group with HTTP/HTTPS
   - Elastic IP for stable DNS
   - Auto Scaling Group with spot instance
   - Route53 A record for admin subdomain
@@ -119,6 +119,16 @@ class AdminServerConstruct(Construct):
       iam.PolicyStatement(
         actions=["ssm:GetParameter"],
         resources=["arn:aws:ssm:*:*:parameter/sites/*"],
+      )
+    )
+
+    # Bedrock access for AI content generation
+    self.role.add_to_policy(
+      iam.PolicyStatement(
+        actions=["bedrock:InvokeModel"],
+        resources=[
+          "arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-3-5-haiku-20241022-v1:0"
+        ],
       )
     )
 

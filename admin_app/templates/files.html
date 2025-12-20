@@ -149,6 +149,94 @@
   </div>
 </div>
 
+<!-- AI Content Assistant -->
+<div class="card mt-4">
+  <div class="card-header d-flex justify-content-between align-items-center" style="cursor: pointer;" data-bs-toggle="collapse" data-bs-target="#chatSection">
+    <span>
+      <i class="bi bi-chat-dots"></i> AI Content Assistant
+    </span>
+    <i class="bi bi-chevron-down"></i>
+  </div>
+  <div class="collapse" id="chatSection">
+    <div class="card-body">
+      <!-- File Selector -->
+      <div class="d-flex align-items-center gap-2 mb-3">
+        <label class="text-muted small mb-0">Editing:</label>
+        <select id="fileSelector" class="form-select form-select-sm" style="max-width: 250px;" onchange="loadSelectedFile()">
+          <option value="">Select a file...</option>
+        </select>
+        <button class="btn btn-outline-secondary btn-sm" onclick="refreshFileList()" title="Refresh file list">
+          <i class="bi bi-arrow-clockwise"></i>
+        </button>
+        <span id="fileStatus" class="text-muted small"></span>
+      </div>
+
+      <p class="text-muted small mb-3">
+        Select a file above, then ask the AI to help modify it. The AI will see the current file contents.
+      </p>
+
+      <!-- Chat Messages -->
+      <div id="chatMessages" class="border rounded p-3 mb-3" style="height: 300px; overflow-y: auto; background: #f8f9fa;">
+        <div class="text-muted text-center py-4" id="chatPlaceholder">
+          <i class="bi bi-lightbulb" style="font-size: 2rem;"></i>
+          <p class="mt-2 mb-0">Select a file and try asking things like:</p>
+          <p class="small">"Change the page title to 'The Stroh Family'"</p>
+          <p class="small">"Add a welcome message above the slideshow"</p>
+          <p class="small">"Make the background a light blue color"</p>
+        </div>
+      </div>
+
+      <!-- Chat Input -->
+      <div class="input-group mb-3">
+        <input type="text" id="chatInput" class="form-control" placeholder="Ask the AI for help with your website...">
+        <button class="btn btn-primary" type="button" id="sendChat" onclick="sendMessage()">
+          <i class="bi bi-send"></i> Send
+        </button>
+      </div>
+
+      <!-- Preview Section (hidden by default) -->
+      <div id="previewSection" style="display: none;">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <strong>Preview Generated Content</strong>
+          <div>
+            <button class="btn btn-outline-secondary btn-sm" onclick="togglePreviewMode()">
+              <i class="bi bi-eye"></i> <span id="previewModeText">Visual Preview</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Code Preview -->
+        <div id="codePreview" class="border rounded p-2 mb-2" style="max-height: 200px; overflow: auto; background: #1e1e1e; display: none;">
+          <pre class="mb-0" style="color: #d4d4d4; white-space: pre-wrap; font-size: 0.8rem;"><code id="previewCode"></code></pre>
+        </div>
+
+        <!-- Visual Preview -->
+        <div id="visualPreview" class="border rounded mb-2" style="height: 300px; overflow: auto; background: white;">
+          <iframe id="previewFrame" style="width: 100%; height: 100%; border: none;"></iframe>
+        </div>
+
+        <div class="alert alert-warning small mb-2">
+          <i class="bi bi-exclamation-triangle"></i>
+          <strong>Before applying:</strong> This will upload directly to your live website. The slideshow may not work in preview but will work on your actual site.
+        </div>
+
+        <div class="d-flex gap-2">
+          <div class="input-group" style="max-width: 300px;">
+            <span class="input-group-text">Save as:</span>
+            <input type="text" id="targetFilename" class="form-control" value="index.html">
+          </div>
+          <button class="btn btn-success" onclick="applyContent()">
+            <i class="bi bi-cloud-upload"></i> Apply to Website
+          </button>
+          <button class="btn btn-outline-secondary" onclick="hidePreview()">
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- New Folder Modal -->
 <div class="modal fade" id="newFolderModal" tabindex="-1">
   <div class="modal-dialog">
@@ -247,6 +335,249 @@
     document.getElementById('deleteKey').value = key;
     document.getElementById('deleteFileName').textContent = name;
     new bootstrap.Modal(document.getElementById('deleteModal')).show();
+  }
+
+  // Chat functionality
+  let chatHistory = [];
+  let pendingContent = null;
+  let showingCode = false;
+  let currentFileContent = null;
+  let currentFileKey = null;
+
+  // Load editable files on page load
+  document.addEventListener('DOMContentLoaded', refreshFileList);
+
+  async function refreshFileList() {
+    const selector = document.getElementById('fileSelector');
+    const status = document.getElementById('fileStatus');
+
+    try {
+      const response = await fetch('/editable-files');
+      const data = await response.json();
+
+      if (data.error) {
+        status.textContent = 'Error loading files';
+        return;
+      }
+
+      // Clear and repopulate
+      selector.innerHTML = '<option value="">Select a file...</option>';
+      data.files.forEach(file => {
+        const option = document.createElement('option');
+        option.value = file.key;
+        option.textContent = file.key;
+        selector.appendChild(option);
+      });
+
+      // Restore selection if possible
+      if (currentFileKey) {
+        selector.value = currentFileKey;
+      }
+
+      status.textContent = '';
+    } catch (error) {
+      status.textContent = 'Error loading files';
+    }
+  }
+
+  async function loadSelectedFile() {
+    const selector = document.getElementById('fileSelector');
+    const status = document.getElementById('fileStatus');
+    const key = selector.value;
+
+    if (!key) {
+      currentFileContent = null;
+      currentFileKey = null;
+      status.textContent = '';
+      return;
+    }
+
+    status.innerHTML = '<i class="bi bi-hourglass-split"></i> Loading...';
+
+    try {
+      const response = await fetch(`/file-content/${encodeURIComponent(key)}`);
+      const data = await response.json();
+
+      if (data.error) {
+        status.innerHTML = `<span class="text-danger">${data.error}</span>`;
+        currentFileContent = null;
+        currentFileKey = null;
+        return;
+      }
+
+      currentFileContent = data.content;
+      currentFileKey = key;
+      status.innerHTML = `<span class="text-success"><i class="bi bi-check-circle"></i> Loaded (${Math.round(data.content.length / 1024)}KB)</span>`;
+
+      // Update target filename field
+      document.getElementById('targetFilename').value = key;
+
+      // Clear chat history when switching files
+      chatHistory = [];
+
+    } catch (error) {
+      status.innerHTML = `<span class="text-danger">Error: ${error.message}</span>`;
+      currentFileContent = null;
+      currentFileKey = null;
+    }
+  }
+
+  // Send message on Enter key
+  document.getElementById('chatInput').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+      sendMessage();
+    }
+  });
+
+  async function sendMessage() {
+    const input = document.getElementById('chatInput');
+    const message = input.value.trim();
+    if (!message) return;
+
+    // Clear placeholder
+    document.getElementById('chatPlaceholder').style.display = 'none';
+
+    // Add user message to UI
+    addMessageToUI('user', message);
+    input.value = '';
+
+    // Show loading indicator
+    const loadingId = addMessageToUI('assistant', '<i class="bi bi-hourglass-split"></i> Thinking...');
+
+    try {
+      const response = await fetch('/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: message,
+          history: chatHistory,
+          file_key: currentFileKey,
+          file_content: currentFileContent
+        })
+      });
+
+      const data = await response.json();
+
+      // Remove loading indicator
+      document.getElementById(loadingId).remove();
+
+      if (data.error) {
+        addMessageToUI('assistant', `<span class="text-danger">${data.error}</span>`);
+      } else {
+        // Add to history (without file content to save tokens)
+        chatHistory.push({ role: 'user', content: message });
+        chatHistory.push({ role: 'assistant', content: data.response });
+
+        // Add response to UI
+        addMessageToUI('assistant', formatResponse(data.response));
+
+        // Check if response contains HTML code block
+        const htmlMatch = data.response.match(/```html\n([\s\S]*?)```/);
+        if (htmlMatch) {
+          pendingContent = htmlMatch[1];
+          showPreview(pendingContent);
+        }
+      }
+    } catch (error) {
+      document.getElementById(loadingId).remove();
+      addMessageToUI('assistant', `<span class="text-danger">Error: ${error.message}</span>`);
+    }
+  }
+
+  function addMessageToUI(role, content) {
+    const messagesDiv = document.getElementById('chatMessages');
+    const id = 'msg-' + Date.now();
+
+    const wrapper = document.createElement('div');
+    wrapper.id = id;
+    wrapper.className = `mb-2 ${role === 'user' ? 'text-end' : ''}`;
+
+    const bubble = document.createElement('div');
+    bubble.className = `d-inline-block p-2 rounded ${role === 'user' ? 'bg-primary text-white' : 'bg-white border'}`;
+    bubble.style.maxWidth = '80%';
+    bubble.style.textAlign = 'left';
+    bubble.innerHTML = content;
+
+    wrapper.appendChild(bubble);
+    messagesDiv.appendChild(wrapper);
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+    return id;
+  }
+
+  function formatResponse(text) {
+    // Convert markdown-style code blocks to HTML
+    let formatted = text
+      .replace(/```html\n([\s\S]*?)```/g, '<div class="bg-dark text-light p-2 rounded my-2" style="font-size: 0.8rem; max-height: 150px; overflow: auto;"><code style="white-space: pre-wrap;">$1</code></div>')
+      .replace(/```([\s\S]*?)```/g, '<code class="bg-light p-1 rounded">$1</code>')
+      .replace(/`([^`]+)`/g, '<code class="bg-light px-1 rounded">$1</code>')
+      .replace(/\n/g, '<br>');
+    return formatted;
+  }
+
+  function showPreview(html) {
+    pendingContent = html;
+    document.getElementById('previewSection').style.display = 'block';
+    document.getElementById('previewCode').textContent = html;
+
+    // Write to iframe for visual preview
+    const iframe = document.getElementById('previewFrame');
+    const doc = iframe.contentDocument || iframe.contentWindow.document;
+    doc.open();
+    doc.write(html);
+    doc.close();
+
+    // Show visual preview by default
+    showingCode = false;
+    document.getElementById('visualPreview').style.display = 'block';
+    document.getElementById('codePreview').style.display = 'none';
+    document.getElementById('previewModeText').textContent = 'Show Code';
+  }
+
+  function togglePreviewMode() {
+    showingCode = !showingCode;
+    document.getElementById('visualPreview').style.display = showingCode ? 'none' : 'block';
+    document.getElementById('codePreview').style.display = showingCode ? 'block' : 'none';
+    document.getElementById('previewModeText').textContent = showingCode ? 'Visual Preview' : 'Show Code';
+  }
+
+  function hidePreview() {
+    document.getElementById('previewSection').style.display = 'none';
+    pendingContent = null;
+  }
+
+  async function applyContent() {
+    if (!pendingContent) return;
+
+    const filename = document.getElementById('targetFilename').value.trim();
+    if (!filename) {
+      alert('Please enter a filename');
+      return;
+    }
+
+    try {
+      const response = await fetch('/chat/apply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          content: pendingContent,
+          filename: filename
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.error) {
+        alert('Error: ' + data.error);
+      } else {
+        addMessageToUI('assistant', `<span class="text-success"><i class="bi bi-check-circle"></i> ${data.message}</span>`);
+        hidePreview();
+        // Refresh file list
+        setTimeout(() => location.reload(), 1000);
+      }
+    } catch (error) {
+      alert('Error: ' + error.message);
+    }
   }
 </script>
 {% endblock %}
