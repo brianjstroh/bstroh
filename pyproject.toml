@@ -49,6 +49,10 @@ quote-style = "double"
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM"]
 
+[tool.ruff.lint.per-file-ignores]
+# User data scripts contain long curl commands that can't be easily split
+"infrastructure/cdk_constructs/admin_server.py" = ["E501"]
+
 [tool.mypy]
 python_version = "3.11"
 check_untyped_defs = true

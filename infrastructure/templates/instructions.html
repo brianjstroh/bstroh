@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Website Instructions</title>
+  <title>Website Admin Guide</title>
   <style>
     * {
       margin: 0;
@@ -55,22 +55,6 @@
       margin-bottom: 1.5rem;
       padding-bottom: 0.75rem;
       border-bottom: 2px solid #e9ecef;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    h2 .step-number {
-      background: #0f3460;
-      color: #fff;
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1rem;
-      flex-shrink: 0;
     }
 
     h3 {
@@ -83,35 +67,13 @@
       margin-bottom: 1rem;
     }
 
-    ol {
+    ul {
       margin: 1rem 0;
-      padding-left: 0;
-      list-style: none;
-      counter-reset: step-counter;
+      padding-left: 1.5rem;
     }
 
-    ol li {
-      margin-bottom: 1rem;
-      padding-left: 2.5rem;
-      position: relative;
-      counter-increment: step-counter;
-    }
-
-    ol li::before {
-      content: counter(step-counter);
-      position: absolute;
-      left: 0;
-      top: 0;
-      background: #e9ecef;
-      color: #495057;
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.85rem;
-      font-weight: 600;
+    li {
+      margin-bottom: 0.5rem;
     }
 
     .highlight {
@@ -163,41 +125,21 @@
       color: #856404;
     }
 
-    .visual-guide {
+    .interface-diagram {
       background: #f8f9fa;
       border: 1px solid #e9ecef;
       border-radius: 8px;
       padding: 1.25rem;
       margin: 1rem 0;
-    }
-
-    .visual-guide p {
-      margin-bottom: 0.5rem;
-    }
-
-    .visual-guide .path {
       font-family: monospace;
-      background: #e9ecef;
-      padding: 0.5rem 0.75rem;
-      border-radius: 4px;
-      display: inline-block;
-      margin-top: 0.5rem;
+      font-size: 0.9rem;
+      line-height: 1.5;
     }
 
-    .credentials-box {
-      background: #f8f9fa;
-      border: 2px dashed #dee2e6;
-      border-radius: 8px;
-      padding: 1.5rem;
-      margin: 1rem 0;
-    }
-
-    .credentials-box p {
-      margin-bottom: 0.75rem;
-    }
-
-    .credentials-box p:last-child {
-      margin-bottom: 0;
+    .interface-diagram .label {
+      color: #6c757d;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 0.85rem;
     }
 
     footer {
@@ -228,136 +170,102 @@
 </head>
 <body>
   <header>
-    <h1>How to Manage Your Website</h1>
-    <p>A simple guide to updating your photos and content</p>
+    <h1>Website Admin Guide</h1>
+    <p>A quick overview of managing your website files</p>
   </header>
 
   <main>
     <section>
-      <h2><span class="step-number">1</span> Log In to AWS</h2>
+      <h2>Logging In</h2>
 
-      <ol>
-        <li>Go to <a href="https://aws.amazon.com/console/" target="_blank">aws.amazon.com/console</a></li>
-        <li>Click <span class="button-look">Sign In to the Console</span> (top right)</li>
-        <li>Select <span class="highlight">IAM user</span></li>
-        <li>Enter your Account ID, Username, and Password (these were provided to you)</li>
-        <li>Click <span class="button-look">Sign in</span></li>
-      </ol>
+      <p>To access the admin site, you'll need:</p>
+      <ul>
+        <li><strong>Your domain</strong> — The website address (e.g., example.com)</li>
+        <li><strong>Your password</strong> — Provided by your site administrator</li>
+      </ul>
 
-      <div class="credentials-box">
-        <p><strong>Your login details should include:</strong></p>
-        <p>Account ID (12-digit number)</p>
-        <p>IAM Username</p>
-        <p>Password</p>
-      </div>
+      <p>Enter both on the login page and click <span class="button-look">Sign In</span>.</p>
     </section>
 
     <section>
-      <h2><span class="step-number">2</span> Find Your Website's Storage</h2>
+      <h2>The Admin Interface</h2>
 
-      <ol>
-        <li>Once logged in, look for the search bar at the top of the page</li>
-        <li>Type <span class="highlight">S3</span> and click on <strong>S3</strong> in the results</li>
-        <li>You'll see a list of "buckets" (storage folders). Find the one with your website's name</li>
-        <li>Click on your bucket name to open it</li>
-      </ol>
+      <p>After logging in, you'll see the file browser. Here's how it's organized:</p>
 
-      <div class="visual-guide">
-        <p><strong>Your bucket name is usually your website address:</strong></p>
-        <span class="path">yourwebsite.com</span>
+      <div class="interface-diagram">
+        <span class="label">Top navigation bar:</span><br>
+        [S3 Admin logo] &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; [your-domain.com] [Logout]<br><br>
+
+        <span class="label">Breadcrumb (shows your location):</span><br>
+        your-domain.com &gt; photos<br><br>
+
+        <span class="label">Upload area:</span><br>
+        ┌─────────────────────────────────────────┐<br>
+        │ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Drag and drop files here &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+        │ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;or click to select &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+        └─────────────────────────────────────────┘<br><br>
+
+        <span class="label">Actions and file list:</span><br>
+        [+ New Folder] &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;3 items<br>
+        ───────────────────────────────────────────────────<br>
+        Name &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Size &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Modified &nbsp;&nbsp;&nbsp;Actions<br>
+        ───────────────────────────────────────────────────<br>
+        📁 photos &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-<br>
+        📄 index.html &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4.2 KB &nbsp;&nbsp;&nbsp;2024-01-15 &nbsp;[↓] [🗑]<br>
       </div>
+
+      <h3>Key Areas</h3>
+      <ul>
+        <li><strong>Navigation bar</strong> — Shows your domain and logout button</li>
+        <li><strong>Breadcrumb</strong> — Shows where you are; click any part to go back</li>
+        <li><strong>Upload area</strong> — Drag files here or click to browse your computer</li>
+        <li><strong>New Folder button</strong> — Creates a folder in the current location</li>
+        <li><strong>File list</strong> — Shows all files and folders with size, date, and actions</li>
+      </ul>
     </section>
 
     <section>
-      <h2><span class="step-number">3</span> Upload Photos</h2>
+      <h2>Common Tasks</h2>
 
-      <p>To add photos to your slideshow:</p>
+      <h3>Uploading Files</h3>
+      <p>Drag files onto the upload area, or click it to select files from your computer. Selected files appear below the upload area — click <span class="button-look">Upload</span> to confirm.</p>
 
-      <ol>
-        <li>Inside your bucket, click on the <span class="folder-name">photos</span> folder to open it</li>
-        <li>Click the orange <span class="button-look">Upload</span> button</li>
-        <li>Click <span class="button-look">Add files</span> and select photos from your computer<br>
-            <em>Or simply drag and drop photos into the upload area</em></li>
-        <li>Scroll down and click the orange <span class="button-look">Upload</span> button at the bottom</li>
-        <li>Wait for the upload to complete, then click <span class="button-look">Close</span></li>
-      </ol>
+      <h3>Opening Folders</h3>
+      <p>Click any folder name (shown with a 📁 icon) to open it. Use the breadcrumb at the top or the <span class="folder-name">..</span> row to go back up.</p>
 
-      <div class="tip">
-        <strong>Tip:</strong> Your photos will automatically appear in the slideshow! Just refresh your website after uploading. It may take a few minutes for changes to appear.
-      </div>
+      <h3>Downloading Files</h3>
+      <p>Click the download button (↓) next to any file to save it to your computer.</p>
 
-      <div class="tip">
-        <strong>Photo tips:</strong>
-        <ul style="margin-top: 0.5rem; margin-bottom: 0; padding-left: 1.25rem;">
-          <li>Supported formats: JPG, PNG, GIF, WebP</li>
-          <li>Landscape (horizontal) photos work best</li>
-          <li>Photos display in alphabetical order by filename</li>
-        </ul>
-      </div>
-    </section>
-
-    <section>
-      <h2><span class="step-number">4</span> Delete Photos</h2>
-
-      <ol>
-        <li>Navigate to the <span class="folder-name">photos</span> folder in your bucket</li>
-        <li>Check the box next to the photo(s) you want to remove</li>
-        <li>Click the <span class="button-look">Delete</span> button that appears</li>
-        <li>Type <span class="highlight">permanently delete</span> to confirm</li>
-        <li>Click the orange <span class="button-look">Delete objects</span> button</li>
-      </ol>
+      <h3>Deleting Files</h3>
+      <p>Click the trash button (🗑) next to a file. You'll be asked to confirm before the file is deleted.</p>
 
       <div class="warning">
-        <strong>Warning:</strong> Deleted photos cannot be recovered. Make sure you have a backup copy on your computer if you might want them later.
+        <strong>Warning:</strong> Deleted files cannot be recovered. Keep backups of important files on your computer.
+      </div>
+
+      <h3>Creating Folders</h3>
+      <p>Click <span class="button-look">+ New Folder</span>, enter a name using letters, numbers, dashes, or underscores, then click <span class="button-look">Create Folder</span>.</p>
+    </section>
+
+    <section>
+      <h2>Tips</h2>
+
+      <div class="tip">
+        <strong>Photos folder:</strong> Images placed in the <span class="folder-name">photos</span> folder automatically appear in your website's slideshow.
+      </div>
+
+      <div class="tip">
+        <strong>Changes may take a few minutes:</strong> Your website uses caching to load faster, so updates might not appear immediately.
+      </div>
+
+      <div class="tip">
+        <strong>Supported image formats:</strong> JPG, PNG, GIF, and WebP work best for photos.
       </div>
     </section>
 
     <section>
-      <h2><span class="step-number">5</span> Upload Other Files</h2>
-
-      <p>You can add any files to your website (PDFs, documents, additional web pages):</p>
-
-      <ol>
-        <li>Go to the main level of your bucket (not inside the photos folder)</li>
-        <li>Click <span class="button-look">Upload</span></li>
-        <li>Add your files and click <span class="button-look">Upload</span></li>
-      </ol>
-
-      <div class="visual-guide">
-        <p><strong>Your files will be available at:</strong></p>
-        <span class="path">https://yourwebsite.com/filename.pdf</span>
-      </div>
-    </section>
-
-    <section>
-      <h2>Troubleshooting</h2>
-
-      <h3>Changes not appearing?</h3>
-      <p>Your website uses caching to load faster. Changes may take 5-10 minutes to appear. Try refreshing your browser or waiting a bit longer.</p>
-
-      <h3>Can't find your bucket?</h3>
-      <p>Make sure you're logged into the correct AWS account. The Account ID should match what was provided to you.</p>
-
-      <h3>"Access Denied" errors?</h3>
-      <p>You can only access your own website's bucket. If you see other buckets listed, make sure you're clicking on the correct one.</p>
-
-      <h3>Photos not showing in slideshow?</h3>
-      <ul style="padding-left: 1.25rem;">
-        <li>Make sure photos are inside the <span class="folder-name">photos</span> folder</li>
-        <li>Check that file names end in .jpg, .png, .gif, or .webp</li>
-        <li>Wait a few minutes and refresh your website</li>
-      </ul>
-    </section>
-
-    <section>
-      <h2>Need More Help?</h2>
-      <p>Contact the person who set up this website for you. They can help with:</p>
-      <ul style="padding-left: 1.25rem;">
-        <li>Password resets</li>
-        <li>Account access issues</li>
-        <li>Website customizations</li>
-        <li>Any questions not covered here</li>
-      </ul>
+      <h2>Need Help?</h2>
+      <p>Contact Brian for assistance with passwords, access issues, or customizations.</p>
     </section>
   </main>
 

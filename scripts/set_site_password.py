@@ -47,10 +47,10 @@ def main() -> None:
       Type="SecureString",
       Overwrite=True,
       Description=f"Admin password hash for {domain}",
-      Tags=[
-        {"Key": "Domain", "Value": domain},
-        {"Key": "Project", "Value": "static-sites"},
-      ],
+      # Tags=[
+      #   {"Key": "Domain", "Value": domain},
+      #   {"Key": "Project", "Value": "static-sites"},
+      # ],
     )
     print(f"Password set for {domain}")
     print(f"SSM Parameter: {param_name}")
