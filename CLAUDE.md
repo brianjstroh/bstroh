@@ -73,3 +73,12 @@ uv run cdk destroy --all
 - 88 character line length
 - Double quotes
 - Strict typing enforced (`mypy --strict`)
+
+
+## Debugging the EC2 instance
+
+We're using Caddy to create security certs, and there is a limit of 5 certs issued per subdomain within a 168 hour period. Any more instances issued in this period will fail to build correctly, and the subdomain will need to be changed, or we'll have to wait out the 168 hour period to retry.
+To debug the instance container and search for Caddy or other issues, locally submit
+
+`aws ssm start-session --target {instance-id}` and then `sudo journalctl -u caddy --no-pager | tail -100`.
+Simply `exit` to close the ssm session.

@@ -5,6 +5,49 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Welcome</title>
   <link rel="stylesheet" href="/christmas.css">
+  <style>
+    .forest-container {
+      position: relative;
+      width: 100%;
+      height: 250px;
+      margin-top: 40px;
+      overflow: hidden;
+    }
+
+    .tree {
+      position: absolute;
+      bottom: 0;
+      transform-origin: bottom center;
+      animation: sway 3s ease-in-out infinite;
+    }
+
+    .tree:nth-child(1) { left: 5%; animation-duration: 3.2s; }
+    .tree:nth-child(2) { left: 20%; animation-duration: 2.8s; animation-delay: 0.3s; }
+    .tree:nth-child(3) { left: 35%; animation-duration: 3.5s; animation-delay: 0.1s; }
+    .tree:nth-child(4) { left: 50%; animation-duration: 3s; }
+    .tree:nth-child(5) { left: 65%; animation-duration: 3.3s; animation-delay: 0.2s; }
+    .tree:nth-child(6) { left: 80%; animation-duration: 2.9s; animation-delay: 0.4s; }
+
+    .grinch {
+      position: absolute;
+      bottom: 20px;
+      right: 10%;
+      transform-origin: bottom center;
+      animation: grinchSway 2.5s ease-in-out infinite;
+      z-index: 5;
+    }
+
+    @keyframes sway {
+      0%, 100% { transform: rotate(0deg); }
+      25% { transform: rotate(2deg); }
+      75% { transform: rotate(-2deg); }
+    }
+
+    @keyframes grinchSway {
+      0%, 100% { transform: rotate(0deg) translateX(0); }
+      50% { transform: rotate(-3deg) translateX(-5px); }
+    }
+  </style>
 </head>
 <body>
   <div class="snowflakes">
@@ -21,8 +64,8 @@
   </div>
 
   <header>
-    <h1>Welcome</h1>
-    <p>A collection of memories</p>
+    <h1>Merry Christmas!</h1>
+    <p>Here is your very own website</p>
   </header>
 
   <main class="slideshow-container">
@@ -41,6 +84,71 @@
       <button onclick="nextSlide()">Next</button>
     </div>
   </main>
+
+  <div class="forest-container">
+    <!-- Christmas Trees -->
+    <svg class="tree" width="80" height="140" viewBox="0 0 80 140">
+      <polygon points="40,10 10,60 20,60 5,90 25,90 0,130 80,130 55,90 75,90 60,60 70,60" fill="#2d5016"/>
+      <rect x="35" y="130" width="10" height="20" fill="#4a2511"/>
+    </svg>
+
+    <svg class="tree" width="100" height="180" viewBox="0 0 100 180">
+      <polygon points="50,5 15,70 25,70 10,110 30,110 0,165 100,165 70,110 90,110 75,70 85,70" fill="#1e3a0f"/>
+      <rect x="45" y="165" width="10" height="25" fill="#4a2511"/>
+    </svg>
+
+    <svg class="tree" width="70" height="120" viewBox="0 0 70 120">
+      <polygon points="35,15 10,50 18,50 8,75 22,75 0,110 70,110 48,75 62,75 52,50 60,50" fill="#2d5016"/>
+      <rect x="32" y="110" width="8" height="15" fill="#4a2511"/>
+    </svg>
+
+    <svg class="tree" width="90" height="160" viewBox="0 0 90 160">
+      <polygon points="45,8 12,65 22,65 8,100 28,100 0,150 90,150 62,100 82,100 68,65 78,65" fill="#1e3a0f"/>
+      <rect x="41" y="150" width="10" height="22" fill="#4a2511"/>
+    </svg>
+
+    <svg class="tree" width="75" height="130" viewBox="0 0 75 130">
+      <polygon points="37,12 12,55 20,55 10,82 25,82 0,120 75,120 50,82 65,82 55,55 63,55" fill="#2d5016"/>
+      <rect x="33" y="120" width="9" height="18" fill="#4a2511"/>
+    </svg>
+
+    <svg class="tree" width="95" height="170" viewBox="0 0 95 170">
+      <polygon points="47,6 14,68 24,68 10,105 30,105 0,160 95,160 65,105 85,105 71,68 81,68" fill="#1e3a0f"/>
+      <rect x="43" y="160" width="10" height="24" fill="#4a2511"/>
+    </svg>
+
+    <!-- The Grinch -->
+    <svg class="grinch" width="100" height="120" viewBox="0 0 100 120">
+      <!-- Body -->
+      <ellipse cx="50" cy="85" rx="25" ry="30" fill="#7fb539"/>
+      
+      <!-- Head -->
+      <circle cx="50" cy="45" r="22" fill="#7fb539"/>
+      
+      <!-- Face features -->
+      <circle cx="43" cy="42" r="3" fill="#2c2c2c"/>
+      <circle cx="57" cy="42" r="3" fill="#2c2c2c"/>
+      
+      <!-- Evil grin -->
+      <path d="M 38 52 Q 50 58 62 52" stroke="#2c2c2c" stroke-width="2" fill="none"/>
+      
+      <!-- Eyebrows (angry) -->
+      <line x1="38" y1="38" x2="46" y2="40" stroke="#2c2c2c" stroke-width="2"/>
+      <line x1="54" y1="40" x2="62" y2="38" stroke="#2c2c2c" stroke-width="2"/>
+      
+      <!-- Santa hat -->
+      <polygon points="40,28 50,8 60,28" fill="#c41e3a"/>
+      <circle cx="50" cy="8" r="5" fill="#fff"/>
+      <ellipse cx="50" cy="28" rx="15" ry="4" fill="#fff"/>
+      
+      <!-- Arms -->
+      <ellipse cx="28" cy="75" rx="8" ry="18" fill="#7fb539" transform="rotate(-20 28 75)"/>
+      <ellipse cx="72" cy="75" rx="8" ry="18" fill="#7fb539" transform="rotate(20 72 75)"/>
+      
+      <!-- Red coat trim -->
+      <rect x="30" y="70" width="40" height="3" fill="#c41e3a"/>
+    </svg>
+  </div>
 
   <footer>
     <p><a href="/instructions.html">How to manage this website</a></p>
