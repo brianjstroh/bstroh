@@ -1,54 +1,71 @@
-# bstroh - Static Website Infrastructure
+# Claude Instructions for bstroh
 
-AWS CDK Python project for deploying static websites.
+AWS CDK project for static website hosting with a web-based admin interface.
 
-## Project Structure
+## Architecture
+
+**Static Sites** (per domain):
+- S3 bucket for website files
+- CloudFront distribution with custom domain
+- ACM certificate (DNS-validated)
+- Route 53 hosted zone
+- Lambda for cache invalidation on S3 changes
+
+**Admin Server** (shared):
+- EC2 t3.nano running Flask app
+- Caddy for HTTPS (auto-certificates)
+- SSM Parameter Store for password hashes
+- IAM role with S3 access to all site buckets
+
+## Key Files
 
 ```
-bstroh/
-├── pyproject.toml          # uv/Python configuration
-├── sites.yaml              # Multi-site configuration
-├── infrastructure/         # CDK application
-│   ├── app.py              # CDK entry point
-│   ├── config.py           # Configuration loader
-│   ├── constructs/         # Reusable CDK constructs
-│   └── stacks/             # CDK stacks
-├── tests/                  # Pytest tests
-└── scripts/                # Helper scripts
+sites.yaml                           # All site configuration
+infrastructure/
+  app.py                             # CDK entry point
+  config.py                          # Config loader
+  stacks/site_stack.py               # Static site stack
+  stacks/admin_stack.py              # Admin server stack
+  cdk_constructs/                    # Reusable constructs
+  templates/                         # HTML templates (index, error, instructions)
+admin_app/
+  app.py                             # Flask app for file management
+  templates/                         # Admin UI (login, file browser)
+scripts/
+  set_site_password.py               # Set admin password for a domain
+  output_credentials.py              # Get IAM credentials for a site
 ```
 
 ## Commands
 
 ```bash
-# Install dependencies
+# Dependencies
 uv sync --all-extras
 
-# Run tests
+# Linting and tests
 uv run pytest
-
-# Lint and format
 uv run ruff check .
 uv run ruff format .
 uv run mypy infrastructure tests
 
-# CDK commands
-uv run cdk synth           # Synthesize CloudFormation
-uv run cdk diff            # Show changes
-uv run cdk deploy --all    # Deploy all stacks
-uv run cdk destroy --all   # Destroy all stacks
+# CDK
+uv run cdk synth
+uv run cdk diff
+uv run cdk deploy --all
+uv run cdk destroy --all
 ```
 
 ## Adding a New Site
 
-1. Register domain in AWS Route 53 Console
-2. Add entry to `sites.yaml`:
+1. Register domain in Route 53 Console
+2. Add to `sites.yaml`:
    ```yaml
    - domain: newsite.com
      owner: Owner Name
      email: owner@example.com
    ```
-3. Run `uv run cdk deploy StaticSite-newsite-com`
-4. Retrieve credentials: `uv run python scripts/output_credentials.py newsite.com`
+3. Deploy: `uv run cdk deploy StaticSite-newsite-com`
+4. Set password: `uv run python scripts/set_site_password.py newsite.com "password"`
 
 ## Code Style
 
@@ -56,4 +73,4 @@ uv run cdk destroy --all   # Destroy all stacks
 - 2-space indentation
 - 88 character line length
 - Double quotes
-- Strict typing enforced
+- Strict typing enforced (`mypy --strict`)

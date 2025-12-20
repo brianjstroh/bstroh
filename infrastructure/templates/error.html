@@ -13,7 +13,7 @@
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      background: linear-gradient(135deg, #1a472a 0%, #2d5a3d 30%, #1a472a 60%, #8b0000 100%);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
@@ -22,6 +22,55 @@
       color: #fff;
       text-align: center;
       padding: 1rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Snowflakes */
+    .snowflakes {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+
+    .snowflake {
+      position: absolute;
+      top: -10px;
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 1rem;
+      animation: fall linear infinite;
+    }
+
+    @keyframes fall {
+      0% {
+        transform: translateY(-10px) rotate(0deg);
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(100vh) rotate(360deg);
+        opacity: 0.3;
+      }
+    }
+
+    .snowflake:nth-child(1) { left: 5%; animation-duration: 10s; animation-delay: 0s; font-size: 0.8rem; }
+    .snowflake:nth-child(2) { left: 15%; animation-duration: 12s; animation-delay: 2s; font-size: 1.2rem; }
+    .snowflake:nth-child(3) { left: 25%; animation-duration: 8s; animation-delay: 4s; font-size: 0.6rem; }
+    .snowflake:nth-child(4) { left: 35%; animation-duration: 14s; animation-delay: 1s; font-size: 1rem; }
+    .snowflake:nth-child(5) { left: 45%; animation-duration: 9s; animation-delay: 3s; font-size: 0.9rem; }
+    .snowflake:nth-child(6) { left: 55%; animation-duration: 11s; animation-delay: 5s; font-size: 1.1rem; }
+    .snowflake:nth-child(7) { left: 65%; animation-duration: 13s; animation-delay: 0.5s; font-size: 0.7rem; }
+    .snowflake:nth-child(8) { left: 75%; animation-duration: 10s; animation-delay: 2.5s; font-size: 1.3rem; }
+    .snowflake:nth-child(9) { left: 85%; animation-duration: 15s; animation-delay: 4.5s; font-size: 0.8rem; }
+    .snowflake:nth-child(10) { left: 95%; animation-duration: 7s; animation-delay: 1.5s; font-size: 1rem; }
+
+    .content {
+      position: relative;
+      z-index: 1;
     }
 
     .error-code {
@@ -70,9 +119,24 @@
   </style>
 </head>
 <body>
-  <div class="error-code">404</div>
-  <h1>Page Not Found</h1>
-  <p>The page you're looking for doesn't exist or has been moved.</p>
-  <a href="/">Go to Homepage</a>
+  <div class="snowflakes">
+    <div class="snowflake">&#10052;</div>
+    <div class="snowflake">&#10053;</div>
+    <div class="snowflake">&#10052;</div>
+    <div class="snowflake">&#10053;</div>
+    <div class="snowflake">&#10052;</div>
+    <div class="snowflake">&#10053;</div>
+    <div class="snowflake">&#10052;</div>
+    <div class="snowflake">&#10053;</div>
+    <div class="snowflake">&#10052;</div>
+    <div class="snowflake">&#10053;</div>
+  </div>
+
+  <div class="content">
+    <div class="error-code">404</div>
+    <h1>Page Not Found</h1>
+    <p>The page you're looking for doesn't exist or has been moved.</p>
+    <a href="/">Go to Homepage</a>
+  </div>
 </body>
 </html>

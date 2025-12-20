@@ -1,16 +1,38 @@
 # bstroh
 
-Static website infrastructure with AWS CDK - deploy websites for friends and family at ~$8-10/year each.
+AWS CDK infrastructure for hosting static websites with a web-based admin interface. Deploy simple photo gallery sites for friends and family at ~$8-10/year each.
 
-## Features
+## Overview
 
-- **S3 Static Website Hosting** - Public S3 bucket with website configuration
-- **CloudFront CDN** - HTTPS, caching, and global edge locations
-- **DNS-Validated SSL Certificates** - Fully automated, no email approval needed
-- **Route 53 DNS** - Hosted zone with A/AAAA records
-- **CloudFront Cache Invalidation** - Auto-invalidate on S3 changes via EventBridge + Lambda
-- **IAM User Provisioning** - Per-site deployment credentials in SSM Parameter Store
-- **Nameserver Auto-Sync** - Custom Resource updates Route 53-registered domain nameservers
+This project provides two main components:
+
+1. **Static Sites** - S3-hosted websites with CloudFront CDN, custom domains, and automatic SSL certificates
+2. **Admin Server** - A lightweight EC2 instance running a Flask web app for easy file management
+
+Site owners can manage their content through a simple web interface at `admin.bstroh.com` - no AWS knowledge required.
+
+## Project Structure
+
+```
+bstroh/
+├── sites.yaml                    # Site and admin configuration
+├── infrastructure/
+│   ├── app.py                    # CDK entry point
+│   ├── config.py                 # Configuration loader
+│   ├── stacks/
+│   │   ├── site_stack.py         # Static site stack
+│   │   └── admin_stack.py        # Admin server stack
+│   ├── cdk_constructs/           # Reusable CDK constructs
+│   └── templates/                # HTML templates for sites
+├── admin_app/                    # Flask admin application
+│   ├── app.py                    # Main Flask app
+│   └── templates/                # Admin UI templates
+├── scripts/                      # Helper scripts
+│   ├── output_credentials.py     # Get site IAM credentials
+│   ├── set_site_password.py      # Set admin portal password
+│   └── package_admin_app.py      # Package admin app for deployment
+└── tests/                        # Pytest tests
+```
 
 ## Quick Start
 
@@ -24,47 +46,51 @@ Static website infrastructure with AWS CDK - deploy websites for friends and fam
 ### Installation
 
 ```bash
-# Install uv if you haven't already
+# Install uv
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# Install project dependencies
+# Install dependencies
 uv sync --all-extras
 
-# Install CDK CLI globally
+# Install CDK CLI
 npm install -g aws-cdk
+
+# Bootstrap CDK (first time only)
+uv run cdk bootstrap
 ```
 
-### Deploy Your First Site
+### Deploy Everything
 
-1. **Register your domain** in AWS Route 53 Console
+```bash
+uv run cdk deploy --all
+```
 
-2. **Configure your site** in `sites.yaml`:
+## Adding a New Site
+
+1. **Register domain** in AWS Route 53 Console
+
+2. **Add to sites.yaml**:
    ```yaml
    sites:
-     - domain: yoursite.com
-       owner: Your Name
-       email: you@example.com
+     - domain: newsite.com
+       owner: Owner Name
+       email: owner@example.com
    ```
 
-3. **Bootstrap CDK** (first time only):
+3. **Deploy the site**:
    ```bash
-   uv run cdk bootstrap
+   uv run cdk deploy StaticSite-newsite-com
    ```
 
-4. **Deploy**:
+4. **Set admin password** for web portal access:
    ```bash
-   uv run cdk deploy --all
+   uv run python scripts/set_site_password.py newsite.com "secure-password"
    ```
 
-5. **Retrieve credentials** for uploading content:
-   ```bash
-   uv run python scripts/output_credentials.py yoursite.com
-   ```
-
-6. **Upload your static site**:
-   ```bash
-   aws s3 sync ./your-site-folder/ s3://yoursite.com/ --delete
-   ```
+5. **Share credentials** with site owner:
+   - Admin URL: `https://admin.bstroh.com`
+   - Domain: `newsite.com`
+   - Password: (the one you set)
 
 ## Configuration
 
@@ -73,96 +99,96 @@ npm install -g aws-cdk
 ```yaml
 defaults:
   region: us-east-1
-  include_www: true           # Include www.domain alias
-  enable_invalidation: true   # Auto-invalidate CloudFront cache
-  sync_nameservers: true      # Auto-update Route 53 domain nameservers
+  include_www: true            # Include www.domain alias
+  enable_invalidation: true    # Auto-invalidate CloudFront cache
+  sync_nameservers: true       # Auto-update Route 53 nameservers
 
+# Admin server configuration
+admin:
+  domain: admin.bstroh.com
+  parent_hosted_zone: bstroh.com
+  instance_type: t3.nano
+  app_bucket: bstroh-admin-app
+
+# Static sites
 sites:
-  - domain: bstroh.com
-    owner: Brian Stroh
-    email: brianjstroh@gmail.com
-
-  - domain: friend-site.com
-    owner: Friend Name
-    email: friend@example.com
-    sync_nameservers: false   # Domain not registered in Route 53
+  - domain: example.com
+    owner: Site Owner
+    email: owner@example.com
 ```
 
 ### Site Options
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `domain` | required | Domain name (e.g., `example.com`) |
-| `owner` | required | Site owner name (for tagging) |
-| `email` | required | Owner email (for tagging) |
-| `include_www` | `true` | Include `www.` subdomain alias |
-| `enable_invalidation` | `true` | Auto-invalidate CloudFront cache on S3 changes |
-| `sync_nameservers` | `true` | Auto-update nameservers for Route 53-registered domains |
-| `hosted_zone_id` | `null` | Use existing hosted zone instead of creating new |
-| `region` | `us-east-1` | AWS region (should be us-east-1 for CloudFront) |
-| `removal_policy` | `retain` | `retain` or `destroy` |
+| `domain` | required | Domain name |
+| `owner` | required | Site owner name |
+| `email` | required | Owner email |
+| `include_www` | `true` | Include www subdomain |
+| `enable_invalidation` | `true` | Auto-invalidate cache on S3 changes |
+| `sync_nameservers` | `true` | Auto-sync Route 53 nameservers |
 
 ## Commands
 
 ```bash
-# Development
-uv run pytest tests/ -v          # Run tests
-uv run ruff check .              # Lint code
-uv run ruff format .             # Format code
-uv run mypy infrastructure       # Type check
-
 # CDK
-uv run cdk synth                 # Synthesize CloudFormation
-uv run cdk diff                  # Show changes
-uv run cdk deploy --all          # Deploy all stacks
-uv run cdk destroy --all         # Destroy all stacks
+uv run cdk synth              # Synthesize CloudFormation
+uv run cdk diff               # Show changes
+uv run cdk deploy --all       # Deploy all stacks
+uv run cdk destroy --all      # Destroy all stacks
+
+# Development
+uv run pytest                 # Run tests
+uv run ruff check .           # Lint
+uv run ruff format .          # Format
+uv run mypy infrastructure    # Type check
 
 # Utilities
-uv run python scripts/output_credentials.py <domain>  # Get site credentials
+uv run python scripts/set_site_password.py <domain> <password>
+uv run python scripts/output_credentials.py <domain>
 ```
-
-## Estimated Costs Per Site
-
-| Resource | Annual Cost |
-|----------|-------------|
-| Route 53 Hosted Zone | $6.00 |
-| Route 53 DNS Queries | ~$0.48 |
-| S3 Storage (1GB) | ~$0.28 |
-| S3 Requests | ~$0.50 |
-| CloudFront (10GB transfer) | ~$1.00 |
-| ACM Certificate | FREE |
-| Lambda | FREE (free tier) |
-| SSM Parameter Store | FREE |
-| **Total** | **~$8-10/year** |
 
 ## Architecture
 
 ```
-                    ┌─────────────────┐
-                    │   CloudFront    │
-                    │   Distribution  │
-                    └────────┬────────┘
-                             │
-              ┌──────────────┼──────────────┐
-              │              │              │
-              ▼              ▼              ▼
-        ┌─────────┐    ┌─────────┐    ┌──────────┐
-        │   ACM   │    │   S3    │    │ Route 53 │
-        │  Cert   │    │ Bucket  │    │   DNS    │
-        └─────────┘    └────┬────┘    └──────────┘
-                            │
-                            ▼
-                    ┌───────────────┐
-                    │  EventBridge  │
-                    │     Rule      │
-                    └───────┬───────┘
-                            │
-                            ▼
-                    ┌───────────────┐
-                    │    Lambda     │
-                    │ (Invalidate)  │
-                    └───────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                        Static Sites                              │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│    Route 53 DNS ──▶ CloudFront ──▶ S3 Bucket                   │
+│         │              │                │                        │
+│         │              │                │                        │
+│    ACM Certificate     │         EventBridge                     │
+│    (auto-renewed)      │                │                        │
+│                        │                ▼                        │
+│                        │           Lambda                        │
+│                        │      (cache invalidation)               │
+│                        │                                         │
+└────────────────────────┼─────────────────────────────────────────┘
+                         │
+┌────────────────────────┼─────────────────────────────────────────┐
+│                   Admin Server                                   │
+├────────────────────────┼─────────────────────────────────────────┤
+│                        │                                         │
+│    Route 53 ──▶ EC2 (t3.nano) ──▶ S3 Buckets                   │
+│                   │                                              │
+│              Flask App                                           │
+│           (Gunicorn + Caddy)                                     │
+│                   │                                              │
+│              SSM Parameters                                      │
+│           (password hashes)                                      │
+│                                                                  │
+└──────────────────────────────────────────────────────────────────┘
 ```
+
+## Cost Estimate
+
+| Resource | Annual Cost |
+|----------|-------------|
+| Route 53 Hosted Zone | $6.00/site |
+| S3 + CloudFront | ~$2-3/site |
+| EC2 t3.nano (admin) | ~$40/year total |
+| **Per Site** | **~$8-10/year** |
 
 ## License
 
