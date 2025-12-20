@@ -224,16 +224,19 @@ set -ex
 # Log output
 exec > >(tee /var/log/user-data.log) 2>&1
 
-# Get instance ID and region
-INSTANCE_ID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
-REGION=$(curl -s http://169.254.169.254/latest/meta-data/placement/region)
+# Get IMDSv2 token (required for Amazon Linux 2023)
+TOKEN=$(curl -sX PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
+
+# Get instance ID and region using IMDSv2
+INSTANCE_ID=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/instance-id)
+REGION=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/placement/region)
 
 # Associate Elastic IP
 ALLOCATION_ID=$(aws ec2 describe-addresses --region $REGION \\
   --filters "Name=tag:Name,Values=admin-server-{admin_config.domain}" \\
   --query 'Addresses[0].AllocationId' --output text)
 
-if [ "$ALLOCATION_ID" != "None" ]; then
+if [ "$ALLOCATION_ID" != "None" ] && [ -n "$ALLOCATION_ID" ]; then
   aws ec2 associate-address --region $REGION \\
     --instance-id $INSTANCE_ID \\
     --allocation-id $ALLOCATION_ID
@@ -245,10 +248,38 @@ dnf update -y
 # Install Python and dependencies
 dnf install -y python3.11 python3.11-pip tar gzip
 
-# Install Caddy
-dnf install -y 'dnf-command(copr)'
-dnf copr enable -y @caddy/caddy
-dnf install -y caddy
+# Install Caddy from official releases
+curl -L -o /tmp/caddy.tar.gz "https://github.com/caddyserver/caddy/releases/download/v2.9.1/caddy_2.9.1_linux_amd64.tar.gz"
+tar -xzf /tmp/caddy.tar.gz -C /usr/local/bin caddy
+chmod +x /usr/local/bin/caddy
+setcap 'cap_net_bind_service=+ep' /usr/local/bin/caddy
+
+# Create caddy user and directories
+useradd --system --home /var/lib/caddy --shell /sbin/nologin caddy || true
+mkdir -p /etc/caddy /var/lib/caddy /var/log/caddy
+chown caddy:caddy /var/lib/caddy /var/log/caddy
+
+# Create caddy systemd service
+cat > /etc/systemd/system/caddy.service << 'CADDYSERVICE'
+[Unit]
+Description=Caddy
+After=network.target network-online.target
+Requires=network-online.target
+
+[Service]
+Type=notify
+User=caddy
+Group=caddy
+ExecStart=/usr/local/bin/caddy run --config /etc/caddy/Caddyfile
+ExecReload=/usr/local/bin/caddy reload --config /etc/caddy/Caddyfile
+TimeoutStopSec=5s
+LimitNOFILE=1048576
+PrivateTmp=true
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+
+[Install]
+WantedBy=multi-user.target
+CADDYSERVICE
 
 # Create app directory
 mkdir -p /opt/admin-app
