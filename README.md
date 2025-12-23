@@ -1,6 +1,6 @@
 # bstroh
 
-AWS CDK infrastructure for hosting static websites with a web-based admin interface. Deploy simple photo gallery sites for friends and family at ~$8-10/year each.
+AWS CDK infrastructure for hosting static websites with a web-based admin interface. Deploy static html sites for friends and family for $4/year plus the cost of the domain name
 
 ## Overview
 
