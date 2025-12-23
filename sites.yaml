@@ -31,13 +31,13 @@ sites:
     owner: Brian Stroh
     email: brianjstroh@gmail.com
 
-  # - domain: chesapeaketeaco.com
-  #   owner: Brian Stroh
-  #   email: brianjstroh@gmail.com
+  - domain: chesapeaketeaco.com
+    owner: Brian Stroh
+    email: brianjstroh@gmail.com
 
-  # - domain: comobailey.com
-  #   owner: Brian Stroh
-  #   email: brianjstroh@gmail.com
+  - domain: comobailey.com
+    owner: Brian Stroh
+    email: brianjstroh@gmail.com
 
   - domain: danielkang.rocks
     owner: Brian Stroh
@@ -47,9 +47,9 @@ sites:
     owner: Brian Stroh
     email: brianjstroh@gmail.com
 
-  # - domain: frolic.rocks
-  #   owner: Brian Stroh
-  #   email: brianjstroh@gmail.com
+  - domain: frolic.rocks
+    owner: Brian Stroh
+    email: brianjstroh@gmail.com
 
   - domain: gabriel.rocks
     owner: Brian Stroh
@@ -63,21 +63,21 @@ sites:
     owner: Brian Stroh
     email: brianjstroh@gmail.com
 
-  # - domain: goldenhoursuncatchers.com
-  #   owner: Brian Stroh
-  #   email: brianjstroh@gmail.com
+  - domain: goldenhoursuncatchers.com
+    owner: Brian Stroh
+    email: brianjstroh@gmail.com
 
-  # - domain: landonwinstead.com
-  #   owner: Brian Stroh
-  #   email: brianjstroh@gmail.com
+  - domain: landonwinstead.com
+    owner: Brian Stroh
+    email: brianjstroh@gmail.com
 
-  # - domain: tankdvm.com
-  #   owner: Brian Stroh
-  #   email: brianjstroh@gmail.com
+  - domain: tankdvm.com
+    owner: Brian Stroh
+    email: brianjstroh@gmail.com
 
-  # - domain: winstead.wedding
-  #   owner: Brian Stroh
-  #   email: brianjstroh@gmail.com
+  - domain: winstead.wedding
+    owner: Brian Stroh
+    email: brianjstroh@gmail.com
 
   - domain: yanghuang.fashion
     owner: Brian Stroh
