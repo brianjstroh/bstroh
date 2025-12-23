@@ -15,11 +15,43 @@ admin:
   app_bucket: bstroh-admin-app
 
 sites:
+  - domain: austinturner.rocks
+    owner: Brian Stroh
+    email: brianjstroh@gmail.com
+
+  - domain: barracudahead.fish
+    owner: Brian Stroh
+    email: brianjstroh@gmail.com
+  
+  - domain: boobee.world
+    owner: Brian Stroh
+    email: brianjstroh@gmail.com
+
   - domain: bstroh.com
     owner: Brian Stroh
     email: brianjstroh@gmail.com
 
-  - domain: giftedtestinglakenona.com
+  # - domain: chesapeaketeaco.com
+  #   owner: Brian Stroh
+  #   email: brianjstroh@gmail.com
+
+  # - domain: comobailey.com
+  #   owner: Brian Stroh
+  #   email: brianjstroh@gmail.com
+
+  - domain: danielkang.rocks
+    owner: Brian Stroh
+    email: brianjstroh@gmail.com
+
+  - domain: elliot.rocks
+    owner: Brian Stroh
+    email: brianjstroh@gmail.com
+
+  # - domain: frolic.rocks
+  #   owner: Brian Stroh
+  #   email: brianjstroh@gmail.com
+
+  - domain: gabriel.rocks
     owner: Brian Stroh
     email: brianjstroh@gmail.com
 
@@ -27,6 +59,26 @@ sites:
     owner: Brian Stroh
     email: brianjstroh@gmail.com
 
-  - domain: elliot.rocks
+  - domain: giftedtestinglakenona.com
+    owner: Brian Stroh
+    email: brianjstroh@gmail.com
+
+  # - domain: goldenhoursuncatchers.com
+  #   owner: Brian Stroh
+  #   email: brianjstroh@gmail.com
+
+  # - domain: landonwinstead.com
+  #   owner: Brian Stroh
+  #   email: brianjstroh@gmail.com
+
+  # - domain: tankdvm.com
+  #   owner: Brian Stroh
+  #   email: brianjstroh@gmail.com
+
+  # - domain: winstead.wedding
+  #   owner: Brian Stroh
+  #   email: brianjstroh@gmail.com
+
+  - domain: yanghuang.fashion
     owner: Brian Stroh
     email: brianjstroh@gmail.com

@@ -14,7 +14,7 @@ class InitialContent(Construct):
   - index.html with photo slideshow
   - instructions.html with maintenance guide
   - error.html for 404 pages
-  - photos/manifest.json for slideshow configuration
+  - photos/.keep for slideshow configuration
   """
 
   def __init__(
