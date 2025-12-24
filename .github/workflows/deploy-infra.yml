@@ -48,4 +48,4 @@ jobs:
         env:
           JSII_SILENCE_WARNING_UNTESTED_NODE_VERSION: "1"
         run: |
-          uv run cdk deploy --all --require-approval never
+          uv run cdk deploy --all --require-approval never --concurrency 10
