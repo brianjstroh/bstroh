@@ -117,7 +117,7 @@ class AdminServerConstruct(Construct):
     # SSM parameter access for site passwords
     self.role.add_to_policy(
       iam.PolicyStatement(
-        actions=["ssm:GetParameter"],
+        actions=["ssm:GetParameter", "ssm:PutParameter"],
         resources=["arn:aws:ssm:*:*:parameter/sites/*"],
       )
     )
