@@ -520,11 +520,31 @@
     document.getElementById('previewSection').style.display = 'block';
     document.getElementById('previewCode').textContent = html;
 
+    // Inject base tag so relative URLs (CSS, images) resolve to the live site
+    const baseUrl = 'https://{{ domain }}/';
+    let previewHtml = html;
+
+    // Insert <base> tag after <head> if present, otherwise prepend it
+    if (previewHtml.match(/<head[^>]*>/i)) {
+      previewHtml = previewHtml.replace(
+        /(<head[^>]*>)/i,
+        `$1<base href="${baseUrl}">`
+      );
+    } else if (previewHtml.match(/<html[^>]*>/i)) {
+      previewHtml = previewHtml.replace(
+        /(<html[^>]*>)/i,
+        `$1<head><base href="${baseUrl}"></head>`
+      );
+    } else {
+      // No html/head tags, just prepend base
+      previewHtml = `<base href="${baseUrl}">` + previewHtml;
+    }
+
     // Write to iframe for visual preview
     const iframe = document.getElementById('previewFrame');
     const doc = iframe.contentDocument || iframe.contentWindow.document;
     doc.open();
-    doc.write(html);
+    doc.write(previewHtml);
     doc.close();
 
     // Show visual preview by default
