@@ -143,6 +143,16 @@ class AdminServerConstruct(Construct):
       )
     )
 
+    # Lambda invoke permissions for GPU server control (Flux)
+    self.role.add_to_policy(
+      iam.PolicyStatement(
+        actions=["lambda:InvokeFunction"],
+        resources=[
+          f"arn:aws:lambda:{admin_config.region}:*:function:gpu-flux-*",
+        ],
+      )
+    )
+
     # User data script
     user_data = ec2.UserData.for_linux()
     user_data.add_commands(self._create_user_data_script(admin_config))

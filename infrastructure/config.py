@@ -34,11 +34,27 @@ class AdminConfig:
 
 
 @dataclass
+class GpuServerConfig:
+  """Configuration for an on-demand GPU server."""
+
+  name: str  # Unique name for this server (e.g., "devstral", "flux")
+  enabled: bool = False
+  instance_type: str = "g5.xlarge"  # 24GB VRAM
+  server_type: str = "ollama"  # "ollama" for LLMs, "comfyui" for image gen
+  model: str = ""  # Model to pre-load (e.g., "devstral:24b" for Ollama)
+  idle_timeout_minutes: int = 60  # Auto-shutdown after idle
+  max_spot_price: str = "0.50"  # Max $/hour for spot
+  volume_size_gb: int = 100  # EBS volume size
+  region: str = "us-east-1"
+
+
+@dataclass
 class Config:
   """Multi-site configuration."""
 
   sites: list[SiteConfig] = field(default_factory=list)
   admin: AdminConfig = field(default_factory=AdminConfig)
+  gpu_servers: list[GpuServerConfig] = field(default_factory=list)
 
   @classmethod
   def from_yaml(cls, path: Path | str = "sites.yaml") -> "Config":
@@ -85,4 +101,21 @@ class Config:
       app_bucket=admin_data.get("app_bucket", "bstroh-admin-app"),
     )
 
-    return cls(sites=sites, admin=admin)
+    # Parse GPU server configurations (list of servers)
+    gpu_servers: list[GpuServerConfig] = []
+    for gpu_data in data.get("gpu_servers", []):
+      gpu_servers.append(
+        GpuServerConfig(
+          name=gpu_data["name"],
+          enabled=gpu_data.get("enabled", False),
+          instance_type=gpu_data.get("instance_type", "g5.xlarge"),
+          server_type=gpu_data.get("server_type", "ollama"),
+          model=gpu_data.get("model", ""),
+          idle_timeout_minutes=gpu_data.get("idle_timeout_minutes", 60),
+          max_spot_price=str(gpu_data.get("max_spot_price", "0.50")),
+          volume_size_gb=gpu_data.get("volume_size_gb", 100),
+          region=gpu_data.get("region", defaults.get("region", "us-east-1")),
+        )
+      )
+
+    return cls(sites=sites, admin=admin, gpu_servers=gpu_servers)

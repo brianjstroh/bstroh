@@ -1,35 +1,82 @@
 # bstroh
 
-AWS CDK infrastructure for hosting static websites with a web-based admin interface. Deploy static html sites for friends and family for $4/year plus the cost of the domain name
+AWS CDK infrastructure for hosting static websites with a web-based admin interface, plus on-demand GPU servers for AI workloads.
 
-## Overview
+## Project Journey
 
-This project provides two main components:
+This project evolved through several phases:
 
-1. **Static Sites** - S3-hosted websites with CloudFront CDN, custom domains, and automatic SSL certificates
-2. **Admin Server** - A lightweight EC2 instance running a Flask web app for easy file management
+1. **Static Site Hosting** - Started as a way to host simple websites for friends and family at ~$4/year per site (just the Route 53 hosted zone cost). Each site gets S3 + CloudFront + custom domain + auto-SSL.
 
-Site owners can manage their content through a simple web interface at `edit.bstroh.com` - no AWS knowledge required.
+2. **Admin Portal** - Added a Flask web app (`edit.bstroh.com`) so non-technical site owners can upload files, edit HTML, and manage their sites without AWS knowledge. Includes an AI assistant powered by Claude for helping with content changes.
+
+3. **On-Demand GPU Servers** - Added infrastructure for self-hosting AI models (Devstral for coding, Flux for images) on spot instances that auto-shutdown after idle periods. Scale-to-zero architecture keeps costs minimal for sporadic use.
+
+## Architecture Overview
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                           Static Sites (×21)                            │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│    Route 53 ──▶ CloudFront ──▶ S3 Bucket                               │
+│        │            │              │                                    │
+│   ACM Cert         │         EventBridge ──▶ Lambda (cache invalidate) │
+│                    │                                                    │
+└────────────────────┼────────────────────────────────────────────────────┘
+                     │
+┌────────────────────┼────────────────────────────────────────────────────┐
+│                Admin Server (edit.bstroh.com)                           │
+├────────────────────┼────────────────────────────────────────────────────┤
+│                    │                                                    │
+│    Route 53 ──▶ EC2 (t3.nano spot) ──▶ All S3 Buckets                  │
+│                    │                                                    │
+│              Flask + Gunicorn + Caddy                                   │
+│                    │                                                    │
+│              Bedrock (Claude) for AI content help                       │
+│              SSM Parameters (password hashes)                           │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│                    GPU Servers (on-demand, scale to zero)               │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│  ┌─────────────────────────┐    ┌─────────────────────────┐            │
+│  │ Devstral (coding AI)    │    │ Flux (image generation) │            │
+│  │ g5.xlarge spot          │    │ g5.xlarge spot          │            │
+│  │ Ollama + devstral:24b   │    │ ComfyUI + Flux weights  │            │
+│  │ Port 11434              │    │ Port 8188               │            │
+│  │ Trigger: CLI script     │    │ Trigger: Admin portal   │            │
+│  └─────────────────────────┘    └─────────────────────────┘            │
+│                                                                         │
+│  Lambda functions: gpu-{name}-start, gpu-{name}-status, gpu-{name}-stop │
+│  Auto-shutdown after 60 minutes idle                                    │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+```
 
 ## Project Structure
 
 ```
 bstroh/
-├── sites.yaml                    # Site and admin configuration
+├── sites.yaml                    # All configuration (sites, admin, GPU servers)
 ├── infrastructure/
 │   ├── app.py                    # CDK entry point
 │   ├── config.py                 # Configuration loader
 │   ├── stacks/
 │   │   ├── site_stack.py         # Static site stack
-│   │   └── admin_stack.py        # Admin server stack
+│   │   ├── admin_stack.py        # Admin server stack
+│   │   └── gpu_server_stack.py   # GPU server stack (Devstral, Flux)
 │   ├── cdk_constructs/           # Reusable CDK constructs
 │   └── templates/                # HTML templates for sites
 ├── admin_app/                    # Flask admin application
-│   ├── app.py                    # Main Flask app
+│   ├── app.py                    # Main Flask app with AI chat
 │   └── templates/                # Admin UI templates
-├── scripts/                      # Helper scripts
+├── scripts/
 │   ├── set_site_password.py      # Set admin portal password
-│   └── package_admin_app.py      # Package admin app for deployment
+│   ├── package_admin_app.py      # Package admin app for deployment
+│   └── start_devstral.sh         # Start Devstral GPU server
 └── tests/                        # Pytest tests
 ```
 
@@ -61,7 +108,8 @@ uv run cdk bootstrap
 ### Deploy Everything
 
 ```bash
-uv run cdk deploy --all
+# Deploy all stacks (use --concurrency for parallel deployment)
+uv run cdk deploy --all --concurrency 10
 ```
 
 ## Adding a New Site
@@ -81,7 +129,7 @@ uv run cdk deploy --all
    uv run cdk deploy StaticSite-newsite-com
    ```
 
-4. **Set admin password** for web portal access:
+4. **Set admin password**:
    ```bash
    uv run python scripts/set_site_password.py newsite.com "secure-password"
    ```
@@ -91,6 +139,46 @@ uv run cdk deploy --all
    - Domain: `newsite.com`
    - Password: (the one you set)
 
+## GPU Servers
+
+### Devstral (AI Coding Assistant)
+
+For use with VS Code Cline as a self-hosted Claude alternative.
+
+```bash
+# Start server (takes 5-10 min for cold start)
+./scripts/start_devstral.sh --wait
+
+# Check status
+aws lambda invoke --function-name gpu-devstral-status /dev/stdout
+
+# Stop manually (or wait for 60-min auto-shutdown)
+aws lambda invoke --function-name gpu-devstral-stop /dev/stdout
+```
+
+Configure Cline: Set API Provider to "Ollama", Base URL to `http://<ip>:11434`, model to `devstral:24b`.
+
+### Flux (Image Generation)
+
+*Coming soon: Trigger from admin portal*
+
+```bash
+# Start ComfyUI server
+aws lambda invoke --function-name gpu-flux-start /dev/stdout
+
+# Access at http://<ip>:8188
+```
+
+### Cost Estimate
+
+| Usage Pattern | Monthly Cost |
+|--------------|--------------|
+| Occasional (10 hrs/month) | ~$4-5 |
+| Regular (40 hrs/month) | ~$17-20 |
+| Heavy (100 hrs/month) | ~$42-50 |
+
+g5.xlarge spot: ~$0.42/hour in us-east-1
+
 ## Configuration
 
 ### sites.yaml
@@ -98,85 +186,58 @@ uv run cdk deploy --all
 ```yaml
 defaults:
   region: us-east-1
-  include_www: true            # Include www.domain alias
-  enable_invalidation: true    # Auto-invalidate CloudFront cache
-  sync_nameservers: true       # Auto-update Route 53 nameservers
+  include_www: true
+  enable_invalidation: true
+  sync_nameservers: true
 
-# Admin server configuration
 admin:
   domain: edit.bstroh.com
   parent_hosted_zone: bstroh.com
   instance_type: t3.nano
   app_bucket: bstroh-admin-app
 
-# Static sites
+gpu_servers:
+  - name: devstral
+    enabled: true
+    server_type: ollama
+    instance_type: g5.xlarge
+    model: devstral:24b
+    idle_timeout_minutes: 60
+    max_spot_price: 0.50
+
+  - name: flux
+    enabled: true
+    server_type: comfyui
+    instance_type: g5.xlarge
+    idle_timeout_minutes: 60
+    max_spot_price: 0.50
+
 sites:
   - domain: example.com
     owner: Site Owner
     email: owner@example.com
 ```
 
-### Site Options
-
-| Option | Default | Description |
-|--------|---------|-------------|
-| `domain` | required | Domain name |
-| `owner` | required | Site owner name |
-| `email` | required | Owner email |
-| `include_www` | `true` | Include www subdomain |
-| `enable_invalidation` | `true` | Auto-invalidate cache on S3 changes |
-| `sync_nameservers` | `true` | Auto-sync Route 53 nameservers |
-
 ## Commands
 
 ```bash
 # CDK
-uv run cdk synth              # Synthesize CloudFormation
-uv run cdk diff               # Show changes
-uv run cdk deploy --all       # Deploy all stacks
-uv run cdk destroy --all      # Destroy all stacks
+uv run cdk synth                    # Synthesize CloudFormation
+uv run cdk diff                     # Show changes
+uv run cdk deploy --all             # Deploy all stacks
+uv run cdk deploy --all --concurrency 10  # Deploy in parallel
+uv run cdk destroy --all            # Destroy all stacks
 
 # Development
-uv run pytest                 # Run tests
-uv run ruff check .           # Lint
-uv run ruff format .          # Format
-uv run mypy infrastructure    # Type check
+uv run pytest                       # Run tests
+uv run ruff check .                 # Lint
+uv run ruff format .                # Format
+uv run mypy infrastructure          # Type check
 
 # Utilities
-uv run python scripts/set_site_password.py <domain> <password>
-```
-
-## Architecture
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                        Static Sites                              │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│    Route 53 DNS ──▶ CloudFront ──▶ S3 Bucket                   │
-│         │              │                │                        │
-│         │              │                │                        │
-│    ACM Certificate     │         EventBridge                     │
-│    (auto-renewed)      │                │                        │
-│                        │                ▼                        │
-│                        │           Lambda                        │
-│                        │      (cache invalidation)               │
-│                        │                                         │
-└────────────────────────┼─────────────────────────────────────────┘
-                         │
-┌────────────────────────┼─────────────────────────────────────────┐
-│                   Admin Server                                   │
-├────────────────────────┼─────────────────────────────────────────┤
-│                        │                                         │
-│    Route 53 ──▶ EC2 (t3.nano) ──▶ S3 Buckets                   │
-│                   │                                              │
-│              Flask App                                           │
-│           (Gunicorn + Caddy)                                     │
-│                   │                                              │
-│              SSM Parameters                                      │
-│           (password hashes)                                      │
-│                                                                  │
-└──────────────────────────────────────────────────────────────────┘
+uv run python scripts/set_site_password.py <domain> <password>  # Single site
+uv run python scripts/pw.py <password>                          # All sites at once
+./scripts/start_devstral.sh --wait  # Start Devstral server
 ```
 
 ## Cost Estimate
@@ -186,7 +247,25 @@ uv run python scripts/set_site_password.py <domain> <password>
 | Route 53 Hosted Zone | $6.00/site |
 | S3 + CloudFront | ~$2-3/site |
 | EC2 t3.nano (admin) | ~$40/year total |
-| **Per Site** | **~$8-10/year** |
+| **Per Static Site** | **~$2-4/year + domain name cost** |
+| GPU servers | Pay-per-use (~$0.42/hr) |
+
+## Debugging
+
+### Admin Server (EC2)
+```bash
+aws ssm start-session --target <instance-id>
+sudo journalctl -u caddy --no-pager | tail -100
+sudo journalctl -u admin-app --no-pager | tail -100
+```
+
+### GPU Server
+```bash
+aws ssm start-session --target <instance-id>
+sudo journalctl -u ollama --no-pager | tail -100
+sudo journalctl -u idle-monitor --no-pager | tail -100
+cat /var/log/user-data.log
+```
 
 ## License
 

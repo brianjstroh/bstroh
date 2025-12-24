@@ -26,6 +26,7 @@ app.secret_key = os.environ.get("SECRET_KEY", os.urandom(24))
 s3 = boto3.client("s3")
 ssm = boto3.client("ssm")
 bedrock = boto3.client("bedrock-runtime", region_name="us-east-1")
+lambda_client = boto3.client("lambda", region_name="us-east-1")
 
 # System prompt for content generation
 SYSTEM_PROMPT = (
@@ -121,6 +122,79 @@ def logout() -> Any:
   """Log out and clear session."""
   session.clear()
   return redirect(url_for("login"))
+
+
+@app.route("/change-password", methods=["GET", "POST"])
+@login_required
+def change_password() -> Any:
+  """Change password page."""
+  domain = session["domain"]
+
+  if request.method == "POST":
+    current_password = request.form.get("current_password", "")
+    new_password = request.form.get("new_password", "")
+    confirm_password = request.form.get("confirm_password", "")
+
+    # Validate inputs
+    if not all([current_password, new_password, confirm_password]):
+      return render_template(
+        "change_password.html",
+        domain=domain,
+        error="All fields are required",
+      )
+
+    if new_password != confirm_password:
+      return render_template(
+        "change_password.html",
+        domain=domain,
+        error="New passwords do not match",
+      )
+
+    if len(new_password) < 8:
+      return render_template(
+        "change_password.html",
+        domain=domain,
+        error="Password must be at least 8 characters",
+      )
+
+    # Verify current password
+    password_hash = get_password_hash(domain)
+    if not password_hash or not bcrypt.checkpw(
+      current_password.encode(), password_hash.encode()
+    ):
+      return render_template(
+        "change_password.html",
+        domain=domain,
+        error="Current password is incorrect",
+      )
+
+    # Hash new password
+    new_password_hash = bcrypt.hashpw(new_password.encode(), bcrypt.gensalt()).decode()
+
+    # Update SSM parameter
+    try:
+      param_name = f"/sites/{domain.replace('.', '-')}/admin_password_hash"
+      ssm.put_parameter(
+        Name=param_name,
+        Value=new_password_hash,
+        Type="SecureString",
+        Overwrite=True,
+        Description=f"Admin password hash for {domain}",
+      )
+
+      return render_template(
+        "change_password.html",
+        domain=domain,
+        success="Password changed successfully",
+      )
+    except ClientError as e:
+      return render_template(
+        "change_password.html",
+        domain=domain,
+        error=f"Failed to update password: {str(e)}",
+      )
+
+  return render_template("change_password.html", domain=domain)
 
 
 @app.route("/files/")
@@ -427,6 +501,55 @@ def apply_content() -> Any:
       ContentType="text/html" if filename.endswith(".html") else "text/plain",
     )
     return jsonify({"success": True, "message": f"Uploaded {filename}"})
+  except ClientError as e:
+    return jsonify({"error": str(e)}), 500
+
+
+# GPU Server Control Routes (Flux)
+@app.route("/gpu/flux/status")
+@login_required
+def gpu_flux_status() -> Any:
+  """Get Flux GPU server status."""
+  try:
+    response = lambda_client.invoke(
+      FunctionName="gpu-flux-status",
+      InvocationType="RequestResponse",
+    )
+    payload = json.loads(response["Payload"].read())
+    body = json.loads(payload.get("body", "{}"))
+    return jsonify(body)
+  except ClientError as e:
+    return jsonify({"status": "error", "error": str(e)}), 500
+
+
+@app.route("/gpu/flux/start", methods=["POST"])
+@login_required
+def gpu_flux_start() -> Any:
+  """Start Flux GPU server."""
+  try:
+    response = lambda_client.invoke(
+      FunctionName="gpu-flux-start",
+      InvocationType="RequestResponse",
+    )
+    payload = json.loads(response["Payload"].read())
+    body = json.loads(payload.get("body", "{}"))
+    return jsonify(body)
+  except ClientError as e:
+    return jsonify({"error": str(e)}), 500
+
+
+@app.route("/gpu/flux/stop", methods=["POST"])
+@login_required
+def gpu_flux_stop() -> Any:
+  """Stop Flux GPU server."""
+  try:
+    response = lambda_client.invoke(
+      FunctionName="gpu-flux-stop",
+      InvocationType="RequestResponse",
+    )
+    payload = json.loads(response["Payload"].read())
+    body = json.loads(payload.get("body", "{}"))
+    return jsonify(body)
   except ClientError as e:
     return jsonify({"error": str(e)}), 500
 

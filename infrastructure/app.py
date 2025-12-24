@@ -12,6 +12,7 @@ import boto3
 
 from infrastructure.config import Config
 from infrastructure.stacks.admin_stack import AdminServerStack
+from infrastructure.stacks.gpu_server_stack import GpuServerStack
 from infrastructure.stacks.site_stack import StaticSiteStack
 
 
@@ -65,6 +66,21 @@ def main() -> None:
           region=config.admin.region,
         ),
         description="Admin server for S3 file management",
+      )
+
+  # Create GPU server stacks (on-demand Devstral, Flux, etc.)
+  for gpu_config in config.gpu_servers:
+    if gpu_config.enabled:
+      stack_name = f"GpuServer-{gpu_config.name}"
+      GpuServerStack(
+        app,
+        stack_name,
+        gpu_config=gpu_config,
+        env=cdk.Environment(
+          account=account_id,
+          region=gpu_config.region,
+        ),
+        description=f"On-demand GPU server: {gpu_config.name}",
       )
 
   app.synth()

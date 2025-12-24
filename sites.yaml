@@ -20,7 +20,7 @@ gpu_servers:
   # Devstral Small 2 for AI coding assistant (use with VS Code Cline)
   # Start from laptop: ./scripts/start_devstral.sh
   - name: devstral
-    enabled: false
+    enabled: true
     server_type: ollama
     instance_type: g5.xlarge  # 24GB VRAM
     model: devstral:24b
@@ -31,7 +31,7 @@ gpu_servers:
   # Flux for AI image generation (triggered from admin portal)
   # Start from: https://edit.bstroh.com (coming soon)
   - name: flux
-    enabled: false
+    enabled: true
     server_type: comfyui
     instance_type: g5.xlarge  # 24GB VRAM
     model: ""  # Flux weights downloaded separately
