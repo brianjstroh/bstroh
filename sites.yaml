@@ -22,8 +22,12 @@ sites:
   - domain: barracudahead.fish
     owner: Brian Stroh
     email: brianjstroh@gmail.com
-  
+
   - domain: boobee.world
+    owner: Brian Stroh
+    email: brianjstroh@gmail.com
+
+  - domain: bromeo.rocks
     owner: Brian Stroh
     email: brianjstroh@gmail.com
 
@@ -40,6 +44,10 @@ sites:
     email: brianjstroh@gmail.com
 
   - domain: danielkang.rocks
+    owner: Brian Stroh
+    email: brianjstroh@gmail.com
+
+  - domain: derek.rocks
     owner: Brian Stroh
     email: brianjstroh@gmail.com
 
@@ -67,7 +75,15 @@ sites:
     owner: Brian Stroh
     email: brianjstroh@gmail.com
 
+  - domain: kevingeoghegan.rocks
+    owner: Brian Stroh
+    email: brianjstroh@gmail.com
+
   - domain: landonwinstead.com
+    owner: Brian Stroh
+    email: brianjstroh@gmail.com
+
+  - domain: rachel.rocks
     owner: Brian Stroh
     email: brianjstroh@gmail.com
 
