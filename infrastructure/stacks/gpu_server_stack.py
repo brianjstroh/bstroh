@@ -622,7 +622,7 @@ def handler(event, context):
     subnet_ids = os.environ["SUBNET_IDS"].split(",")
 
     response = ec2.run_instances(
-        LaunchTemplate={"LaunchTemplateId": launch_template_id},
+        LaunchTemplate={"LaunchTemplateId": launch_template_id, "Version": "$Latest"},
         MinCount=1,
         MaxCount=1,
         SubnetId=subnet_ids[0],
