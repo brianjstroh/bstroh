@@ -402,7 +402,7 @@ pip3.11 install -r requirements.txt
 mkdir -p models/unet models/clip models/vae
 
 # Check if Flux models are cached in S3
-S3_FLUX_PATH="s3://$MODEL_BUCKET/flux/flux-dev.tar.gz"
+S3_FLUX_PATH="s3://$MODEL_BUCKET/flux/flux-schnell.tar.gz"
 
 echo "Checking for cached Flux models in S3..."
 if aws s3 ls "$S3_FLUX_PATH" > /dev/null 2>&1; then
@@ -412,19 +412,19 @@ if aws s3 ls "$S3_FLUX_PATH" > /dev/null 2>&1; then
   rm /tmp/flux-models.tar.gz
   echo "Flux models restored from S3 cache"
 else
-  echo "No cache found. Downloading Flux dev models from HuggingFace..."
+  echo "No cache found. Downloading Flux schnell models from HuggingFace..."
   pip3.11 install huggingface_hub
 
-  # Download Flux.1-dev model files
+  # Download Flux.1-schnell model files
   python3.11 << 'PYEOF'
 from huggingface_hub import hf_hub_download
 import os
 
-# Flux.1-dev UNET (main model)
-print("Downloading Flux.1-dev UNET...")
+# Flux.1-schnell UNET (main model)
+print("Downloading Flux.1-schnell UNET...")
 hf_hub_download(
-    repo_id="black-forest-labs/FLUX.1-dev",
-    filename="flux1-dev.safetensors",
+    repo_id="black-forest-labs/FLUX.1-schnell",
+    filename="flux1-schnell.safetensors",
     local_dir="/opt/ComfyUI/models/unet",
     local_dir_use_symlinks=False
 )
@@ -447,7 +447,7 @@ hf_hub_download(
 # VAE
 print("Downloading VAE...")
 hf_hub_download(
-    repo_id="black-forest-labs/FLUX.1-dev",
+    repo_id="black-forest-labs/FLUX.1-schnell",
     filename="ae.safetensors",
     local_dir="/opt/ComfyUI/models/vae",
     local_dir_use_symlinks=False
