@@ -80,9 +80,7 @@ class GpuServerStack(cdk.Stack):
       "InstanceRole",
       assumed_by=iam.ServicePrincipal("ec2.amazonaws.com"),
       managed_policies=[
-        iam.ManagedPolicy.from_aws_managed_policy_name(
-          "AmazonSSMManagedInstanceCore"
-        ),
+        iam.ManagedPolicy.from_aws_managed_policy_name("AmazonSSMManagedInstanceCore"),
       ],
     )
 
@@ -92,9 +90,7 @@ class GpuServerStack(cdk.Stack):
         actions=["ec2:TerminateInstances"],
         resources=["*"],
         conditions={
-          "StringEquals": {
-            "ec2:ResourceTag/Name": f"gpu-server-{server_name}"
-          }
+          "StringEquals": {"ec2:ResourceTag/Name": f"gpu-server-{server_name}"}
         },
       )
     )
@@ -589,7 +585,7 @@ echo "=== Setup complete: {server_name} ==="
 
   def _get_start_lambda_code(self) -> str:
     """Lambda code to start GPU server."""
-    return '''
+    return """
 import boto3
 import os
 import json
@@ -646,11 +642,11 @@ def handler(event, context):
             "note": "Wait 5-10 min for instance and model to be ready",
         })
     }
-'''
+"""
 
   def _get_status_lambda_code(self) -> str:
     """Lambda code to check GPU server status."""
-    return '''
+    return """
 import boto3
 import os
 import json
@@ -696,11 +692,11 @@ def handler(event, context):
             "endpoint": f"http://{ip}:11434" if ip else None,
         })
     }
-'''
+"""
 
   def _get_stop_lambda_code(self) -> str:
     """Lambda code to stop GPU server."""
-    return '''
+    return """
 import boto3
 import os
 import json
@@ -738,4 +734,4 @@ def handler(event, context):
             "instanceIds": instance_ids,
         })
     }
-'''
+"""
