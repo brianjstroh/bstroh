@@ -116,8 +116,9 @@ class GpuServerStack(cdk.Stack):
       "LaunchTemplate",
       launch_template_name=f"gpu-server-{server_name}",
       instance_type=ec2.InstanceType(gpu_config.instance_type),
-      machine_image=ec2.MachineImage.latest_amazon_linux2023(
-        cpu_type=ec2.AmazonLinuxCpuType.X86_64,
+      machine_image=ec2.MachineImage.lookup(
+        name="Deep Learning Base OSS Nvidia Driver GPU AMI (Amazon Linux 2023) *",
+        owners=["amazon"],
       ),
       security_group=security_group,
       role=instance_role,
@@ -301,13 +302,9 @@ echo "Instance: $INSTANCE_ID, Region: $REGION, IP: $PUBLIC_IP"
 MODEL_BUCKET="{model_bucket}"
 echo "Model cache bucket: $MODEL_BUCKET"
 
-# Install NVIDIA drivers (Amazon Linux 2023)
-# Use AWS's official driver S3 bucket
-dnf install -y kernel-devel-$(uname -r) kernel-headers-$(uname -r) gcc make dkms
-aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/latest/ . --no-sign-request
-chmod +x NVIDIA-Linux-x86_64*.run
-./NVIDIA-Linux-x86_64*.run --silent --dkms
-rm -f NVIDIA-Linux-x86_64*.run
+# NVIDIA drivers are pre-installed in the Deep Learning AMI
+echo "Verifying NVIDIA drivers..."
+nvidia-smi
 """
 
     # Server-specific setup
