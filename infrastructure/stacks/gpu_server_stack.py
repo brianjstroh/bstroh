@@ -106,6 +106,16 @@ class GpuServerStack(cdk.Stack):
     # S3 access for model cache bucket
     self.model_bucket.grant_read_write(instance_role)
 
+    # Permission to read HuggingFace token from SSM
+    instance_role.add_to_policy(
+      iam.PolicyStatement(
+        actions=["ssm:GetParameter"],
+        resources=[
+          f"arn:aws:ssm:{cdk.Aws.REGION}:{cdk.Aws.ACCOUNT_ID}:parameter/gpu-server/huggingface-token"
+        ],
+      )
+    )
+
     # User data script
     user_data = ec2.UserData.for_linux()
     user_data.add_commands(self._create_user_data_script())
@@ -410,10 +420,21 @@ else
   echo "No cache found. Downloading Flux schnell models from HuggingFace..."
   pip3.11 install huggingface_hub
 
+  # Get HuggingFace token from SSM
+  HF_TOKEN=$(aws ssm get-parameter --name /gpu-server/huggingface-token \
+    --with-decryption --query 'Parameter.Value' --output text --region $REGION)
+  export HF_TOKEN
+
   # Download Flux.1-schnell model files
   python3.11 << 'PYEOF'
-from huggingface_hub import hf_hub_download
+from huggingface_hub import hf_hub_download, login
 import os
+
+# Login with token
+hf_token = os.environ.get("HF_TOKEN")
+if hf_token:
+    login(token=hf_token)
+    print("Logged in to HuggingFace")
 
 # Flux.1-schnell UNET (main model)
 print("Downloading Flux.1-schnell UNET...")
