@@ -302,10 +302,12 @@ MODEL_BUCKET="{model_bucket}"
 echo "Model cache bucket: $MODEL_BUCKET"
 
 # Install NVIDIA drivers (Amazon Linux 2023)
-dnf install -y kernel-devel kernel-headers gcc make dkms
-dnf config-manager --add-repo \\
-  https://developer.download.nvidia.com/compute/cuda/repos/amzn2023/x86_64/cuda-amzn2023.repo
-dnf install -y cuda-drivers
+# Use AWS's official driver S3 bucket
+dnf install -y kernel-devel-$(uname -r) kernel-headers-$(uname -r) gcc make dkms
+aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/latest/ . --no-sign-request
+chmod +x NVIDIA-Linux-x86_64*.run
+./NVIDIA-Linux-x86_64*.run --silent --dkms
+rm -f NVIDIA-Linux-x86_64*.run
 """
 
     # Server-specific setup
