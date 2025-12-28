@@ -153,6 +153,17 @@ class AdminServerConstruct(Construct):
       )
     )
 
+    # SES permissions for contact form emails
+    self.role.add_to_policy(
+      iam.PolicyStatement(
+        actions=[
+          "ses:SendEmail",
+          "ses:SendRawEmail",
+        ],
+        resources=["*"],
+      )
+    )
+
     # User data script
     user_data = ec2.UserData.for_linux()
     user_data.add_commands(self._create_user_data_script(admin_config))

@@ -1,7 +1,9 @@
 """Minimal Flask app for S3 file management."""
 
+import html
 import json
 import os
+import re
 from functools import wraps
 from typing import Any
 
@@ -27,6 +29,7 @@ s3 = boto3.client("s3")
 ssm = boto3.client("ssm")
 bedrock = boto3.client("bedrock-runtime", region_name="us-east-1")
 lambda_client = boto3.client("lambda", region_name="us-east-1")
+ses = boto3.client("ses", region_name="us-east-1")
 
 # System prompt for content generation
 SYSTEM_PROMPT = (
@@ -503,6 +506,107 @@ def apply_content() -> Any:
     return jsonify({"success": True, "message": f"Uploaded {filename}"})
   except ClientError as e:
     return jsonify({"error": str(e)}), 500
+
+
+# Contact Form Route (Public - no authentication required)
+@app.route("/contact/giftedtestinglakenona", methods=["POST", "OPTIONS"])
+def contact_form_giftedtestinglakenona() -> Any:
+  """Handle contact form submission for giftedtestinglakenona.com."""
+  # Handle CORS preflight
+  if request.method == "OPTIONS":
+    response = jsonify({"status": "ok"})
+    response.headers["Access-Control-Allow-Origin"] = (
+      "https://giftedtestinglakenona.com"
+    )
+    response.headers["Access-Control-Allow-Methods"] = "POST, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    return response
+
+  # Get form data
+  data = request.get_json() if request.is_json else request.form.to_dict()
+
+  # Extract and sanitize fields
+  name = _sanitize_text(data.get("name", ""), max_length=100)
+  email = _sanitize_email(data.get("email", ""))
+  phone = _sanitize_text(data.get("phone", ""), max_length=20)
+  message = _sanitize_text(data.get("message", ""), max_length=2000)
+
+  # Validate required fields
+  if not name or not email or not message:
+    response = jsonify({"error": "Name, email, and message are required"})
+    response.status_code = 400
+    response.headers["Access-Control-Allow-Origin"] = (
+      "https://giftedtestinglakenona.com"
+    )
+    return response
+
+  # Compose email
+  email_subject = f"Contact Form: {name}"
+  email_body = f"""New contact form submission from giftedtestinglakenona.com:
+
+Name: {name}
+Email: {email}
+Phone: {phone}
+
+Message:
+{message}
+
+---
+This email was sent from the contact form on giftedtestinglakenona.com
+"""
+
+  # Send email via SES
+  try:
+    ses.send_email(
+      Source="brianjstroh@gmail.com",
+      Destination={
+        "ToAddresses": ["brianjstroh@gmail.com"],
+      },
+      Message={
+        "Subject": {"Data": email_subject},
+        "Body": {"Text": {"Data": email_body}},
+      },
+      ReplyToAddresses=[email] if email else [],
+    )
+
+    response = jsonify({"success": True, "message": "Message sent successfully"})
+    response.headers["Access-Control-Allow-Origin"] = (
+      "https://giftedtestinglakenona.com"
+    )
+    return response
+
+  except ClientError:
+    response = jsonify({"error": "Failed to send message. Please try again later."})
+    response.status_code = 500
+    response.headers["Access-Control-Allow-Origin"] = (
+      "https://giftedtestinglakenona.com"
+    )
+    return response
+
+
+def _sanitize_text(text: str, max_length: int = 1000) -> str:
+  """Sanitize text input by escaping HTML and limiting length."""
+  if not text:
+    return ""
+  # Strip leading/trailing whitespace
+  text = text.strip()
+  # Limit length
+  text = text[:max_length]
+  # Escape HTML to prevent XSS
+  text = html.escape(text)
+  return text
+
+
+def _sanitize_email(email_str: str) -> str:
+  """Validate and sanitize email address."""
+  if not email_str:
+    return ""
+  email_str = email_str.strip().lower()
+  # Basic email validation regex
+  email_pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+  if re.match(email_pattern, email_str):
+    return email_str
+  return ""
 
 
 # GPU Server Control Routes (Flux)

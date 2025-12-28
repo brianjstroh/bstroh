@@ -5,6 +5,7 @@ import os
 import sys
 import tarfile
 import tempfile
+import time
 from pathlib import Path
 
 import boto3
@@ -12,6 +13,88 @@ from botocore.exceptions import ClientError
 
 # Default bucket name
 DEFAULT_BUCKET = "bstroh-admin-app"
+
+
+def update_running_instance(bucket_name: str) -> None:
+  """Update the running admin server instance in place without restart."""
+  ec2 = boto3.client("ec2")
+  ssm = boto3.client("ssm")
+
+  # Find running admin server instance
+  try:
+    response = ec2.describe_instances(
+      Filters=[
+        {"Name": "tag:aws:autoscaling:groupName", "Values": ["*Admin*"]},
+        {"Name": "instance-state-name", "Values": ["running"]},
+      ]
+    )
+
+    instances = []
+    for reservation in response.get("Reservations", []):
+      for instance in reservation.get("Instances", []):
+        instances.append(instance["InstanceId"])
+
+    if not instances:
+      print("No running admin server instances found. Skipping update.")
+      return
+
+    instance_id = instances[0]
+    print(f"Found running instance: {instance_id}")
+
+  except ClientError as e:
+    print(f"Error finding instance: {e}")
+    return
+
+  # Send command to update the instance
+  try:
+    print("Sending update command via SSM...")
+    response = ssm.send_command(
+      InstanceIds=[instance_id],
+      DocumentName="AWS-RunShellScript",
+      Parameters={
+        "commands": [
+          "cd /opt/admin-app",
+          f"aws s3 cp s3://{bucket_name}/admin-app.tar.gz /tmp/admin-app-new.tar.gz",
+          "tar -xzf /tmp/admin-app-new.tar.gz -C /opt/admin-app",
+          "rm /tmp/admin-app-new.tar.gz",
+          "systemctl restart admin-app",
+          "sleep 2",
+          "systemctl status admin-app --no-pager",
+        ]
+      },
+      Comment="Update admin app without instance restart",
+    )
+
+    command_id = response["Command"]["CommandId"]
+    print(f"Command sent: {command_id}")
+    print("Waiting for command to complete...")
+
+    # Wait for command to complete
+    for _ in range(30):  # Wait up to 30 seconds
+      time.sleep(1)
+      result = ssm.get_command_invocation(
+        CommandId=command_id,
+        InstanceId=instance_id,
+      )
+      status = result["Status"]
+
+      if status == "Success":
+        print("\nUpdate successful!")
+        print("\nOutput:")
+        print(result["StandardOutputContent"])
+        return
+      elif status in ["Failed", "Cancelled", "TimedOut"]:
+        print(f"\nUpdate failed with status: {status}")
+        print("\nOutput:")
+        print(result["StandardOutputContent"])
+        print("\nError:")
+        print(result["StandardErrorContent"])
+        sys.exit(1)
+
+    print("Timed out waiting for update to complete")
+
+  except ClientError as e:
+    print(f"Error updating instance: {e}")
 
 
 def main() -> None:
@@ -62,6 +145,10 @@ def main() -> None:
 
   finally:
     os.unlink(temp_path)
+
+  # Update running instance in place (without restart)
+  print("\nUpdating running admin server instance...")
+  update_running_instance(bucket_name)
 
 
 if __name__ == "__main__":
