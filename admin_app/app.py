@@ -515,7 +515,9 @@ def contact_form_giftedtestinglakenona() -> Any:
   # Handle CORS preflight
   if request.method == "OPTIONS":
     response = jsonify({"status": "ok"})
-    response.headers["Access-Control-Allow-Origin"] = "https://giftedtestinglakenona.com"
+    response.headers["Access-Control-Allow-Origin"] = (
+      "https://giftedtestinglakenona.com"
+    )
     response.headers["Access-Control-Allow-Methods"] = "POST, OPTIONS"
     response.headers["Access-Control-Allow-Headers"] = "Content-Type"
     return response
@@ -533,7 +535,9 @@ def contact_form_giftedtestinglakenona() -> Any:
   if not name or not email or not message:
     response = jsonify({"error": "Name, email, and message are required"})
     response.status_code = 400
-    response.headers["Access-Control-Allow-Origin"] = "https://giftedtestinglakenona.com"
+    response.headers["Access-Control-Allow-Origin"] = (
+      "https://giftedtestinglakenona.com"
+    )
     return response
 
   # Compose email
@@ -566,13 +570,17 @@ This email was sent from the contact form on giftedtestinglakenona.com
     )
 
     response = jsonify({"success": True, "message": "Message sent successfully"})
-    response.headers["Access-Control-Allow-Origin"] = "https://giftedtestinglakenona.com"
+    response.headers["Access-Control-Allow-Origin"] = (
+      "https://giftedtestinglakenona.com"
+    )
     return response
 
-  except ClientError as e:
+  except ClientError:
     response = jsonify({"error": "Failed to send message. Please try again later."})
     response.status_code = 500
-    response.headers["Access-Control-Allow-Origin"] = "https://giftedtestinglakenona.com"
+    response.headers["Access-Control-Allow-Origin"] = (
+      "https://giftedtestinglakenona.com"
+    )
     return response
 
 
