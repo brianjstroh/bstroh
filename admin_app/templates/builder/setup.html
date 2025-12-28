@@ -1,0 +1,295 @@
+{% extends "base.html" %}
+
+{% block title %}Setup Your Site - {{ domain }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="text-center mb-5">
+    <h1 class="mb-3">Welcome to {{ domain }}</h1>
+    <p class="lead text-muted">Let's set up your website in just a few steps.</p>
+  </div>
+
+  <!-- Progress Steps -->
+  <div class="d-flex justify-content-center mb-5">
+    <div class="d-flex align-items-center">
+      <div class="step-circle active" id="step1">1</div>
+      <div class="step-line"></div>
+      <div class="step-circle" id="step2">2</div>
+      <div class="step-line"></div>
+      <div class="step-circle" id="step3">3</div>
+    </div>
+  </div>
+
+  <!-- Step 1: Template Selection -->
+  <div id="templateStep" class="setup-step">
+    <h3 class="text-center mb-4">Choose a Template</h3>
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
+      {% for template in templates %}
+      <div class="col">
+        <div class="card template-card h-100" data-template-id="{{ template.id }}" onclick="selectTemplate('{{ template.id }}')">
+          <div class="card-img-top template-preview">
+            <div class="template-placeholder">
+              <i class="bi bi-layout-text-window-reverse"></i>
+            </div>
+          </div>
+          <div class="card-body">
+            <h5 class="card-title">{{ template.name }}</h5>
+            <p class="card-text small text-muted">{{ template.description }}</p>
+            <div class="template-features">
+              {% for feature in template.features %}
+              <span class="badge bg-light text-dark me-1">{{ feature }}</span>
+              {% endfor %}
+            </div>
+          </div>
+          <div class="card-footer bg-transparent border-0">
+            <span class="badge bg-secondary">{{ template.category }}</span>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Step 2: Color Scheme -->
+  <div id="colorStep" class="setup-step" style="display: none;">
+    <h3 class="text-center mb-4">Choose Your Colors</h3>
+    <p class="text-center text-muted mb-4">Pick a color scheme that matches your brand. You can customize these later.</p>
+
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        <div class="row row-cols-2 row-cols-md-3 g-3">
+          {% for scheme in color_schemes %}
+          <div class="col">
+            <div class="color-scheme-card" data-scheme-id="{{ scheme.id }}" onclick="selectColorScheme('{{ scheme.id }}')">
+              <div class="color-swatches">
+                <div class="swatch" style="background-color: {{ scheme.colors.primary }}"></div>
+                <div class="swatch" style="background-color: {{ scheme.colors.secondary }}"></div>
+                <div class="swatch" style="background-color: {{ scheme.colors.accent }}"></div>
+                <div class="swatch" style="background-color: {{ scheme.colors.background }}"></div>
+              </div>
+              <div class="scheme-name">{{ scheme.name }}</div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div class="text-center mt-4">
+      <button class="btn btn-outline-secondary" onclick="goToStep(1)">
+        <i class="bi bi-arrow-left"></i> Back
+      </button>
+    </div>
+  </div>
+
+  <!-- Step 3: Site Name -->
+  <div id="nameStep" class="setup-step" style="display: none;">
+    <h3 class="text-center mb-4">Name Your Site</h3>
+    <div class="row justify-content-center">
+      <div class="col-md-6">
+        <div class="mb-3">
+          <label class="form-label">Site Name</label>
+          <input type="text" class="form-control form-control-lg" id="siteName" placeholder="My Awesome Site" value="{{ domain.split('.')[0] | title }}">
+          <div class="form-text">This will appear in your header and browser tab.</div>
+        </div>
+
+        <div class="d-flex justify-content-between mt-4">
+          <button class="btn btn-outline-secondary" onclick="goToStep(2)">
+            <i class="bi bi-arrow-left"></i> Back
+          </button>
+          <button class="btn btn-primary btn-lg" onclick="createSite()" id="createBtn">
+            Create My Site <i class="bi bi-arrow-right"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div id="loadingStep" class="setup-step text-center py-5" style="display: none;">
+    <div class="spinner-border text-primary mb-3" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <h4>Creating your site...</h4>
+    <p class="text-muted">This will just take a moment.</p>
+  </div>
+</div>
+
+<style>
+  .step-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #e9ecef;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    color: #6c757d;
+  }
+  .step-circle.active {
+    background-color: #0d6efd;
+    color: white;
+  }
+  .step-circle.completed {
+    background-color: #198754;
+    color: white;
+  }
+  .step-line {
+    width: 60px;
+    height: 3px;
+    background-color: #e9ecef;
+  }
+
+  .template-card {
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 2px solid transparent;
+  }
+  .template-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+  }
+  .template-card.selected {
+    border-color: #0d6efd;
+  }
+  .template-preview {
+    height: 150px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .template-placeholder {
+    font-size: 3rem;
+    color: rgba(255,255,255,0.5);
+  }
+  .template-features {
+    margin-top: 0.5rem;
+  }
+
+  .color-scheme-card {
+    padding: 1rem;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .color-scheme-card:hover {
+    border-color: #0d6efd;
+  }
+  .color-scheme-card.selected {
+    border-color: #0d6efd;
+    background-color: #f0f7ff;
+  }
+  .color-swatches {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 0.5rem;
+  }
+  .swatch {
+    width: 100%;
+    height: 30px;
+    border-radius: 4px;
+  }
+  .scheme-name {
+    font-weight: 500;
+    text-align: center;
+    font-size: 0.9rem;
+  }
+</style>
+
+<script>
+  let selectedTemplate = null;
+  let selectedColorScheme = null;
+  let currentStep = 1;
+
+  function selectTemplate(templateId) {
+    selectedTemplate = templateId;
+    document.querySelectorAll('.template-card').forEach(card => {
+      card.classList.remove('selected');
+    });
+    document.querySelector(`[data-template-id="${templateId}"]`).classList.add('selected');
+
+    // Auto-advance to color step
+    setTimeout(() => goToStep(2), 300);
+  }
+
+  function selectColorScheme(schemeId) {
+    selectedColorScheme = schemeId;
+    document.querySelectorAll('.color-scheme-card').forEach(card => {
+      card.classList.remove('selected');
+    });
+    document.querySelector(`[data-scheme-id="${schemeId}"]`).classList.add('selected');
+
+    // Auto-advance to name step
+    setTimeout(() => goToStep(3), 300);
+  }
+
+  function goToStep(step) {
+    currentStep = step;
+
+    // Update step indicators
+    document.querySelectorAll('.step-circle').forEach((el, i) => {
+      el.classList.remove('active', 'completed');
+      if (i + 1 < step) el.classList.add('completed');
+      if (i + 1 === step) el.classList.add('active');
+    });
+
+    // Show/hide steps
+    document.getElementById('templateStep').style.display = step === 1 ? 'block' : 'none';
+    document.getElementById('colorStep').style.display = step === 2 ? 'block' : 'none';
+    document.getElementById('nameStep').style.display = step === 3 ? 'block' : 'none';
+  }
+
+  async function createSite() {
+    if (!selectedTemplate) {
+      alert('Please select a template');
+      goToStep(1);
+      return;
+    }
+    if (!selectedColorScheme) {
+      alert('Please select a color scheme');
+      goToStep(2);
+      return;
+    }
+
+    const siteName = document.getElementById('siteName').value.trim() || '{{ domain }}';
+
+    // Show loading
+    document.getElementById('nameStep').style.display = 'none';
+    document.getElementById('loadingStep').style.display = 'block';
+
+    try {
+      const response = await fetch('/builder/site/init', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          template_id: selectedTemplate,
+          color_scheme_id: selectedColorScheme,
+          site_name: siteName
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        window.location.href = '/builder';
+      } else {
+        alert('Error: ' + (data.error || 'Unknown error'));
+        document.getElementById('loadingStep').style.display = 'none';
+        document.getElementById('nameStep').style.display = 'block';
+      }
+    } catch (error) {
+      alert('Error creating site: ' + error.message);
+      document.getElementById('loadingStep').style.display = 'none';
+      document.getElementById('nameStep').style.display = 'block';
+    }
+  }
+
+  // Handle Enter key on site name input
+  document.getElementById('siteName').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') createSite();
+  });
+</script>
+{% endblock %}

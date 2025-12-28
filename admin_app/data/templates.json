@@ -1,0 +1,162 @@
+{
+  "templates": [
+    {
+      "id": "business-classic",
+      "name": "Business Classic",
+      "description": "Clean professional template with header navigation, hero section, and organized content areas. Perfect for small businesses and services.",
+      "thumbnail": "/static/templates/business-classic.png",
+      "category": "business",
+      "features": ["header", "hero", "services", "about", "contact", "footer"],
+      "default_color_scheme": "ocean-blue",
+      "slots": [
+        {
+          "id": "header",
+          "name": "Header",
+          "allowed_categories": ["navigation"],
+          "min_items": 1,
+          "max_items": 1
+        },
+        {
+          "id": "hero",
+          "name": "Hero Section",
+          "allowed_categories": ["hero"],
+          "min_items": 0,
+          "max_items": 1
+        },
+        {
+          "id": "main",
+          "name": "Main Content",
+          "allowed_categories": ["content", "gallery", "contact"],
+          "max_items": 10
+        },
+        {
+          "id": "footer",
+          "name": "Footer",
+          "allowed_categories": ["footer"],
+          "min_items": 1,
+          "max_items": 1
+        }
+      ]
+    },
+    {
+      "id": "portfolio-modern",
+      "name": "Portfolio Modern",
+      "description": "Full-width image-focused layout ideal for photographers, artists, and creative professionals. Features large galleries and minimal text.",
+      "thumbnail": "/static/templates/portfolio-modern.png",
+      "category": "portfolio",
+      "features": ["header", "hero", "gallery", "about", "contact", "footer"],
+      "default_color_scheme": "slate-minimal",
+      "slots": [
+        {
+          "id": "header",
+          "name": "Header",
+          "allowed_categories": ["navigation"],
+          "min_items": 1,
+          "max_items": 1
+        },
+        {
+          "id": "hero",
+          "name": "Hero Section",
+          "allowed_categories": ["hero"],
+          "min_items": 0,
+          "max_items": 1
+        },
+        {
+          "id": "main",
+          "name": "Main Content",
+          "allowed_categories": ["content", "gallery"],
+          "max_items": 15
+        },
+        {
+          "id": "footer",
+          "name": "Footer",
+          "allowed_categories": ["footer"],
+          "min_items": 1,
+          "max_items": 1
+        }
+      ]
+    },
+    {
+      "id": "landing-page",
+      "name": "Landing Page",
+      "description": "Single-page conversion-focused design with prominent call-to-action buttons. Great for product launches, events, or lead generation.",
+      "thumbnail": "/static/templates/landing-page.png",
+      "category": "landing",
+      "features": ["header", "hero", "features", "testimonials", "cta", "footer"],
+      "default_color_scheme": "vibrant-coral",
+      "slots": [
+        {
+          "id": "header",
+          "name": "Header",
+          "allowed_categories": ["navigation"],
+          "min_items": 0,
+          "max_items": 1
+        },
+        {
+          "id": "hero",
+          "name": "Hero Section",
+          "allowed_categories": ["hero"],
+          "min_items": 1,
+          "max_items": 1
+        },
+        {
+          "id": "main",
+          "name": "Main Content",
+          "allowed_categories": ["content", "gallery", "contact"],
+          "max_items": 8
+        },
+        {
+          "id": "footer",
+          "name": "Footer",
+          "allowed_categories": ["footer"],
+          "min_items": 0,
+          "max_items": 1
+        }
+      ]
+    },
+    {
+      "id": "personal-blog",
+      "name": "Personal Blog",
+      "description": "Clean, readable layout optimized for long-form content. Includes sidebar for navigation and featured content sections.",
+      "thumbnail": "/static/templates/personal-blog.png",
+      "category": "blog",
+      "features": ["header", "hero", "blog", "sidebar", "footer"],
+      "default_color_scheme": "warm-earth",
+      "slots": [
+        {
+          "id": "header",
+          "name": "Header",
+          "allowed_categories": ["navigation"],
+          "min_items": 1,
+          "max_items": 1
+        },
+        {
+          "id": "hero",
+          "name": "Hero Section",
+          "allowed_categories": ["hero"],
+          "min_items": 0,
+          "max_items": 1
+        },
+        {
+          "id": "main",
+          "name": "Main Content",
+          "allowed_categories": ["content", "gallery"],
+          "max_items": 10
+        },
+        {
+          "id": "sidebar",
+          "name": "Sidebar",
+          "allowed_categories": ["sidebar", "contact"],
+          "max_items": 5
+        },
+        {
+          "id": "footer",
+          "name": "Footer",
+          "allowed_categories": ["footer"],
+          "min_items": 1,
+          "max_items": 1
+        }
+      ]
+    }
+  ]
+}

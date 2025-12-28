@@ -1,0 +1,10 @@
+<section class="content-section" {% if anchor_id %}id="{{ anchor_id }}"{% endif %}>
+  <div class="container">
+    <div class="section-heading text-{{ alignment }}">
+      <h2>{{ heading }}</h2>
+      {% if subtitle %}
+      <p class="subtitle">{{ subtitle }}</p>
+      {% endif %}
+    </div>
+  </div>
+</section>

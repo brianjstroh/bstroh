@@ -1,7 +1,9 @@
-"""Minimal Flask app for S3 file management."""
+"""Minimal Flask app for S3 file management and website builder."""
 
 import json
 import os
+import re
+import uuid
 from functools import wraps
 from typing import Any
 
@@ -18,6 +20,7 @@ from flask import (
   session,
   url_for,
 )
+from generator import SiteGenerator
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", os.urandom(24))
@@ -501,6 +504,393 @@ def apply_content() -> Any:
       ContentType="text/html" if filename.endswith(".html") else "text/plain",
     )
     return jsonify({"success": True, "message": f"Uploaded {filename}"})
+  except ClientError as e:
+    return jsonify({"error": str(e)}), 500
+
+
+# Website Builder Routes
+def get_generator() -> SiteGenerator:
+  """Get a SiteGenerator instance for the current session's bucket."""
+  bucket = session.get("bucket")
+  if not bucket:
+    raise ValueError("No bucket in session")
+  return SiteGenerator(bucket, s3)
+
+
+@app.route("/builder")
+@login_required
+def builder_dashboard() -> Any:
+  """Main builder dashboard - template selection or page editor."""
+  domain = session["domain"]
+
+  gen = get_generator()
+  site_config = gen.get_site_config()
+
+  if site_config is None:
+    # New site - show template selection
+    templates = gen.get_templates()
+    color_schemes = gen.get_color_schemes()
+    return render_template(
+      "builder/setup.html",
+      domain=domain,
+      templates=templates,
+      color_schemes=color_schemes,
+    )
+  else:
+    # Existing site - show page list
+    pages = []
+    for page_id in site_config.get("pages", []):
+      page_config = gen.get_page_config(page_id)
+      if page_config:
+        pages.append(page_config)
+    return render_template(
+      "builder/dashboard.html",
+      domain=domain,
+      site=site_config,
+      pages=pages,
+      color_schemes=gen.get_color_schemes(),
+    )
+
+
+@app.route("/builder/templates")
+@login_required
+def builder_templates() -> Any:
+  """API: List available templates."""
+  gen = get_generator()
+  return jsonify({"templates": gen.get_templates()})
+
+
+@app.route("/builder/components")
+@login_required
+def builder_components() -> Any:
+  """API: List available components."""
+  category = request.args.get("category")
+  gen = get_generator()
+  return jsonify({"components": gen.get_components(category)})
+
+
+@app.route("/builder/color-schemes")
+@login_required
+def builder_color_schemes() -> Any:
+  """API: List color schemes."""
+  gen = get_generator()
+  return jsonify({"color_schemes": gen.get_color_schemes()})
+
+
+@app.route("/builder/site/init", methods=["POST"])
+@login_required
+def builder_init_site() -> Any:
+  """Initialize site with chosen template."""
+  data = request.get_json()
+  if not data:
+    return jsonify({"error": "No data provided"}), 400
+
+  template_id = data.get("template_id")
+  color_scheme_id = data.get("color_scheme_id")
+  site_name = data.get("site_name", session["domain"])
+
+  if not template_id or not color_scheme_id:
+    return jsonify({"error": "template_id and color_scheme_id required"}), 400
+
+  try:
+    gen = get_generator()
+    site_config = gen.init_site(template_id, color_scheme_id, site_name)
+    # Publish the initial page
+    gen.publish_all()
+    return jsonify({"success": True, "site": site_config})
+  except ValueError as e:
+    return jsonify({"error": str(e)}), 400
+  except ClientError as e:
+    return jsonify({"error": str(e)}), 500
+
+
+@app.route("/builder/site/settings", methods=["GET", "POST"])
+@login_required
+def builder_site_settings() -> Any:
+  """View/update site settings."""
+  gen = get_generator()
+  site_config = gen.get_site_config()
+
+  if not site_config:
+    return redirect(url_for("builder_dashboard"))
+
+  if request.method == "POST":
+    data = request.get_json()
+    if data:
+      # Update allowed fields
+      if "site_name" in data:
+        site_config["site_name"] = data["site_name"]
+      if "color_scheme_id" in data:
+        site_config["color_scheme_id"] = data["color_scheme_id"]
+      if "color_overrides" in data:
+        site_config["color_overrides"] = data["color_overrides"]
+      if "footer_text" in data:
+        site_config["footer_text"] = data["footer_text"]
+      if "navigation" in data:
+        site_config["navigation"] = data["navigation"]
+      if "logo_url" in data:
+        site_config["logo_url"] = data["logo_url"]
+
+      gen.save_site_config(site_config)
+      return jsonify({"success": True})
+
+  return jsonify({"site": site_config})
+
+
+@app.route("/builder/pages")
+@login_required
+def builder_pages() -> Any:
+  """API: List pages for current site."""
+  gen = get_generator()
+  site_config = gen.get_site_config()
+
+  if not site_config:
+    return jsonify({"pages": []})
+
+  pages = []
+  for page_id in site_config.get("pages", []):
+    page_config = gen.get_page_config(page_id)
+    if page_config:
+      pages.append(
+        {
+          "id": page_config["id"],
+          "title": page_config["title"],
+          "slug": page_config["slug"],
+        }
+      )
+
+  return jsonify({"pages": pages})
+
+
+@app.route("/builder/pages/<page_id>")
+@login_required
+def builder_edit_page(page_id: str) -> Any:
+  """Page editor view."""
+  gen = get_generator()
+  site_config = gen.get_site_config()
+
+  if not site_config:
+    return redirect(url_for("builder_dashboard"))
+
+  page_config = gen.get_page_config(page_id)
+  if not page_config:
+    return "Page not found", 404
+
+  # For API requests, return JSON
+  if request.headers.get("Accept") == "application/json":
+    return jsonify({"page": page_config})
+
+  # For browser requests, render editor
+  return render_template(
+    "builder/page_editor.html",
+    domain=session["domain"],
+    site=site_config,
+    page=page_config,
+    components=gen.get_components(),
+    color_schemes=gen.get_color_schemes(),
+  )
+
+
+@app.route("/builder/pages/<page_id>/save", methods=["POST"])
+@login_required
+def builder_save_page(page_id: str) -> Any:
+  """Save page structure and regenerate HTML."""
+  data = request.get_json()
+  if not data:
+    return jsonify({"error": "No data provided"}), 400
+
+  gen = get_generator()
+  page_config = gen.get_page_config(page_id)
+
+  if not page_config:
+    return jsonify({"error": "Page not found"}), 404
+
+  # Update page config
+  if "title" in data:
+    page_config["title"] = data["title"]
+  if "slots" in data:
+    page_config["slots"] = data["slots"]
+  if "meta_description" in data:
+    page_config["meta_description"] = data["meta_description"]
+
+  try:
+    gen.save_page_config(page_id, page_config)
+    gen.publish_page(page_id)
+    return jsonify({"success": True})
+  except ClientError as e:
+    return jsonify({"error": str(e)}), 500
+
+
+@app.route("/builder/pages/new", methods=["POST"])
+@login_required
+def builder_new_page() -> Any:
+  """Create a new page."""
+  data = request.get_json()
+  if not data:
+    return jsonify({"error": "No data provided"}), 400
+
+  title = data.get("title", "New Page")
+  page_id = data.get("page_id") or title.lower().replace(" ", "-")
+  # Clean page_id
+  page_id = re.sub(r"[^a-z0-9-]", "", page_id)
+
+  gen = get_generator()
+
+  try:
+    page_config = gen.add_page(page_id, title)
+    gen.publish_page(page_id)
+    return jsonify({"success": True, "page": page_config})
+  except ValueError as e:
+    return jsonify({"error": str(e)}), 400
+  except ClientError as e:
+    return jsonify({"error": str(e)}), 500
+
+
+@app.route("/builder/pages/<page_id>/delete", methods=["POST"])
+@login_required
+def builder_delete_page(page_id: str) -> Any:
+  """Delete a page."""
+  gen = get_generator()
+
+  try:
+    gen.delete_page(page_id)
+    return jsonify({"success": True})
+  except ValueError as e:
+    return jsonify({"error": str(e)}), 400
+  except ClientError as e:
+    return jsonify({"error": str(e)}), 500
+
+
+@app.route("/builder/publish", methods=["POST"])
+@login_required
+def builder_publish() -> Any:
+  """Regenerate all HTML files."""
+  gen = get_generator()
+
+  try:
+    published = gen.publish_all()
+    return jsonify({"success": True, "published": published})
+  except ValueError as e:
+    return jsonify({"error": str(e)}), 400
+  except ClientError as e:
+    return jsonify({"error": str(e)}), 500
+
+
+@app.route("/builder/preview/<page_id>", methods=["GET", "POST"])
+@login_required
+def builder_preview(page_id: str) -> Any:
+  """Generate live preview of a page."""
+  gen = get_generator()
+
+  try:
+    if request.method == "POST":
+      # Preview unsaved changes
+      page_data = request.get_json()
+      if page_data:
+        html_content = gen.generate_page_html_preview(page_data)
+      else:
+        html_content = gen.generate_page_html(page_id)
+    else:
+      # GET - preview saved version
+      html_content = gen.generate_page_html(page_id)
+    return Response(html_content, mimetype="text/html")
+  except ValueError as e:
+    return str(e), 404
+
+
+@app.route("/builder/assets")
+@login_required
+def builder_list_assets() -> Any:
+  """List image assets in the S3 bucket."""
+  bucket = session["bucket"]
+  domain = session["domain"]
+
+  allowed_extensions = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg"}
+  images: list[dict[str, Any]] = []
+
+  try:
+    # List objects in assets/images/ folder
+    paginator = s3.get_paginator("list_objects_v2")
+    for prefix in ["assets/images/", "assets/", "images/", ""]:
+      for page in paginator.paginate(Bucket=bucket, Prefix=prefix):
+        for obj in page.get("Contents", []):
+          key = obj["Key"]
+          ext = os.path.splitext(key)[1].lower()
+          if ext in allowed_extensions:
+            images.append(
+              {
+                "key": key,
+                "url": f"/{key}",
+                "full_url": f"https://{domain}/{key}",
+                "name": os.path.basename(key),
+                "size": obj["Size"],
+                "modified": obj["LastModified"].isoformat(),
+              }
+            )
+
+    # Remove duplicates (in case of overlapping prefixes)
+    seen = set()
+    unique_images = []
+    for img in images:
+      if img["key"] not in seen:
+        seen.add(img["key"])
+        unique_images.append(img)
+
+    # Sort by modified date, newest first
+    unique_images.sort(key=lambda x: x["modified"], reverse=True)
+
+    return jsonify({"images": unique_images})
+  except ClientError as e:
+    return jsonify({"error": str(e)}), 500
+
+
+@app.route("/builder/assets/upload", methods=["POST"])
+@login_required
+def builder_upload_asset() -> Any:
+  """Upload an image asset."""
+  bucket = session["bucket"]
+
+  if "file" not in request.files:
+    return jsonify({"error": "No file provided"}), 400
+
+  file = request.files["file"]
+  if not file.filename:
+    return jsonify({"error": "No filename"}), 400
+
+  # Validate file type
+  allowed_extensions = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg"}
+  ext = os.path.splitext(file.filename)[1].lower()
+  if ext not in allowed_extensions:
+    return jsonify({"error": "File type not allowed"}), 400
+
+  # Generate unique filename
+  filename = f"assets/images/{uuid.uuid4().hex}{ext}"
+
+  try:
+    content_type = {
+      ".jpg": "image/jpeg",
+      ".jpeg": "image/jpeg",
+      ".png": "image/png",
+      ".gif": "image/gif",
+      ".webp": "image/webp",
+      ".svg": "image/svg+xml",
+    }.get(ext, "application/octet-stream")
+
+    s3.upload_fileobj(
+      file,
+      bucket,
+      filename,
+      ExtraArgs={"ContentType": content_type},
+    )
+
+    domain = session["domain"]
+    return jsonify(
+      {
+        "success": True,
+        "url": f"https://{domain}/{filename}",
+        "key": filename,
+      }
+    )
   except ClientError as e:
     return jsonify({"error": str(e)}), 500
 

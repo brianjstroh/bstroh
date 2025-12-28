@@ -1,0 +1,33 @@
+<section class="gallery-section" {% if anchor_id %}id="{{ anchor_id }}"{% endif %}>
+  <div class="container">
+    {% if title %}
+    <div class="section-heading text-center">
+      <h2>{{ title }}</h2>
+    </div>
+    {% endif %}
+    <div class="gallery-grid cols-{{ columns }}">
+      {% for image_url in images %}
+      {% if image_url %}
+      <div class="gallery-item">
+        <img src="{{ image_url }}" alt="Gallery image"
+             {% if show_lightbox %}onclick="openLightbox(this.src)"{% endif %}>
+      </div>
+      {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% if show_lightbox %}
+<div id="lightbox-{{ component_id }}" class="lightbox" onclick="closeLightbox()" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:1000; cursor:pointer;">
+  <img id="lightbox-img-{{ component_id }}" src="" alt="Lightbox" style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); max-width:90%; max-height:90%;">
+</div>
+<script>
+function openLightbox(src) {
+  document.getElementById('lightbox-{{ component_id }}').style.display = 'block';
+  document.getElementById('lightbox-img-{{ component_id }}').src = src;
+}
+function closeLightbox() {
+  document.getElementById('lightbox-{{ component_id }}').style.display = 'none';
+}
+</script>
+{% endif %}

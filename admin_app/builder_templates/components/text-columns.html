@@ -1,0 +1,22 @@
+<section class="content-section">
+  <div class="container">
+    <div class="two-column {% if image_position == 'left' %}image-left{% endif %}">
+      <div class="column-content">
+        {% if heading %}
+        <h3>{{ heading }}</h3>
+        {% endif %}
+        {% for paragraph in content.split('\n\n') %}
+        <p>{{ paragraph }}</p>
+        {% endfor %}
+        {% if cta_text %}
+        <a href="{{ cta_link }}" class="btn" style="margin-top: 1rem;">{{ cta_text }}</a>
+        {% endif %}
+      </div>
+      {% if image %}
+      <div class="column-image">
+        <img src="{{ image }}" alt="{{ heading }}">
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</section>

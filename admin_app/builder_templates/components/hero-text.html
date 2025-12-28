@@ -1,0 +1,11 @@
+<section class="hero-section text-{{ alignment }}" {% if anchor_id %}id="{{ anchor_id }}"{% endif %}>
+  <div class="container">
+    <h1 class="hero-title">{{ title }}</h1>
+    {% if subtitle %}
+    <p class="hero-subtitle">{{ subtitle }}</p>
+    {% endif %}
+    {% if cta_text %}
+    <a href="{{ cta_link }}" class="btn">{{ cta_text }}</a>
+    {% endif %}
+  </div>
+</section>
