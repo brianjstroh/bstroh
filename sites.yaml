@@ -28,17 +28,6 @@ gpu_servers:
     max_spot_price: 0.50
     volume_size_gb: 100
 
-  # Flux for AI image generation (triggered from admin portal)
-  # Start from: https://edit.bstroh.com (coming soon)
-  - name: flux
-    enabled: true
-    server_type: comfyui
-    instance_type: g5.xlarge  # 24GB VRAM
-    model: ""  # Flux weights downloaded separately
-    idle_timeout_minutes: 60
-    max_spot_price: 0.50
-    volume_size_gb: 150  # Larger for image models
-
 sites:
   - domain: austinturner.rocks
     owner: Brian Stroh

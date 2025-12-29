@@ -16,15 +16,12 @@ AWS CDK project for static website hosting with a web-based admin interface, plu
 - Caddy for HTTPS (auto-certificates)
 - SSM Parameter Store for password hashes
 - IAM role with S3 access to all site buckets
-- Bedrock (Claude) for AI content assistance
 
-**GPU Servers** (on-demand, scale to zero):
-- g5.xlarge spot instances (24GB VRAM)
+**GPU Server** (on-demand, scale to zero):
+- g5.xlarge spot instance (24GB VRAM)
 - Auto-shutdown after 60 minutes idle
 - Lambda functions for start/stop/status
-- Two servers configured:
-  - `devstral`: Ollama + Devstral Small 2 (24B) for AI coding
-  - `flux`: ComfyUI + Flux for image generation
+- `devstral`: Ollama + Devstral Small 2 (24B) for AI coding
 
 ## Key Files
 
@@ -35,12 +32,12 @@ infrastructure/
   config.py                          # Config loader
   stacks/site_stack.py               # Static site stack
   stacks/admin_stack.py              # Admin server stack
-  stacks/gpu_server_stack.py         # GPU server stack (Devstral, Flux)
+  stacks/gpu_server_stack.py         # GPU server stack (Devstral)
   cdk_constructs/                    # Reusable constructs
   templates/                         # HTML templates (index, error, instructions)
 admin_app/
-  app.py                             # Flask app for file management + AI chat
-  templates/                         # Admin UI (login, file browser, chat)
+  app.py                             # Flask app for file management
+  templates/                         # Admin UI (login, file browser)
 scripts/
   set_site_password.py               # Set admin password for a domain
   start_devstral.sh                  # Start Devstral GPU server from CLI
@@ -64,11 +61,10 @@ uv run cdk diff
 uv run cdk deploy --all --concurrency 10
 uv run cdk destroy --all
 
-# GPU servers
+# GPU server
 ./scripts/start_devstral.sh --wait   # Start Devstral, wait for ready
 aws lambda invoke --function-name gpu-devstral-status /dev/stdout
 aws lambda invoke --function-name gpu-devstral-stop /dev/stdout
-aws lambda invoke --function-name gpu-flux-start /dev/stdout
 ```
 
 ## Adding a New Site
@@ -108,8 +104,7 @@ sudo journalctl -u admin-app --no-pager | tail -100
 ### GPU Server
 ```bash
 aws ssm start-session --target {instance-id}
-sudo journalctl -u ollama --no-pager | tail -100      # For Devstral
-sudo journalctl -u comfyui --no-pager | tail -100     # For Flux
+sudo journalctl -u ollama --no-pager | tail -100
 sudo journalctl -u idle-monitor --no-pager | tail -100
 cat /var/log/user-data.log
 ```

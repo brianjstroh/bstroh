@@ -68,12 +68,6 @@
             </a>
           </li>
           <li class="nav-item">
-            <a class="nav-link {% if request.endpoint == 'chat' %}active{% endif %}"
-               href="{{ url_for('chat') }}">
-              <i class="bi bi-chat-dots"></i> AI Assistant
-            </a>
-          </li>
-          <li class="nav-item">
             <a class="nav-link {% if request.endpoint == 'browse' %}active{% endif %}"
                href="{{ url_for('browse', prefix='') }}">
               <i class="bi bi-folder"></i> Files
@@ -81,14 +75,6 @@
           </li>
         </ul>
         <div class="d-flex align-items-center">
-          <!-- Flux GPU Server Controls -->
-          <div class="me-3" id="fluxControls">
-            <button class="btn btn-outline-warning btn-sm" id="fluxBtn"
-                    onclick="toggleFluxServer()" title="AI Image Generator">
-              <i class="bi bi-gpu-card"></i>
-              <span id="fluxStatus">Flux</span>
-            </button>
-          </div>
           <span class="text-light me-3">{{ session.domain }}</span>
           <a href="{{ url_for('change_password') }}" class="btn btn-outline-light btn-sm me-2"
              title="Change Password">
@@ -109,88 +95,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script src="{{ url_for('static', filename='js/builder.js') }}"></script>
-  {% if session.authenticated %}
-  <script>
-    // Flux GPU Server Controls
-    let fluxState = 'unknown';
-
-    async function checkFluxStatus() {
-      try {
-        const response = await fetch('/gpu/flux/status');
-        const data = await response.json();
-        fluxState = data.status;
-        updateFluxButton();
-      } catch (error) {
-        console.error('Error checking Flux status:', error);
-      }
-    }
-
-    function updateFluxButton() {
-      const btn = document.getElementById('fluxBtn');
-      const status = document.getElementById('fluxStatus');
-
-      if (fluxState === 'running') {
-        btn.className = 'btn btn-success btn-sm';
-        status.textContent = 'Flux (Running)';
-        btn.title = 'Click to open ComfyUI or stop server';
-      } else if (fluxState === 'pending') {
-        btn.className = 'btn btn-warning btn-sm';
-        status.textContent = 'Flux (Starting...)';
-        btn.title = 'Server is starting up';
-      } else {
-        btn.className = 'btn btn-outline-secondary btn-sm';
-        status.textContent = 'Flux';
-        btn.title = 'Click to start AI image generator';
-      }
-    }
-
-    async function toggleFluxServer() {
-      const btn = document.getElementById('fluxBtn');
-      btn.disabled = true;
-
-      try {
-        if (fluxState === 'running') {
-          // Show options: open ComfyUI or stop
-          const action = confirm(
-            'Flux server is running.\\n\\n' +
-            'OK = Open ComfyUI in new tab\\n' +
-            'Cancel = Stop the server'
-          );
-          if (action) {
-            const response = await fetch('/gpu/flux/status');
-            const data = await response.json();
-            if (data.endpoint) {
-              window.open(data.endpoint.replace(':11434', ':8188'), '_blank');
-            }
-          } else {
-            await fetch('/gpu/flux/stop', { method: 'POST' });
-            fluxState = 'stopped';
-            updateFluxButton();
-          }
-        } else if (fluxState !== 'pending') {
-          // Start the server
-          const response = await fetch('/gpu/flux/start', { method: 'POST' });
-          const data = await response.json();
-          fluxState = 'pending';
-          updateFluxButton();
-          alert(
-            'Flux server starting!\\n\\n' +
-            'This takes 5-10 minutes for first boot.\\n' +
-            'The button will turn green when ready.'
-          );
-        }
-      } catch (error) {
-        alert('Error: ' + error.message);
-      } finally {
-        btn.disabled = false;
-      }
-    }
-
-    // Check status on page load and every 30 seconds
-    checkFluxStatus();
-    setInterval(checkFluxStatus, 30000);
-  </script>
-  {% endif %}
   {% block scripts %}{% endblock %}
 </body>
 </html>

@@ -1,6 +1,5 @@
 """Minimal Flask app for S3 file management and website builder."""
 
-import json
 import os
 import re
 import uuid
@@ -28,37 +27,6 @@ app.secret_key = os.environ.get("SECRET_KEY", os.urandom(24))
 # Initialize AWS clients
 s3 = boto3.client("s3")
 ssm = boto3.client("ssm")
-bedrock = boto3.client("bedrock-runtime", region_name="us-east-1")
-lambda_client = boto3.client("lambda", region_name="us-east-1")
-
-# System prompt for content generation
-SYSTEM_PROMPT = (
-  "You are a helpful assistant for website owners who manage simple static "
-  "websites hosted on Amazon S3. Your role is to help them modify HTML content "
-  "for their sites.\n\n"
-  "Important context about their setup:\n"
-  "- The website is a static S3 site served via CloudFront CDN\n"
-  "- Changes go live immediately after uploading (with a few minutes cache delay)\n"
-  "- Site owners can download files, edit locally, and re-upload them\n"
-  "- The main files are: index.html (homepage), error.html (404 page), "
-  "instructions.html (help page), christmas.css (shared styles), and photos/ "
-  "folder for images\n\n"
-  "When the user provides file content to edit:\n"
-  "1. Make ONLY the changes they requested - preserve everything else exactly as-is\n"
-  "2. Always provide the COMPLETE updated file that can be directly uploaded\n"
-  "3. Do not remove or modify code unrelated to the user's request\n"
-  "4. Keep external CSS links (like christmas.css) intact unless asked to change\n\n"
-  "When generating or modifying HTML:\n"
-  "1. Always provide COMPLETE, ready-to-use HTML that can be directly uploaded\n"
-  "2. Keep the existing structure - only modify what's needed for the request\n"
-  "3. Make sure the HTML works without any server-side processing\n\n"
-  "When asked to make changes:\n"
-  "1. Ask clarifying questions if the request is ambiguous\n"
-  "2. Briefly explain what changes you're making\n"
-  "3. Warn about any potential issues (broken layouts, missing images, etc.)\n\n"
-  "Always be encouraging and remember these are often non-technical users "
-  "managing personal or small business websites."
-)
 
 # Image extensions for preview
 IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg", ".bmp"}
@@ -304,52 +272,6 @@ def download(key: str) -> Any:
     return str(e), 404
 
 
-@app.route("/file-content/<path:key>")
-@login_required
-def file_content(key: str) -> Any:
-  """Get file contents as JSON for the chat interface."""
-  bucket = session["bucket"]
-
-  # Only allow text-based files
-  allowed_extensions = {".html", ".css", ".js", ".txt", ".json", ".xml"}
-  ext = os.path.splitext(key)[1].lower()
-  if ext not in allowed_extensions:
-    return jsonify({"error": "Only text files can be read"}), 400
-
-  try:
-    obj = s3.get_object(Bucket=bucket, Key=key)
-    content = obj["Body"].read().decode("utf-8")
-    return jsonify({"content": content, "key": key})
-  except ClientError as e:
-    return jsonify({"error": str(e)}), 404
-  except UnicodeDecodeError:
-    return jsonify({"error": "File is not valid UTF-8 text"}), 400
-
-
-@app.route("/editable-files")
-@login_required
-def editable_files() -> Any:
-  """List files that can be edited via the chat interface."""
-  bucket = session["bucket"]
-  editable_extensions = {".html", ".css", ".js", ".txt"}
-
-  files: list[dict[str, str]] = []
-  try:
-    paginator = s3.get_paginator("list_objects_v2")
-    for page in paginator.paginate(Bucket=bucket, MaxKeys=100):
-      for obj in page.get("Contents", []):
-        key = obj["Key"]
-        ext = os.path.splitext(key)[1].lower()
-        if ext in editable_extensions and not key.endswith("/"):
-          files.append({"key": key, "name": key.split("/")[-1]})
-  except ClientError as e:
-    return jsonify({"error": str(e)}), 500
-
-  # Sort by key
-  files.sort(key=lambda x: x["key"])
-  return jsonify({"files": files})
-
-
 @app.route("/upload", methods=["POST"])
 @login_required
 def upload() -> Any:
@@ -416,96 +338,6 @@ def _format_size(size_bytes: int) -> str:
     return f"{size_bytes / (1024 * 1024):.1f} MB"
   else:
     return f"{size_bytes / (1024 * 1024 * 1024):.1f} GB"
-
-
-@app.route("/chat", methods=["POST"])
-@login_required
-def chat() -> Any:
-  """Chat endpoint for content generation via Bedrock."""
-  data = request.get_json()
-  if not data or "message" not in data:
-    return jsonify({"error": "No message provided"}), 400
-
-  user_message = data["message"]
-  conversation_history = data.get("history", [])
-  file_key = data.get("file_key")
-  file_content = data.get("file_content")
-  domain = session.get("domain", "your-site.com")
-
-  # Build messages for Claude
-  messages = []
-
-  # Add conversation history
-  for msg in conversation_history:
-    messages.append({"role": msg["role"], "content": msg["content"]})
-
-  # Build the current user message with file context if this is the first message
-  if file_content and len(conversation_history) == 0:
-    # First message with file context - include the file contents
-    full_message = f"""I'm editing the file `{file_key}`. Here is its current content:
-
-```html
-{file_content}
-```
-
-My request: {user_message}"""
-    messages.append({"role": "user", "content": full_message})
-  else:
-    # Subsequent messages or no file selected
-    messages.append({"role": "user", "content": user_message})
-
-  try:
-    response = bedrock.invoke_model(
-      modelId="us.anthropic.claude-sonnet-4-5-20250929-v1:0",
-      contentType="application/json",
-      accept="application/json",
-      body=json.dumps(
-        {
-          "anthropic_version": "bedrock-2023-05-31",
-          "max_tokens": 4096,
-          "system": SYSTEM_PROMPT + f"\n\nThe user's website domain is: {domain}",
-          "messages": messages,
-        }
-      ),
-    )
-
-    response_body = json.loads(response["body"].read())
-    assistant_message = response_body["content"][0]["text"]
-
-    return jsonify({"response": assistant_message})
-
-  except ClientError as e:
-    return jsonify({"error": f"Bedrock error: {str(e)}"}), 500
-  except Exception as e:
-    return jsonify({"error": f"Error: {str(e)}"}), 500
-
-
-@app.route("/chat/apply", methods=["POST"])
-@login_required
-def apply_content() -> Any:
-  """Apply generated content to a file."""
-  data = request.get_json()
-  if not data or "content" not in data or "filename" not in data:
-    return jsonify({"error": "Missing content or filename"}), 400
-
-  bucket = session["bucket"]
-  filename = data["filename"]
-  content = data["content"]
-
-  # Basic validation
-  if not filename.endswith((".html", ".css", ".js", ".txt")):
-    return jsonify({"error": "Only .html, .css, .js, and .txt files allowed"}), 400
-
-  try:
-    s3.put_object(
-      Bucket=bucket,
-      Key=filename,
-      Body=content.encode("utf-8"),
-      ContentType="text/html" if filename.endswith(".html") else "text/plain",
-    )
-    return jsonify({"success": True, "message": f"Uploaded {filename}"})
-  except ClientError as e:
-    return jsonify({"error": str(e)}), 500
 
 
 # Website Builder Routes
@@ -891,55 +723,6 @@ def builder_upload_asset() -> Any:
         "key": filename,
       }
     )
-  except ClientError as e:
-    return jsonify({"error": str(e)}), 500
-
-
-# GPU Server Control Routes (Flux)
-@app.route("/gpu/flux/status")
-@login_required
-def gpu_flux_status() -> Any:
-  """Get Flux GPU server status."""
-  try:
-    response = lambda_client.invoke(
-      FunctionName="gpu-flux-status",
-      InvocationType="RequestResponse",
-    )
-    payload = json.loads(response["Payload"].read())
-    body = json.loads(payload.get("body", "{}"))
-    return jsonify(body)
-  except ClientError as e:
-    return jsonify({"status": "error", "error": str(e)}), 500
-
-
-@app.route("/gpu/flux/start", methods=["POST"])
-@login_required
-def gpu_flux_start() -> Any:
-  """Start Flux GPU server."""
-  try:
-    response = lambda_client.invoke(
-      FunctionName="gpu-flux-start",
-      InvocationType="RequestResponse",
-    )
-    payload = json.loads(response["Payload"].read())
-    body = json.loads(payload.get("body", "{}"))
-    return jsonify(body)
-  except ClientError as e:
-    return jsonify({"error": str(e)}), 500
-
-
-@app.route("/gpu/flux/stop", methods=["POST"])
-@login_required
-def gpu_flux_stop() -> Any:
-  """Stop Flux GPU server."""
-  try:
-    response = lambda_client.invoke(
-      FunctionName="gpu-flux-stop",
-      InvocationType="RequestResponse",
-    )
-    payload = json.loads(response["Payload"].read())
-    body = json.loads(payload.get("body", "{}"))
-    return jsonify(body)
   except ClientError as e:
     return jsonify({"error": str(e)}), 500
 
