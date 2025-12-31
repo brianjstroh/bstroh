@@ -49,6 +49,9 @@ def login_required(f: Any) -> Any:
   @wraps(f)
   def decorated(*args: Any, **kwargs: Any) -> Any:
     if not session.get("authenticated"):
+      # Return JSON error for API/AJAX requests
+      if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        return jsonify({"error": "Session expired. Please log in again."}), 401
       return redirect(url_for("login"))
     return f(*args, **kwargs)
 
@@ -300,6 +303,8 @@ def builder_site_settings() -> Any:
   site_config = gen.get_site_config()
 
   if not site_config:
+    if request.is_json:
+      return jsonify({"error": "Site not initialized"}), 404
     return redirect(url_for("builder_dashboard"))
 
   if request.method == "POST":
@@ -445,6 +450,30 @@ def builder_delete_page(page_id: str) -> Any:
   try:
     gen.delete_page(page_id)
     return jsonify({"success": True})
+  except ValueError as e:
+    return jsonify({"error": str(e)}), 400
+  except ClientError as e:
+    return jsonify({"error": str(e)}), 500
+
+
+@app.route("/builder/pages/<page_id>/copy", methods=["POST"])
+@login_required
+def builder_copy_page(page_id: str) -> Any:
+  """Copy an existing page."""
+  data = request.get_json()
+  if not data:
+    return jsonify({"error": "No data provided"}), 400
+
+  title = data.get("title", "Copy")
+  new_page_id = title.lower().replace(" ", "-")
+  new_page_id = re.sub(r"[^a-z0-9-]", "", new_page_id)
+
+  gen = get_generator()
+
+  try:
+    new_page = gen.copy_page(page_id, new_page_id, title)
+    gen.publish_page(new_page_id)
+    return jsonify({"success": True, "page": new_page})
   except ValueError as e:
     return jsonify({"error": str(e)}), 400
   except ClientError as e:

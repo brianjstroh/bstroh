@@ -15,43 +15,11 @@
       <div class="step-circle active" id="step1">1</div>
       <div class="step-line"></div>
       <div class="step-circle" id="step2">2</div>
-      <div class="step-line"></div>
-      <div class="step-circle" id="step3">3</div>
     </div>
   </div>
 
-  <!-- Step 1: Template Selection -->
-  <div id="templateStep" class="setup-step">
-    <h3 class="text-center mb-4">Choose a Template</h3>
-    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
-      {% for template in templates %}
-      <div class="col">
-        <div class="card template-card h-100" data-template-id="{{ template.id }}" onclick="selectTemplate('{{ template.id }}')">
-          <div class="card-img-top template-preview">
-            <div class="template-placeholder">
-              <i class="bi bi-layout-text-window-reverse"></i>
-            </div>
-          </div>
-          <div class="card-body">
-            <h5 class="card-title">{{ template.name }}</h5>
-            <p class="card-text small text-muted">{{ template.description }}</p>
-            <div class="template-features">
-              {% for feature in template.features %}
-              <span class="badge bg-light text-dark me-1">{{ feature }}</span>
-              {% endfor %}
-            </div>
-          </div>
-          <div class="card-footer bg-transparent border-0">
-            <span class="badge bg-secondary">{{ template.category }}</span>
-          </div>
-        </div>
-      </div>
-      {% endfor %}
-    </div>
-  </div>
-
-  <!-- Step 2: Color Scheme -->
-  <div id="colorStep" class="setup-step" style="display: none;">
+  <!-- Step 1: Color Scheme -->
+  <div id="colorStep" class="setup-step">
     <h3 class="text-center mb-4">Choose Your Colors</h3>
     <p class="text-center text-muted mb-4">Pick a color scheme that matches your brand. You can customize these later.</p>
 
@@ -74,15 +42,9 @@
         </div>
       </div>
     </div>
-
-    <div class="text-center mt-4">
-      <button class="btn btn-outline-secondary" onclick="goToStep(1)">
-        <i class="bi bi-arrow-left"></i> Back
-      </button>
-    </div>
   </div>
 
-  <!-- Step 3: Site Name -->
+  <!-- Step 2: Site Name -->
   <div id="nameStep" class="setup-step" style="display: none;">
     <h3 class="text-center mb-4">Name Your Site</h3>
     <div class="row justify-content-center">
@@ -94,7 +56,7 @@
         </div>
 
         <div class="d-flex justify-content-between mt-4">
-          <button class="btn btn-outline-secondary" onclick="goToStep(2)">
+          <button class="btn btn-outline-secondary" onclick="goToStep(1)">
             <i class="bi bi-arrow-left"></i> Back
           </button>
           <button class="btn btn-primary btn-lg" onclick="createSite()" id="createBtn">
@@ -141,33 +103,6 @@
     background-color: #e9ecef;
   }
 
-  .template-card {
-    cursor: pointer;
-    transition: all 0.2s;
-    border: 2px solid transparent;
-  }
-  .template-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-  }
-  .template-card.selected {
-    border-color: #0d6efd;
-  }
-  .template-preview {
-    height: 150px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .template-placeholder {
-    font-size: 3rem;
-    color: rgba(255,255,255,0.5);
-  }
-  .template-features {
-    margin-top: 0.5rem;
-  }
-
   .color-scheme-card {
     padding: 1rem;
     border: 2px solid #e9ecef;
@@ -200,20 +135,8 @@
 </style>
 
 <script>
-  let selectedTemplate = null;
   let selectedColorScheme = null;
   let currentStep = 1;
-
-  function selectTemplate(templateId) {
-    selectedTemplate = templateId;
-    document.querySelectorAll('.template-card').forEach(card => {
-      card.classList.remove('selected');
-    });
-    document.querySelector(`[data-template-id="${templateId}"]`).classList.add('selected');
-
-    // Auto-advance to color step
-    setTimeout(() => goToStep(2), 300);
-  }
 
   function selectColorScheme(schemeId) {
     selectedColorScheme = schemeId;
@@ -223,7 +146,7 @@
     document.querySelector(`[data-scheme-id="${schemeId}"]`).classList.add('selected');
 
     // Auto-advance to name step
-    setTimeout(() => goToStep(3), 300);
+    setTimeout(() => goToStep(2), 300);
   }
 
   function goToStep(step) {
@@ -237,20 +160,14 @@
     });
 
     // Show/hide steps
-    document.getElementById('templateStep').style.display = step === 1 ? 'block' : 'none';
-    document.getElementById('colorStep').style.display = step === 2 ? 'block' : 'none';
-    document.getElementById('nameStep').style.display = step === 3 ? 'block' : 'none';
+    document.getElementById('colorStep').style.display = step === 1 ? 'block' : 'none';
+    document.getElementById('nameStep').style.display = step === 2 ? 'block' : 'none';
   }
 
   async function createSite() {
-    if (!selectedTemplate) {
-      alert('Please select a template');
-      goToStep(1);
-      return;
-    }
     if (!selectedColorScheme) {
       alert('Please select a color scheme');
-      goToStep(2);
+      goToStep(1);
       return;
     }
 
@@ -265,7 +182,7 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          template_id: selectedTemplate,
+          template_id: 'default',
           color_scheme_id: selectedColorScheme,
           site_name: siteName
         })

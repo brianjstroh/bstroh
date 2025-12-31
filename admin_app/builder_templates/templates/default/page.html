@@ -118,7 +118,6 @@
       color: var(--color-primary);
     }
 
-    /* Mobile menu toggle button */
     .mobile-menu-toggle {
       display: none;
       background: none;
@@ -143,7 +142,6 @@
       transition: transform 0.3s, opacity 0.3s;
     }
 
-    /* Animate hamburger to X when open */
     .nav-open .hamburger-icon span:nth-child(1) {
       transform: translateY(8px) rotate(45deg);
     }
@@ -232,37 +230,31 @@
     .text-left { text-align: left; }
     .text-right { text-align: right; }
 
-    .text-block {
-      max-width: 800px;
-      margin: 0 auto 2rem;
-    }
-
-    .text-block.width-narrow { max-width: 600px; }
-    .text-block.width-medium { max-width: 800px; }
-    .text-block.width-wide { max-width: 1000px; }
-    .text-block.width-full { max-width: none; }
-
-    .text-block p {
-      margin-bottom: 1rem;
-    }
-
     /* Two column layout */
     .two-column {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 3rem;
-      align-items: center;
+      align-items: start;
     }
 
-    .two-column.image-left .column-image { order: -1; }
+    .two-column.ratio-60-40 { grid-template-columns: 60fr 40fr; }
+    .two-column.ratio-40-60 { grid-template-columns: 40fr 60fr; }
+    .two-column.ratio-70-30 { grid-template-columns: 70fr 30fr; }
+    .two-column.ratio-30-70 { grid-template-columns: 30fr 70fr; }
 
-    .two-column h3 {
-      font-size: 1.75rem;
+    .two-column .column {
+      min-width: 0;
+    }
+
+    .two-column .column-image {
+      width: 100%;
+      border-radius: 8px;
       margin-bottom: 1rem;
     }
 
-    .two-column img {
-      border-radius: 8px;
+    .two-column .column-content p {
+      margin-bottom: 1rem;
     }
 
     /* Gallery */
@@ -382,38 +374,117 @@
       cursor: pointer;
       opacity: 0;
       transition: opacity 0.3s;
+      z-index: 50;
     }
 
     .back-to-top.visible {
       opacity: 1;
     }
 
-    /* Main with sidebar layout */
-    .main-with-sidebar {
-      display: grid;
-      grid-template-columns: 1fr 300px;
-      gap: 2rem;
-      padding: 2rem 0;
-    }
-
-    .main-content {
-      min-width: 0;
+    /* Page layout with collapsible left sidebar */
+    .page-layout {
+      display: flex;
+      min-height: calc(100vh - 60px);
     }
 
     .sidebar {
+      width: 280px;
+      min-width: 280px;
       background-color: var(--color-surface);
-      padding: 1.5rem;
-      border-radius: 8px;
-      border: 1px solid var(--color-border);
-      height: fit-content;
-      position: sticky;
-      top: 80px;
+      border-right: 1px solid var(--color-border);
+      padding: 2rem 1.5rem;
+      transition: margin-left 0.3s ease, width 0.3s ease, min-width 0.3s ease, padding 0.3s ease;
+      overflow-y: auto;
+      overflow-x: hidden;
     }
 
-    .sidebar > *:not(:last-child) {
-      margin-bottom: 1.5rem;
-      padding-bottom: 1.5rem;
-      border-bottom: 1px solid var(--color-border);
+    .sidebar.collapsed {
+      margin-left: -280px;
+    }
+
+    .sidebar-toggle {
+      position: fixed;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 24px;
+      height: 48px;
+      background-color: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-left: none;
+      border-radius: 0 6px 6px 0;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 90;
+      transition: left 0.3s ease;
+    }
+
+    .sidebar-toggle.sidebar-open {
+      left: 280px;
+    }
+
+    .sidebar-toggle:hover {
+      background-color: var(--color-border);
+    }
+
+    .sidebar-toggle svg {
+      width: 16px;
+      height: 16px;
+      transition: transform 0.3s ease;
+    }
+
+    .sidebar-toggle.sidebar-open svg {
+      transform: rotate(180deg);
+    }
+
+    .sidebar-widget {
+      margin-bottom: 2rem;
+    }
+
+    .sidebar-widget:last-child {
+      margin-bottom: 0;
+    }
+
+    .sidebar-widget h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: var(--color-text);
+    }
+
+    .sidebar-widget img {
+      width: 100%;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+    }
+
+    .sidebar-widget p {
+      font-size: 0.9rem;
+      color: var(--color-text-muted);
+      line-height: 1.6;
+    }
+
+    .main-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .page-layout.no-sidebar .sidebar-toggle {
+      display: none;
+    }
+
+    /* Sidebar overlay for mobile */
+    .sidebar-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 75;
     }
 
     /* Responsive */
@@ -422,11 +493,12 @@
       .hero-subtitle { font-size: 1rem; }
       .section-heading h2 { font-size: 1.75rem; }
       .two-column { grid-template-columns: 1fr; }
+      .two-column.ratio-60-40,
+      .two-column.ratio-40-60,
+      .two-column.ratio-70-30,
+      .two-column.ratio-30-70 { grid-template-columns: 1fr; }
       .gallery-grid.cols-3, .gallery-grid.cols-4 { grid-template-columns: repeat(2, 1fr); }
-      .main-with-sidebar { grid-template-columns: 1fr; }
-      .sidebar { position: static; }
 
-      /* Mobile navigation */
       .mobile-menu-toggle {
         display: block;
       }
@@ -453,6 +525,37 @@
       .site-nav.nav-open .nav-menu {
         display: flex;
       }
+
+      /* Mobile sidebar - fixed overlay */
+      .sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        height: 100vh;
+        z-index: 80;
+        box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        padding-top: 70px;
+      }
+
+      .sidebar.collapsed {
+        margin-left: -280px;
+      }
+
+      .sidebar-toggle {
+        position: fixed;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 90;
+      }
+
+      .sidebar-toggle.sidebar-open {
+        left: 280px;
+      }
+
+      .sidebar-overlay.visible {
+        display: block;
+      }
     }
   </style>
 </head>
@@ -465,30 +568,40 @@
   </header>
   {% endif %}
 
-  <main>
+  {% if slots.hero %}
+  {% for component_html in slots.hero %}
+  {{ component_html | safe }}
+  {% endfor %}
+  {% endif %}
+
+  <div class="page-layout {% if not slots.sidebar or slots.sidebar|length == 0 %}no-sidebar{% endif %}">
     {% if slots.sidebar and slots.sidebar|length > 0 %}
-    <div class="container main-with-sidebar">
-      <div class="main-content">
-        {% if slots.main %}
-        {% for component_html in slots.main %}
+    <aside class="sidebar collapsed" id="sidebar">
+      {% for component_html in slots.sidebar %}
+      <div class="sidebar-widget">
         {{ component_html | safe }}
-        {% endfor %}
-        {% endif %}
       </div>
-      <aside class="sidebar">
-        {% for component_html in slots.sidebar %}
-        {{ component_html | safe }}
-        {% endfor %}
-      </aside>
-    </div>
-    {% else %}
-    {% if slots.main %}
-    {% for component_html in slots.main %}
-    {{ component_html | safe }}
-    {% endfor %}
+      {% endfor %}
+    </aside>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
     {% endif %}
-    {% endif %}
-  </main>
+
+    <main class="main-content" id="main">
+      {% if slots.sidebar and slots.sidebar|length > 0 %}
+      <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 18l6-6-6-6"/>
+        </svg>
+      </button>
+      {% endif %}
+
+      {% if slots.main %}
+      {% for component_html in slots.main %}
+      {{ component_html | safe }}
+      {% endfor %}
+      {% endif %}
+    </main>
+  </div>
 
   {% if slots.footer %}
   <footer>
@@ -524,6 +637,38 @@
         }
       });
     });
+
+    // Sidebar toggle
+    const sidebar = document.getElementById('sidebar');
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+    function updateSidebarState() {
+      const isOpen = sidebar && !sidebar.classList.contains('collapsed');
+      if (sidebarToggle) {
+        sidebarToggle.classList.toggle('sidebar-open', isOpen);
+      }
+      if (sidebarOverlay) {
+        sidebarOverlay.classList.toggle('visible', isOpen);
+      }
+    }
+
+    if (sidebarToggle && sidebar) {
+      // Initialize state
+      updateSidebarState();
+
+      sidebarToggle.addEventListener('click', () => {
+        sidebar.classList.toggle('collapsed');
+        updateSidebarState();
+      });
+
+      if (sidebarOverlay) {
+        sidebarOverlay.addEventListener('click', () => {
+          sidebar.classList.add('collapsed');
+          updateSidebarState();
+        });
+      }
+    }
   </script>
 </body>
 </html>

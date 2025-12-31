@@ -98,10 +98,12 @@ class SiteGenerator:
   def init_site(
     self, template_id: str, color_scheme_id: str, site_name: str
   ) -> dict[str, Any]:
-    """Initialize a new site with the given template."""
+    """Initialize a new site."""
+    # Always use default template
+    template_id = "default"
     template = self._templates.get(template_id)
     if not template:
-      raise ValueError(f"Template {template_id} not found")
+      raise ValueError("Default template not found")
 
     now = datetime.now(UTC).isoformat()
 
@@ -122,10 +124,8 @@ class SiteGenerator:
       "updated_at": now,
     }
 
-    # Create default index page with template components (starter content for new sites)
-    index_page = self._create_default_page(
-      "index", "Home", template, include_starter=True
-    )
+    # Create default index page with starter content
+    index_page = self._create_default_page("index", "Home", include_starter=True)
 
     # Save to S3
     self.save_site_config(site_config)
@@ -137,13 +137,12 @@ class SiteGenerator:
     self,
     page_id: str,
     title: str,
-    template: dict[str, Any],
     include_starter: bool = False,
   ) -> dict[str, Any]:
-    """Create a page. Nav/footer always added. If include_starter, adds content too."""
+    """Create a page with nav/footer. If include_starter, adds hero and heading."""
     now = datetime.now(UTC).isoformat()
 
-    # Initialize slots dict
+    # Initialize slots
     slots: dict[str, list[dict[str, Any]]] = {
       "header": [],
       "hero": [],
@@ -154,7 +153,7 @@ class SiteGenerator:
 
     comp_counter = 0
 
-    # Always add navigation and footer (shared elements on all pages)
+    # Always add navigation and footer
     nav_comp = self._components.get("nav-main", {})
     slots["header"].append(
       {
@@ -175,43 +174,16 @@ class SiteGenerator:
     )
     comp_counter += 1
 
-    # Only add starter content components for the initial index page
+    # Add starter content for new sites (just a heading, no hero)
     if include_starter:
-      for slot in template.get("slots", []):
-        slot_id = slot["id"]
-
-        if slot_id == "hero" and "hero" in slot.get("allowed_categories", []):
-          hero_comp = self._components.get("hero-text", {})
-          slots["hero"].append(
-            {
-              "id": f"comp-{comp_counter}",
-              "type": "hero-text",
-              "data": hero_comp.get("default_data", {}).copy(),
-            }
-          )
-          comp_counter += 1
-
-        elif slot_id == "main":
-          # Add a heading and text block
-          heading_comp = self._components.get("text-heading", {})
-          text_comp = self._components.get("text-paragraph", {})
-
-          slots["main"].append(
-            {
-              "id": f"comp-{comp_counter}",
-              "type": "text-heading",
-              "data": heading_comp.get("default_data", {}).copy(),
-            }
-          )
-          comp_counter += 1
-          slots["main"].append(
-            {
-              "id": f"comp-{comp_counter}",
-              "type": "text-paragraph",
-              "data": text_comp.get("default_data", {}).copy(),
-            }
-          )
-          comp_counter += 1
+      heading_comp = self._components.get("text-heading", {})
+      slots["main"].append(
+        {
+          "id": f"comp-{comp_counter}",
+          "type": "text-heading",
+          "data": heading_comp.get("default_data", {}).copy(),
+        }
+      )
 
     return {
       "id": page_id,
@@ -241,10 +213,6 @@ class SiteGenerator:
     if not site_config:
       raise ValueError("Site not initialized")
 
-    template = self._templates.get(site_config["template_id"])
-    if not template:
-      raise ValueError(f"Template {site_config['template_id']} not found")
-
     # Get color scheme
     color_scheme = self._color_schemes.get(site_config["color_scheme_id"], {})
     base_colors = color_scheme.get("colors", {})
@@ -263,14 +231,8 @@ class SiteGenerator:
     # Generate CSS variables
     css_vars = self._generate_color_css(colors)
 
-    # Render the page template
-    try:
-      page_template = self.jinja_env.get_template(
-        f"templates/{site_config['template_id']}/page.html"
-      )
-    except Exception:
-      # Fall back to default template
-      page_template = self.jinja_env.get_template("templates/default/page.html")
+    # Render the page template (always use default)
+    page_template = self.jinja_env.get_template("templates/default/page.html")
 
     return page_template.render(
       site=site_config,
@@ -436,12 +398,8 @@ class SiteGenerator:
     if not site_config:
       raise ValueError("Site not initialized")
 
-    template = self._templates.get(site_config["template_id"])
-    if not template:
-      raise ValueError("Template not found")
-
     # Create page
-    page_config = self._create_default_page(page_id, title, template)
+    page_config = self._create_default_page(page_id, title)
     self.save_page_config(page_id, page_config)
 
     # Update site config
@@ -480,3 +438,60 @@ class SiteGenerator:
 
     with contextlib.suppress(Exception):
       self.s3.delete_object(Bucket=self.bucket, Key=f"{page_id}.html")
+
+  def copy_page(
+    self, source_page_id: str, new_page_id: str, new_title: str
+  ) -> dict[str, Any]:
+    """Copy an existing page to a new page."""
+    site_config = self.get_site_config()
+    if not site_config:
+      raise ValueError("Site not initialized")
+
+    source_page = self.get_page_config(source_page_id)
+    if not source_page:
+      raise ValueError(f"Source page {source_page_id} not found")
+
+    if new_page_id in site_config["pages"]:
+      raise ValueError(f"Page {new_page_id} already exists")
+
+    now = datetime.now(UTC).isoformat()
+
+    # Deep copy the source page
+    new_page: dict[str, Any] = {
+      "id": new_page_id,
+      "title": new_title,
+      "slug": new_page_id,
+      "slots": {},
+      "meta_description": source_page.get("meta_description", ""),
+      "created_at": now,
+      "updated_at": now,
+    }
+
+    # Copy all slots with new component IDs
+    comp_counter = 0
+    for slot_name, components in source_page.get("slots", {}).items():
+      new_page["slots"][slot_name] = []
+      for comp in components:
+        new_comp = {
+          "id": f"comp-{comp_counter}",
+          "type": comp["type"],
+          "data": comp.get("data", {}).copy(),
+        }
+        new_page["slots"][slot_name].append(new_comp)
+        comp_counter += 1
+
+    # Save the new page
+    self.save_page_config(new_page_id, new_page)
+
+    # Update site config
+    site_config["pages"].append(new_page_id)
+    site_config["navigation"].append(
+      {
+        "label": new_title,
+        "url": f"/{new_page_id}.html",
+        "children": [],
+      }
+    )
+    self.save_site_config(site_config)
+
+    return new_page

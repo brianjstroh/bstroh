@@ -5,23 +5,21 @@
       "name": "Main Navigation",
       "description": "Site-wide navigation bar - links are managed in Site Settings",
       "category": "navigation",
-      "thumbnail": "/static/components/nav-main.png",
       "editable_fields": [],
       "default_data": {}
     },
     {
       "id": "hero-image",
-      "name": "Hero with Background Image",
-      "description": "Full-width hero section with background image, headline, and call-to-action",
+      "name": "Hero Section",
+      "description": "Full-width hero with background image, headline, and call-to-action",
       "category": "hero",
-      "thumbnail": "/static/components/hero-image.png",
       "editable_fields": [
         {"name": "title", "type": "text", "label": "Headline", "required": true, "default": "Welcome to Our Site"},
         {"name": "subtitle", "type": "text", "label": "Subheadline", "default": "Discover what we have to offer"},
-        {"name": "image", "type": "image", "label": "Background Image", "required": true},
+        {"name": "image", "type": "image", "label": "Background Image"},
         {"name": "overlay_opacity", "type": "select", "label": "Overlay Darkness", "options": ["none", "light", "medium", "dark"], "default": "medium"},
         {"name": "cta_text", "type": "text", "label": "Button Text", "default": "Learn More"},
-        {"name": "cta_link", "type": "url", "label": "Button Link", "default": "/about.html", "help_text": "Link to a page (e.g., /about.html) or section (#about)"},
+        {"name": "cta_link", "type": "url", "label": "Button Link", "default": "#main"},
         {"name": "height", "type": "select", "label": "Height", "options": ["small", "medium", "large", "fullscreen"], "default": "large"}
       ],
       "default_data": {
@@ -30,29 +28,8 @@
         "image": "",
         "overlay_opacity": "medium",
         "cta_text": "Learn More",
-        "cta_link": "/about.html",
+        "cta_link": "#main",
         "height": "large"
-      }
-    },
-    {
-      "id": "hero-text",
-      "name": "Hero Text Only",
-      "description": "Clean hero section with headline and subtitle on solid background",
-      "category": "hero",
-      "thumbnail": "/static/components/hero-text.png",
-      "editable_fields": [
-        {"name": "title", "type": "text", "label": "Headline", "required": true, "default": "Welcome"},
-        {"name": "subtitle", "type": "textarea", "label": "Description", "default": "We're glad you're here. Explore our services below."},
-        {"name": "cta_text", "type": "text", "label": "Button Text", "default": "Get Started"},
-        {"name": "cta_link", "type": "url", "label": "Button Link", "default": "/contact.html", "help_text": "Link to a page (e.g., /contact.html) or section (#contact)"},
-        {"name": "alignment", "type": "select", "label": "Text Alignment", "options": ["left", "center", "right"], "default": "center"}
-      ],
-      "default_data": {
-        "title": "Welcome",
-        "subtitle": "We're glad you're here. Explore our services below.",
-        "cta_text": "Get Started",
-        "cta_link": "/contact.html",
-        "alignment": "center"
       }
     },
     {
@@ -60,12 +37,11 @@
       "name": "Section Heading",
       "description": "Large heading with optional subtitle for section titles",
       "category": "content",
-      "thumbnail": "/static/components/text-heading.png",
       "editable_fields": [
         {"name": "heading", "type": "text", "label": "Heading", "required": true, "default": "About Us"},
         {"name": "subtitle", "type": "text", "label": "Subtitle", "default": "Learn more about what we do"},
         {"name": "alignment", "type": "select", "label": "Alignment", "options": ["left", "center", "right"], "default": "center"},
-        {"name": "anchor_id", "type": "text", "label": "Section ID (for links)", "placeholder": "about", "help_text": "Used for navigation links like #about"}
+        {"name": "anchor_id", "type": "text", "label": "Section ID (for links)", "placeholder": "about"}
       ],
       "default_data": {
         "heading": "About Us",
@@ -75,41 +51,23 @@
       }
     },
     {
-      "id": "text-paragraph",
-      "name": "Text Block",
-      "description": "Rich text content block for paragraphs and formatted text",
-      "category": "content",
-      "thumbnail": "/static/components/text-paragraph.png",
-      "editable_fields": [
-        {"name": "content", "type": "textarea", "label": "Content", "required": true, "default": "Add your content here. You can write multiple paragraphs by pressing Enter twice between them."},
-        {"name": "max_width", "type": "select", "label": "Content Width", "options": ["narrow", "medium", "wide", "full"], "default": "medium"}
-      ],
-      "default_data": {
-        "content": "Add your content here. You can write multiple paragraphs by pressing Enter twice between them.",
-        "max_width": "medium"
-      }
-    },
-    {
-      "id": "text-columns",
+      "id": "two-column",
       "name": "Two Column Layout",
-      "description": "Side-by-side content with optional image",
+      "description": "Flexible two-column section for text and images",
       "category": "content",
-      "thumbnail": "/static/components/text-columns.png",
       "editable_fields": [
-        {"name": "heading", "type": "text", "label": "Heading", "default": "Our Services"},
-        {"name": "content", "type": "textarea", "label": "Text Content", "default": "Describe your services or features here."},
-        {"name": "image", "type": "image", "label": "Image"},
-        {"name": "image_position", "type": "select", "label": "Image Position", "options": ["left", "right"], "default": "right"},
-        {"name": "cta_text", "type": "text", "label": "Button Text (optional)"},
-        {"name": "cta_link", "type": "url", "label": "Button Link"}
+        {"name": "left_content", "type": "richtext", "label": "Left Column", "default": "Add content for the left column."},
+        {"name": "right_content", "type": "richtext", "label": "Right Column", "default": "Add content for the right column."},
+        {"name": "left_image", "type": "image", "label": "Left Image (optional)"},
+        {"name": "right_image", "type": "image", "label": "Right Image (optional)"},
+        {"name": "column_ratio", "type": "select", "label": "Column Ratio", "options": ["50-50", "60-40", "40-60", "70-30", "30-70"], "default": "50-50"}
       ],
       "default_data": {
-        "heading": "Our Services",
-        "content": "Describe your services or features here.",
-        "image": "",
-        "image_position": "right",
-        "cta_text": "",
-        "cta_link": ""
+        "left_content": "Add content for the left column.",
+        "right_content": "Add content for the right column.",
+        "left_image": "",
+        "right_image": "",
+        "column_ratio": "50-50"
       }
     },
     {
@@ -117,7 +75,6 @@
       "name": "Image Gallery",
       "description": "Grid of images with optional lightbox view",
       "category": "gallery",
-      "thumbnail": "/static/components/gallery-grid.png",
       "editable_fields": [
         {"name": "title", "type": "text", "label": "Gallery Title", "default": "Our Work"},
         {"name": "images", "type": "imagelist", "label": "Gallery Images"},
@@ -136,7 +93,6 @@
       "name": "Contact Form",
       "description": "Simple contact form with name, email, and message fields",
       "category": "contact",
-      "thumbnail": "/static/components/contact-form.png",
       "editable_fields": [
         {"name": "title", "type": "text", "label": "Form Title", "default": "Get in Touch"},
         {"name": "subtitle", "type": "text", "label": "Subtitle", "default": "We'd love to hear from you"},
@@ -158,25 +114,21 @@
     },
     {
       "id": "footer-simple",
-      "name": "Simple Footer",
-      "description": "Site-wide footer - text is managed in Site Settings",
+      "name": "Footer",
+      "description": "Site-wide footer - text and social links managed in Site Settings",
       "category": "footer",
-      "thumbnail": "/static/components/footer-simple.png",
       "editable_fields": [
-        {"name": "social_links", "type": "textarea", "label": "Social Links (Icon|URL per line)", "default": "", "help_text": "Icons: facebook, instagram, twitter, linkedin, youtube, email"},
         {"name": "show_back_to_top", "type": "checkbox", "label": "Show Back to Top Button", "default": true}
       ],
       "default_data": {
-        "social_links": "",
         "show_back_to_top": true
       }
     },
     {
       "id": "sidebar-about",
       "name": "About Widget",
-      "description": "Small about section for sidebars",
+      "description": "Small about section for sidebar",
       "category": "sidebar",
-      "thumbnail": "/static/components/sidebar-about.png",
       "editable_fields": [
         {"name": "title", "type": "text", "label": "Title", "default": "About"},
         {"name": "image", "type": "image", "label": "Photo"},
@@ -186,25 +138,6 @@
         "title": "About",
         "image": "",
         "content": "A brief description about yourself or your business."
-      }
-    },
-    {
-      "id": "sidebar-contact",
-      "name": "Contact Info Widget",
-      "description": "Contact details for sidebar",
-      "category": "sidebar",
-      "thumbnail": "/static/components/sidebar-contact.png",
-      "editable_fields": [
-        {"name": "title", "type": "text", "label": "Title", "default": "Contact Us"},
-        {"name": "email", "type": "email", "label": "Email"},
-        {"name": "phone", "type": "text", "label": "Phone"},
-        {"name": "address", "type": "textarea", "label": "Address"}
-      ],
-      "default_data": {
-        "title": "Contact Us",
-        "email": "",
-        "phone": "",
-        "address": ""
       }
     }
   ]
