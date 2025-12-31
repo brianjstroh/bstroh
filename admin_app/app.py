@@ -244,6 +244,13 @@ def builder_dashboard() -> Any:
     )
 
 
+@app.route("/builder/help")
+@login_required
+def builder_help() -> Any:
+  """Help page with user guide for the site builder."""
+  return render_template("builder/help.html")
+
+
 @app.route("/builder/templates")
 @login_required
 def builder_templates() -> Any:

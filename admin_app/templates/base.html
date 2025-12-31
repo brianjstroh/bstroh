@@ -73,6 +73,12 @@
               <i class="bi bi-folder"></i> Files
             </a>
           </li>
+          <li class="nav-item">
+            <a class="nav-link {% if request.endpoint == 'builder_help' %}active{% endif %}"
+               href="{{ url_for('builder_help') }}">
+              <i class="bi bi-question-circle"></i> Help
+            </a>
+          </li>
         </ul>
         <div class="d-flex align-items-center">
           <span class="text-light me-3">{{ session.domain }}</span>

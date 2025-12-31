@@ -1,0 +1,434 @@
+{% extends "base.html" %}
+
+{% block title %}Help - Site Builder{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-lg-3 mb-4">
+    <!-- Quick Navigation -->
+    <div class="card position-sticky" style="top: 1rem;">
+      <div class="card-header">
+        <i class="bi bi-list-ul"></i> Quick Navigation
+      </div>
+      <div class="list-group list-group-flush">
+        <a href="#getting-started" class="list-group-item list-group-item-action">Getting Started</a>
+        <a href="#dashboard" class="list-group-item list-group-item-action">Dashboard</a>
+        <a href="#pages" class="list-group-item list-group-item-action">Managing Pages</a>
+        <a href="#page-editor" class="list-group-item list-group-item-action">Page Editor</a>
+        <a href="#components" class="list-group-item list-group-item-action">Components</a>
+        <a href="#navigation" class="list-group-item list-group-item-action">Navigation &amp; Footer</a>
+        <a href="#publishing" class="list-group-item list-group-item-action">Publishing</a>
+        <a href="#files" class="list-group-item list-group-item-action">File Management</a>
+        <a href="#tips" class="list-group-item list-group-item-action">Tips &amp; Tricks</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-9">
+    <div class="card mb-4">
+      <div class="card-header">
+        <h4 class="mb-0"><i class="bi bi-book"></i> Site Builder Help Guide</h4>
+      </div>
+      <div class="card-body">
+        <p class="lead">Welcome to the Site Builder! This guide will help you create and manage your website.</p>
+      </div>
+    </div>
+
+    <!-- Getting Started -->
+    <div class="card mb-4" id="getting-started">
+      <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-rocket-takeoff"></i> Getting Started</h5>
+      </div>
+      <div class="card-body">
+        <p>The Site Builder lets you create professional websites without writing code. Here's a quick overview:</p>
+
+        <div class="row g-3">
+          <div class="col-md-4">
+            <div class="border rounded p-3 h-100">
+              <h6><i class="bi bi-house text-primary"></i> Dashboard</h6>
+              <p class="small mb-0">Configure site-wide settings like your site name, colors, navigation, and footer.</p>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="border rounded p-3 h-100">
+              <h6><i class="bi bi-file-earmark-text text-primary"></i> Pages</h6>
+              <p class="small mb-0">Create and edit individual pages using drag-and-drop components.</p>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="border rounded p-3 h-100">
+              <h6><i class="bi bi-folder text-primary"></i> Files</h6>
+              <p class="small mb-0">Upload and manage images, documents, and other files for your site.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="alert alert-info mt-4 mb-0">
+          <i class="bi bi-lightbulb"></i> <strong>Quick Start:</strong> Begin by setting up your site name and colors on the Dashboard, then create your first page!
+        </div>
+      </div>
+    </div>
+
+    <!-- Dashboard -->
+    <div class="card mb-4" id="dashboard">
+      <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-speedometer2"></i> Dashboard</h5>
+      </div>
+      <div class="card-body">
+        <p>The Dashboard is your control center for site-wide settings.</p>
+
+        <div class="accordion" id="dashboardAccordion">
+          <div class="accordion-item">
+            <h2 class="accordion-header">
+              <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#siteSettings">
+                Site Settings
+              </button>
+            </h2>
+            <div id="siteSettings" class="accordion-collapse collapse show" data-bs-parent="#dashboardAccordion">
+              <div class="accordion-body">
+                <ul>
+                  <li><strong>Site Name:</strong> Your website's name, displayed in the browser title and header.</li>
+                  <li><strong>Color Scheme:</strong> Choose from preset color themes or create a custom palette.</li>
+                  <li><strong>Logo:</strong> Upload or link to your site's logo image.</li>
+                </ul>
+                <p class="small text-muted mb-0">Click "Save Changes" after modifying settings, then "Publish All Pages" to apply them live.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <h2 class="accordion-header">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#colorSchemes">
+                Color Schemes
+              </button>
+            </h2>
+            <div id="colorSchemes" class="accordion-collapse collapse" data-bs-parent="#dashboardAccordion">
+              <div class="accordion-body">
+                <p>Choose a preset color scheme or select "Custom" to define your own colors:</p>
+                <ul>
+                  <li><strong>Primary:</strong> Main accent color (buttons, links)</li>
+                  <li><strong>Secondary:</strong> Supporting accent color</li>
+                  <li><strong>Accent:</strong> Highlight color for special elements</li>
+                  <li><strong>Background:</strong> Page background color</li>
+                  <li><strong>Surface:</strong> Card and container backgrounds</li>
+                  <li><strong>Text:</strong> Main text color</li>
+                  <li><strong>Muted:</strong> Secondary text color</li>
+                  <li><strong>Border:</strong> Border and divider color</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <h2 class="accordion-header">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarWidgets">
+                Sidebar
+              </button>
+            </h2>
+            <div id="sidebarWidgets" class="accordion-collapse collapse" data-bs-parent="#dashboardAccordion">
+              <div class="accordion-body">
+                <p>Add widgets to a collapsible sidebar that appears on all pages. Available widgets include:</p>
+                <ul>
+                  <li><strong>About Widget:</strong> A brief bio with optional photo</li>
+                  <li><strong>Content Block:</strong> Flexible content with text, images, and styling</li>
+                  <li><strong>Gallery:</strong> Image gallery grid</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Managing Pages -->
+    <div class="card mb-4" id="pages">
+      <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-files"></i> Managing Pages</h5>
+      </div>
+      <div class="card-body">
+        <h6>Creating a New Page</h6>
+        <ol>
+          <li>From the Dashboard, click the <span class="badge bg-primary"><i class="bi bi-plus"></i></span> button next to "Pages"</li>
+          <li>Enter a page title (e.g., "About Us")</li>
+          <li>The URL will be auto-generated, or you can customize it</li>
+          <li>Click "Create Page" to open the page editor</li>
+        </ol>
+
+        <h6 class="mt-4">Copying a Page</h6>
+        <p>Click the <i class="bi bi-copy"></i> icon next to any page to create a duplicate. This is useful when creating pages with similar layouts.</p>
+
+        <h6 class="mt-4">Deleting a Page</h6>
+        <p>In the page editor, click "Delete Page" (you cannot delete the index/home page).</p>
+
+        <div class="alert alert-warning mb-0">
+          <i class="bi bi-exclamation-triangle"></i> <strong>Note:</strong> The index page is your homepage. It cannot be deleted but can be fully customized.
+        </div>
+      </div>
+    </div>
+
+    <!-- Page Editor -->
+    <div class="card mb-4" id="page-editor">
+      <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-pencil-square"></i> Page Editor</h5>
+      </div>
+      <div class="card-body">
+        <p>The page editor is where you build your page content using components.</p>
+
+        <h6>Adding Components</h6>
+        <ol>
+          <li>Click "<i class="bi bi-plus-lg"></i> Add Component" in the component list</li>
+          <li>Select a component type from the dropdown</li>
+          <li>The component will be added to your page</li>
+        </ol>
+
+        <h6 class="mt-4">Editing Components</h6>
+        <ol>
+          <li>Click on a component to select it</li>
+          <li>The settings panel will show all editable options</li>
+          <li>Changes appear in the preview automatically</li>
+        </ol>
+
+        <h6 class="mt-4">Reordering Components</h6>
+        <p>Use the <i class="bi bi-arrow-up"></i> and <i class="bi bi-arrow-down"></i> buttons to move components up or down in the page.</p>
+
+        <h6 class="mt-4">Component Sections</h6>
+        <p>Some components (like Content Block) have collapsible sections:</p>
+        <ul>
+          <li>Click the section header to expand/collapse options</li>
+          <li>Toggle the switch to enable/disable that section</li>
+          <li>Only enabled sections will appear on your page</li>
+        </ul>
+
+        <h6 class="mt-4">Saving Changes</h6>
+        <p>Click "Save Page" to save your changes. Then click "Publish" to make them live on your website.</p>
+      </div>
+    </div>
+
+    <!-- Components -->
+    <div class="card mb-4" id="components">
+      <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-grid-3x3-gap"></i> Components</h5>
+      </div>
+      <div class="card-body">
+        <p>Components are the building blocks of your pages. Here are the available types:</p>
+
+        <div class="table-responsive">
+          <table class="table table-bordered">
+            <thead class="table-light">
+              <tr>
+                <th>Component</th>
+                <th>Description</th>
+                <th>Best For</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Section Heading</strong></td>
+                <td>Large heading with optional subtitle</td>
+                <td>Section titles, page headers</td>
+              </tr>
+              <tr>
+                <td><strong>Content Block</strong></td>
+                <td>Flexible block with text, images, timestamps, borders, and overlays</td>
+                <td>Blog posts, articles, featured content</td>
+              </tr>
+              <tr>
+                <td><strong>Two Column Layout</strong></td>
+                <td>Side-by-side columns that can contain other components</td>
+                <td>Comparing items, image + text layouts</td>
+              </tr>
+              <tr>
+                <td><strong>Image Gallery</strong></td>
+                <td>Grid of images with optional lightbox</td>
+                <td>Portfolio, photo galleries</td>
+              </tr>
+              <tr>
+                <td><strong>Contact Form</strong></td>
+                <td>Form with name, email, phone, and message fields</td>
+                <td>Contact pages</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h6 class="mt-4">Content Block Features</h6>
+        <p>The Content Block is the most versatile component with these optional sections:</p>
+        <ul>
+          <li><strong>Image/Slideshow:</strong> Single image or auto-advancing slideshow</li>
+          <li><strong>Image Overlay:</strong> Text and button overlay on images</li>
+          <li><strong>Text Content:</strong> Rich text with font and size options</li>
+          <li><strong>Timestamp:</strong> Date/time display with formatting options</li>
+          <li><strong>Border:</strong> Decorative border with solid or gradient styles</li>
+          <li><strong>Max Width:</strong> Control the component's maximum width</li>
+        </ul>
+
+        <h6 class="mt-4">Component IDs</h6>
+        <p>Each component has a unique ID (shown as <code>#component-id</code> in the list). You can customize this ID for anchor links. For example, set the ID to "about" to create a link like <code>yoursite.com/page.html#about</code>.</p>
+      </div>
+    </div>
+
+    <!-- Navigation & Footer -->
+    <div class="card mb-4" id="navigation">
+      <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-signpost-2"></i> Navigation &amp; Footer</h5>
+      </div>
+      <div class="card-body">
+        <h6>Main Navigation</h6>
+        <p>Configure the links that appear in your site's header:</p>
+        <ol>
+          <li>Go to the Dashboard</li>
+          <li>In the "Main Navigation" section, add links with a label and URL</li>
+          <li>Use URLs like <code>/about.html</code> for internal pages</li>
+          <li>Use full URLs like <code>https://example.com</code> for external links</li>
+          <li>Click "Save Navigation" to apply</li>
+        </ol>
+
+        <h6 class="mt-4">Footer Settings</h6>
+        <p>Customize the footer that appears on all pages:</p>
+        <ul>
+          <li><strong>Footer Text:</strong> Copyright notice or other text</li>
+          <li><strong>Social Links:</strong> Add links to Facebook, Instagram, Twitter/X, LinkedIn, YouTube, or email</li>
+        </ul>
+        <p class="small text-muted">Social icons only appear for platforms where you've entered a URL.</p>
+      </div>
+    </div>
+
+    <!-- Publishing -->
+    <div class="card mb-4" id="publishing">
+      <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-cloud-upload"></i> Publishing</h5>
+      </div>
+      <div class="card-body">
+        <p>Publishing makes your changes visible on your live website.</p>
+
+        <h6>When to Publish</h6>
+        <ul>
+          <li>After saving changes to any page</li>
+          <li>After modifying site settings (name, colors, logo)</li>
+          <li>After updating navigation or footer</li>
+        </ul>
+
+        <h6 class="mt-4">How to Publish</h6>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="border rounded p-3">
+              <h6><i class="bi bi-file-earmark-check"></i> Single Page</h6>
+              <p class="small mb-0">In the page editor, click "Publish" to publish just that page.</p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="border rounded p-3">
+              <h6><i class="bi bi-files"></i> All Pages</h6>
+              <p class="small mb-0">From the Dashboard, click "Publish All Pages" in Quick Actions.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="alert alert-success mt-4 mb-0">
+          <i class="bi bi-check-circle"></i> <strong>Tip:</strong> Always use "Publish All Pages" after changing site settings to ensure all pages reflect the updates.
+        </div>
+      </div>
+    </div>
+
+    <!-- File Management -->
+    <div class="card mb-4" id="files">
+      <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-folder"></i> File Management</h5>
+      </div>
+      <div class="card-body">
+        <p>The Files tab lets you manage all files on your website.</p>
+
+        <h6>Uploading Files</h6>
+        <ol>
+          <li>Navigate to the Files tab</li>
+          <li>Click the upload area or drag and drop files</li>
+          <li>Files are uploaded to the current folder</li>
+        </ol>
+
+        <h6 class="mt-4">Creating Folders</h6>
+        <p>Click "New Folder" to create a folder for organizing your files (e.g., <code>images/</code>, <code>documents/</code>).</p>
+
+        <h6 class="mt-4">Using Images in Components</h6>
+        <p>When adding images to components, you can:</p>
+        <ul>
+          <li>Click the upload button to upload a new image</li>
+          <li>Paste an image URL directly</li>
+          <li>Use files already uploaded to your site</li>
+        </ul>
+
+        <div class="alert alert-info mb-0">
+          <i class="bi bi-info-circle"></i> <strong>Image URLs:</strong> Files uploaded to your site are available at <code>https://{{ session.domain }}/filename.jpg</code>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tips & Tricks -->
+    <div class="card mb-4" id="tips">
+      <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-stars"></i> Tips &amp; Tricks</h5>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="border rounded p-3 h-100">
+              <h6><i class="bi bi-phone text-primary"></i> Mobile Preview</h6>
+              <p class="small mb-0">Use the device buttons above the preview to see how your site looks on different screen sizes.</p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="border rounded p-3 h-100">
+              <h6><i class="bi bi-copy text-primary"></i> Duplicate Components</h6>
+              <p class="small mb-0">Click the copy button on any component to duplicate it with all its settings.</p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="border rounded p-3 h-100">
+              <h6><i class="bi bi-link-45deg text-primary"></i> Anchor Links</h6>
+              <p class="small mb-0">Set a Section ID on components to create jump links within or between pages.</p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="border rounded p-3 h-100">
+              <h6><i class="bi bi-palette text-primary"></i> Theme Colors</h6>
+              <p class="small mb-0">Leave color fields blank in components to automatically use your site's theme colors.</p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="border rounded p-3 h-100">
+              <h6><i class="bi bi-images text-primary"></i> Slideshows</h6>
+              <p class="small mb-0">Add multiple images to a Content Block to automatically create a slideshow.</p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="border rounded p-3 h-100">
+              <h6><i class="bi bi-box-arrow-up-right text-primary"></i> Preview Site</h6>
+              <p class="small mb-0">Click "View Live Site" in Quick Actions to open your published website in a new tab.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Need More Help -->
+    <div class="card">
+      <div class="card-body text-center">
+        <h5><i class="bi bi-question-circle"></i> Need More Help?</h5>
+        <p class="text-muted">If you have questions or run into issues, please contact Brian or open an issue here: https://github.com/brianjstroh/bstroh/issues.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  html {
+    scroll-behavior: smooth;
+  }
+  .accordion-button:not(.collapsed) {
+    background-color: #e7f1ff;
+    color: #0c63e4;
+  }
+  .list-group-item-action:hover {
+    background-color: #f8f9fa;
+  }
+</style>
+{% endblock %}
