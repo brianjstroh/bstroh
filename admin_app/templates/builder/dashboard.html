@@ -244,6 +244,44 @@
       </div>
     </div>
 
+    <!-- Sidebar -->
+    <div class="card mb-4">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-layout-sidebar"></i> Sidebar</span>
+        <button class="btn btn-sm btn-outline-primary" onclick="addSidebarWidget()">
+          <i class="bi bi-plus"></i> Add Widget
+        </button>
+      </div>
+      <div class="card-body">
+        <p class="text-muted small mb-3">Configure the sidebar that appears on all pages. The sidebar is collapsible and appears on the left side of the page.</p>
+        <div id="sidebarWidgetsContainer">
+          {% for widget in site.sidebar %}
+          <div class="sidebar-widget-item border rounded p-3 mb-2" data-index="{{ loop.index0 }}" data-type="{{ widget.type }}">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <strong>{{ widget.type | replace('-', ' ') | title }}</strong>
+              <div>
+                <button class="btn btn-sm btn-outline-primary" onclick="editSidebarWidget({{ loop.index0 }})" title="Edit">
+                  <i class="bi bi-pencil"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger" onclick="removeSidebarWidget({{ loop.index0 }})" title="Remove">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
+            </div>
+            {% if widget.data.title %}
+            <small class="text-muted">{{ widget.data.title }}</small>
+            {% endif %}
+          </div>
+          {% else %}
+          <div id="noSidebarWidgets" class="text-center text-muted py-3">
+            <i class="bi bi-layout-sidebar"></i>
+            <p class="mb-0">No sidebar widgets yet. Click "Add Widget" to get started.</p>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
     <!-- Preview -->
     <div class="card">
       <div class="card-header d-flex justify-content-between align-items-center">
@@ -302,17 +340,64 @@
   </div>
 </div>
 
+<!-- Sidebar Widget Modal -->
+<div class="modal fade" id="sidebarWidgetModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="sidebarWidgetModalTitle">Add Sidebar Widget</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div id="widgetTypeSelector" class="mb-3">
+          <label class="form-label">Widget Type</label>
+          <select class="form-select" id="widgetType" onchange="showWidgetFields()">
+            <!-- Populated by JavaScript -->
+          </select>
+        </div>
+        <div id="widgetFields">
+          <!-- Dynamic fields populated by JavaScript -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="saveSidebarWidget()">Save Widget</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
   let newPageModal;
+  let sidebarWidgetModal;
+  let sidebarWidgets = {{ site.sidebar | tojson | safe if site.sidebar else '[]' }};
+  let editingSidebarIndex = -1;
   const colorSchemes = {{ color_schemes | tojson | safe }};
+  // Allow sidebar and content components in the sidebar (exclude navigation, footer, and slot-based components)
+  const allComponents = {{ components | tojson | safe }};
+  const sidebarComponentDefs = allComponents.filter(c =>
+    c.category !== 'navigation' &&
+    c.category !== 'footer' &&
+    !c.has_slots
+  );
 
   document.addEventListener('DOMContentLoaded', function() {
     newPageModal = new bootstrap.Modal(document.getElementById('newPageModal'));
+    sidebarWidgetModal = new bootstrap.Modal(document.getElementById('sidebarWidgetModal'));
 
     // Auto-generate slug from title
     document.getElementById('newPageTitle').addEventListener('input', function() {
       const slug = this.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
       document.getElementById('newPageSlug').value = slug;
+    });
+
+    // Populate widget type dropdown
+    const widgetTypeSelect = document.getElementById('widgetType');
+    sidebarComponentDefs.forEach(comp => {
+      const option = document.createElement('option');
+      option.value = comp.id;
+      option.textContent = comp.name;
+      widgetTypeSelect.appendChild(option);
     });
 
     // Initialize custom colors visibility
@@ -580,6 +665,322 @@
       }
     } catch (error) {
       alert('Error saving navigation: ' + error.message);
+    }
+  }
+
+  // Sidebar widget management
+  function addSidebarWidget() {
+    editingSidebarIndex = -1;
+    document.getElementById('sidebarWidgetModalTitle').textContent = 'Add Sidebar Widget';
+    document.getElementById('widgetTypeSelector').style.display = 'block';
+    document.getElementById('widgetType').value = 'sidebar-about';
+    showWidgetFields();
+    sidebarWidgetModal.show();
+  }
+
+  function editSidebarWidget(index) {
+    editingSidebarIndex = index;
+    const widget = sidebarWidgets[index];
+    document.getElementById('sidebarWidgetModalTitle').textContent = 'Edit Widget';
+    document.getElementById('widgetTypeSelector').style.display = 'none';
+    document.getElementById('widgetType').value = widget.type;
+    showWidgetFields(widget.data);
+    sidebarWidgetModal.show();
+  }
+
+  function showWidgetFields(existingData = null) {
+    const widgetType = document.getElementById('widgetType').value;
+    const compDef = sidebarComponentDefs.find(c => c.id === widgetType);
+    const container = document.getElementById('widgetFields');
+
+    if (!compDef) {
+      container.innerHTML = '<p class="text-muted">Widget type not found</p>';
+      return;
+    }
+
+    container.innerHTML = '';
+
+    compDef.editable_fields.forEach(field => {
+      const value = existingData ? (existingData[field.name] !== undefined ? existingData[field.name] : field.default) : (field.default !== undefined ? field.default : '');
+      const div = document.createElement('div');
+      div.className = 'mb-3';
+
+      const label = document.createElement('label');
+      label.className = 'form-label';
+      label.textContent = field.label;
+
+      let input;
+      switch (field.type) {
+        case 'textarea':
+          div.appendChild(label);
+          input = document.createElement('textarea');
+          input.className = 'form-control';
+          input.rows = 3;
+          input.value = value || '';
+          input.dataset.fieldName = field.name;
+          div.appendChild(input);
+          break;
+
+        case 'checkbox':
+          div.className = 'mb-3 form-check';
+          input = document.createElement('input');
+          input.type = 'checkbox';
+          input.className = 'form-check-input';
+          input.checked = value === true || value === 'true';
+          input.dataset.fieldName = field.name;
+          input.id = 'widget_' + field.name;
+          label.className = 'form-check-label';
+          label.htmlFor = input.id;
+          div.appendChild(input);
+          div.appendChild(label);
+          break;
+
+        case 'select':
+          div.appendChild(label);
+          input = document.createElement('select');
+          input.className = 'form-select';
+          (field.options || []).forEach(opt => {
+            const option = document.createElement('option');
+            option.value = opt;
+            option.textContent = opt;
+            option.selected = opt === value;
+            input.appendChild(option);
+          });
+          input.dataset.fieldName = field.name;
+          div.appendChild(input);
+          break;
+
+        case 'image':
+          div.appendChild(label);
+          const imgGroup = document.createElement('div');
+          imgGroup.className = 'input-group';
+          input = document.createElement('input');
+          input.type = 'text';
+          input.className = 'form-control';
+          input.value = value || '';
+          input.placeholder = 'Image URL';
+          input.dataset.fieldName = field.name;
+          const uploadBtn = document.createElement('button');
+          uploadBtn.type = 'button';
+          uploadBtn.className = 'btn btn-outline-secondary';
+          uploadBtn.innerHTML = '<i class="bi bi-upload"></i>';
+          uploadBtn.onclick = () => {
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = 'image/*';
+            fileInput.onchange = async (e) => {
+              if (e.target.files[0]) {
+                const formData = new FormData();
+                formData.append('file', e.target.files[0]);
+                try {
+                  const response = await fetch('/builder/assets/upload', { method: 'POST', body: formData });
+                  const data = await response.json();
+                  if (data.success) input.value = data.url;
+                } catch (err) { alert('Upload error: ' + err.message); }
+              }
+            };
+            fileInput.click();
+          };
+          imgGroup.appendChild(input);
+          imgGroup.appendChild(uploadBtn);
+          div.appendChild(imgGroup);
+          break;
+
+        case 'imagelist':
+          div.appendChild(label);
+          const listContainer = document.createElement('div');
+          listContainer.className = 'imagelist-sidebar-container border rounded p-2';
+          listContainer.dataset.fieldName = field.name;
+          const imageList = Array.isArray(value) ? value : [];
+          const listPreview = document.createElement('div');
+          listPreview.className = 'd-flex flex-wrap gap-1 mb-2';
+          imageList.forEach((url, idx) => {
+            const thumb = document.createElement('div');
+            thumb.className = 'position-relative';
+            thumb.style.cssText = 'width: 50px; height: 50px;';
+            thumb.innerHTML = `<img src="${url}" style="width:100%;height:100%;object-fit:cover;border-radius:4px;">
+              <button type="button" class="btn btn-sm btn-danger position-absolute" style="top:-5px;right:-5px;padding:0 4px;font-size:10px;" onclick="this.parentElement.remove()">&times;</button>`;
+            thumb.dataset.imageUrl = url;
+            listPreview.appendChild(thumb);
+          });
+          listContainer.appendChild(listPreview);
+          const addImgBtn = document.createElement('button');
+          addImgBtn.type = 'button';
+          addImgBtn.className = 'btn btn-sm btn-outline-primary';
+          addImgBtn.innerHTML = '<i class="bi bi-plus"></i> Add Image';
+          addImgBtn.onclick = () => {
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = 'image/*';
+            fileInput.onchange = async (e) => {
+              if (e.target.files[0]) {
+                const formData = new FormData();
+                formData.append('file', e.target.files[0]);
+                try {
+                  const response = await fetch('/builder/assets/upload', { method: 'POST', body: formData });
+                  const data = await response.json();
+                  if (data.success) {
+                    const thumb = document.createElement('div');
+                    thumb.className = 'position-relative';
+                    thumb.style.cssText = 'width: 50px; height: 50px;';
+                    thumb.innerHTML = `<img src="${data.url}" style="width:100%;height:100%;object-fit:cover;border-radius:4px;">
+                      <button type="button" class="btn btn-sm btn-danger position-absolute" style="top:-5px;right:-5px;padding:0 4px;font-size:10px;" onclick="this.parentElement.remove()">&times;</button>`;
+                    thumb.dataset.imageUrl = data.url;
+                    listPreview.appendChild(thumb);
+                  }
+                } catch (err) { alert('Upload error: ' + err.message); }
+              }
+            };
+            fileInput.click();
+          };
+          listContainer.appendChild(addImgBtn);
+          div.appendChild(listContainer);
+          break;
+
+        case 'range':
+          div.appendChild(label);
+          const rangeWrapper = document.createElement('div');
+          rangeWrapper.className = 'd-flex align-items-center gap-2';
+          const rangeInput = document.createElement('input');
+          rangeInput.type = 'range';
+          rangeInput.className = 'form-range flex-grow-1';
+          rangeInput.min = field.min || 0;
+          rangeInput.max = field.max || 100;
+          rangeInput.value = value !== undefined && value !== '' ? value : (field.default || 50);
+          rangeInput.dataset.fieldName = field.name;
+          const rangeLabel = document.createElement('span');
+          rangeLabel.className = 'badge bg-secondary';
+          rangeLabel.style.minWidth = '40px';
+          rangeLabel.textContent = rangeInput.value + '%';
+          rangeInput.addEventListener('input', () => { rangeLabel.textContent = rangeInput.value + '%'; });
+          rangeWrapper.appendChild(rangeInput);
+          rangeWrapper.appendChild(rangeLabel);
+          div.appendChild(rangeWrapper);
+          break;
+
+        case 'datetime':
+          div.appendChild(label);
+          const dtInput = document.createElement('input');
+          dtInput.type = 'datetime-local';
+          dtInput.className = 'form-control';
+          dtInput.dataset.fieldName = field.name;
+          if (value) dtInput.value = value.substring(0, 16);
+          div.appendChild(dtInput);
+          break;
+
+        case 'richtext':
+          div.appendChild(label);
+          const rtTextarea = document.createElement('textarea');
+          rtTextarea.className = 'form-control';
+          rtTextarea.rows = 4;
+          rtTextarea.value = value || '';
+          rtTextarea.dataset.fieldName = field.name;
+          const rtHelp = document.createElement('small');
+          rtHelp.className = 'text-muted';
+          rtHelp.textContent = 'HTML formatting supported';
+          div.appendChild(rtTextarea);
+          div.appendChild(rtHelp);
+          break;
+
+        case 'color':
+          div.appendChild(label);
+          const colorInput = document.createElement('input');
+          colorInput.type = 'color';
+          colorInput.className = 'form-control form-control-color';
+          colorInput.value = value || '#000000';
+          colorInput.dataset.fieldName = field.name;
+          div.appendChild(colorInput);
+          break;
+
+        default:
+          div.appendChild(label);
+          input = document.createElement('input');
+          input.type = field.type === 'email' ? 'email' : field.type === 'url' ? 'url' : 'text';
+          input.className = 'form-control';
+          input.value = value || '';
+          if (field.placeholder) input.placeholder = field.placeholder;
+          input.dataset.fieldName = field.name;
+          div.appendChild(input);
+      }
+
+      container.appendChild(div);
+    });
+  }
+
+  async function saveSidebarWidget() {
+    const widgetType = document.getElementById('widgetType').value;
+    const compDef = sidebarComponentDefs.find(c => c.id === widgetType);
+
+    const data = {};
+    // Regular inputs and selects
+    document.querySelectorAll('#widgetFields input[data-field-name]:not([type="checkbox"]), #widgetFields select[data-field-name], #widgetFields textarea[data-field-name]').forEach(input => {
+      data[input.dataset.fieldName] = input.value;
+    });
+    // Checkboxes
+    document.querySelectorAll('#widgetFields input[type="checkbox"][data-field-name]').forEach(input => {
+      data[input.dataset.fieldName] = input.checked;
+    });
+    // Image lists
+    document.querySelectorAll('#widgetFields .imagelist-sidebar-container').forEach(container => {
+      const images = [];
+      container.querySelectorAll('[data-image-url]').forEach(thumb => {
+        images.push(thumb.dataset.imageUrl);
+      });
+      data[container.dataset.fieldName] = images;
+    });
+
+    if (editingSidebarIndex >= 0) {
+      // Update existing
+      sidebarWidgets[editingSidebarIndex].data = data;
+    } else {
+      // Add new
+      sidebarWidgets.push({
+        id: 'sidebar-' + Date.now(),
+        type: widgetType,
+        data: data
+      });
+    }
+
+    // Save to server
+    try {
+      const response = await fetch('/builder/site/sidebar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sidebar: sidebarWidgets })
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        sidebarWidgetModal.hide();
+        location.reload();
+      } else {
+        alert('Error saving sidebar: ' + result.error);
+      }
+    } catch (error) {
+      alert('Error saving sidebar: ' + error.message);
+    }
+  }
+
+  async function removeSidebarWidget(index) {
+    if (!confirm('Remove this widget?')) return;
+
+    sidebarWidgets.splice(index, 1);
+
+    try {
+      const response = await fetch('/builder/site/sidebar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sidebar: sidebarWidgets })
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        location.reload();
+      } else {
+        alert('Error removing widget: ' + result.error);
+      }
+    } catch (error) {
+      alert('Error removing widget: ' + error.message);
     }
   }
 

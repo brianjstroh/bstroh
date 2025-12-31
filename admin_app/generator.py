@@ -120,6 +120,7 @@ class SiteGenerator:
       "navigation": [{"label": "Home", "url": "/", "children": []}],
       "footer_text": f"© {datetime.now().year} {site_name}. All rights reserved.",
       "social_links": {},
+      "sidebar": [],  # Site-wide sidebar components
       "created_at": now,
       "updated_at": now,
     }
@@ -139,47 +140,21 @@ class SiteGenerator:
     title: str,
     include_starter: bool = False,
   ) -> dict[str, Any]:
-    """Create a page with nav/footer. If include_starter, adds hero and heading."""
+    """Create a page with nav/footer. Header/footer/sidebar are site-wide."""
     now = datetime.now(UTC).isoformat()
 
-    # Initialize slots
+    # Initialize slots - only main content is per-page
+    # Header, footer, sidebar are site-wide (stored in site config)
     slots: dict[str, list[dict[str, Any]]] = {
-      "header": [],
-      "hero": [],
       "main": [],
-      "sidebar": [],
-      "footer": [],
     }
 
-    comp_counter = 0
-
-    # Always add navigation and footer
-    nav_comp = self._components.get("nav-main", {})
-    slots["header"].append(
-      {
-        "id": f"comp-{comp_counter}",
-        "type": "nav-main",
-        "data": nav_comp.get("default_data", {}).copy(),
-      }
-    )
-    comp_counter += 1
-
-    footer_comp = self._components.get("footer-simple", {})
-    slots["footer"].append(
-      {
-        "id": f"comp-{comp_counter}",
-        "type": "footer-simple",
-        "data": footer_comp.get("default_data", {}).copy(),
-      }
-    )
-    comp_counter += 1
-
-    # Add starter content for new sites (just a heading, no hero)
+    # Add starter content for new sites
     if include_starter:
       heading_comp = self._components.get("text-heading", {})
       slots["main"].append(
         {
-          "id": f"comp-{comp_counter}",
+          "id": "comp-0",
           "type": "text-heading",
           "data": heading_comp.get("default_data", {}).copy(),
         }
@@ -219,7 +194,7 @@ class SiteGenerator:
     overrides = site_config.get("color_overrides", {})
     colors = {**base_colors, **overrides}
 
-    # Render components by slot
+    # Render page-specific components (main content)
     rendered_slots: dict[str, list[str]] = {}
     page_slots = page_config.get("slots", {})
     for slot_id, components in page_slots.items():
@@ -227,6 +202,12 @@ class SiteGenerator:
       for comp in components:
         rendered = self._render_component(comp, site_config)
         rendered_slots[slot_id].append(rendered)
+
+    # Render site-wide sidebar from site config
+    rendered_slots["sidebar"] = []
+    for comp in site_config.get("sidebar", []):
+      rendered = self._render_component(comp, site_config)
+      rendered_slots["sidebar"].append(rendered)
 
     # Generate CSS variables
     css_vars = self._generate_color_css(colors)
@@ -242,10 +223,31 @@ class SiteGenerator:
       colors=colors,
     )
 
-  def _render_component(self, comp: dict[str, Any], site_config: dict[str, Any]) -> str:
-    """Render a single component to HTML."""
+  def _render_component(
+    self, comp: dict[str, Any], site_config: dict[str, Any], depth: int = 0
+  ) -> str:
+    """Render a single component to HTML, with recursive slot support."""
+    # Prevent infinite recursion
+    if depth > 3:
+      return '<div class="component-error">Max nesting depth exceeded</div>'
+
     comp_type = comp.get("type", "")
-    comp_data = comp.get("data", {})
+    comp_data = comp.get("data", {}).copy()
+
+    # Check if this component has nested slots and render them
+    comp_def = self._components.get(comp_type, {})
+    if comp_def.get("has_slots"):
+      for field in comp_def.get("editable_fields", []):
+        if field.get("type") == "componentslot":
+          slot_name = field["name"]
+          slot_components = comp_data.get(slot_name, [])
+          # Render each nested component
+          rendered_slot: list[str] = []
+          for nested_comp in slot_components:
+            rendered = self._render_component(nested_comp, site_config, depth + 1)
+            rendered_slot.append(rendered)
+          # Pass rendered HTML to template
+          comp_data[f"{slot_name}_rendered"] = rendered_slot
 
     try:
       template = self.jinja_env.get_template(f"components/{comp_type}.html")

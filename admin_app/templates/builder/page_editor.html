@@ -38,23 +38,14 @@
 
     <!-- Add Components -->
     <div class="card mb-4" id="addComponentCard">
-      <div class="card-header d-flex justify-content-between align-items-center">
-        <span><i class="bi bi-plus-square"></i> Add Component</span>
-        <span class="badge bg-primary" id="targetSlotBadge">Main Content</span>
+      <div class="card-header">
+        <i class="bi bi-plus-square"></i> Add Component
       </div>
       <div class="card-body p-2">
-        <div class="mb-2">
-          <label class="form-label small text-muted mb-1">Add to section:</label>
-          <select class="form-select form-select-sm" id="componentSlot" onchange="updateSlotBadge()">
-            <option value="hero">Hero Section</option>
-            <option value="main" selected>Main Content</option>
-            <option value="sidebar">Sidebar</option>
-          </select>
-        </div>
-        <p class="small text-muted mb-2">Click a component to add it (hover to preview):</p>
+        <p class="small text-muted mb-2">Click to add (hover to preview):</p>
         <div class="component-list">
           {% for component in components %}
-          {% if component.category not in ['navigation', 'footer'] %}
+          {% if component.category not in ['navigation', 'footer', 'sidebar'] %}
           <div class="component-item p-2 mb-2 border rounded"
                data-component-id="{{ component.id }}"
                onclick="addComponent('{{ component.id }}')"
@@ -89,7 +80,7 @@
   <div class="col-md-6">
     <div class="card mb-4">
       <div class="card-header d-flex justify-content-between align-items-center">
-        <span><i class="bi bi-layers"></i> Page Structure</span>
+        <span><i class="bi bi-layers"></i> Page Content</span>
         <div>
           <button class="btn btn-sm btn-outline-secondary" onclick="refreshPreview()">
             <i class="bi bi-arrow-clockwise"></i>
@@ -99,41 +90,8 @@
           </button>
         </div>
       </div>
-      <div class="card-body p-0">
-        <!-- Slot: Hero -->
-        <div class="slot-section" data-slot="hero">
-          <div class="slot-header bg-light px-3 py-2 border-bottom d-flex justify-content-between align-items-center">
-            <span><i class="bi bi-image"></i> Hero Section</span>
-            <button class="btn btn-sm btn-outline-primary" onclick="selectSlotAndScroll('hero')" title="Add component to Hero">
-              <i class="bi bi-plus"></i>
-            </button>
-          </div>
-          <div class="slot-content p-2" id="slot-hero">
-          </div>
-        </div>
-
-        <!-- Slot: Main -->
-        <div class="slot-section" data-slot="main">
-          <div class="slot-header bg-light px-3 py-2 border-bottom d-flex justify-content-between align-items-center">
-            <span><i class="bi bi-layout-text-window"></i> Main Content</span>
-            <button class="btn btn-sm btn-outline-primary" onclick="selectSlotAndScroll('main')" title="Add component to Main">
-              <i class="bi bi-plus"></i>
-            </button>
-          </div>
-          <div class="slot-content p-2" id="slot-main">
-          </div>
-        </div>
-
-        <!-- Slot: Sidebar -->
-        <div class="slot-section" data-slot="sidebar">
-          <div class="slot-header bg-light px-3 py-2 border-bottom d-flex justify-content-between align-items-center">
-            <span><i class="bi bi-layout-sidebar"></i> Sidebar</span>
-            <button class="btn btn-sm btn-outline-primary" onclick="selectSlotAndScroll('sidebar')" title="Add component to Sidebar">
-              <i class="bi bi-plus"></i>
-            </button>
-          </div>
-          <div class="slot-content p-2" id="slot-sidebar">
-          </div>
+      <div class="card-body p-2">
+        <div class="slot-content" id="slot-main">
         </div>
       </div>
     </div>
@@ -144,9 +102,9 @@
     <div class="card" style="position: sticky; top: 1rem;">
       <div class="card-header d-flex justify-content-between align-items-center">
         <span><i class="bi bi-eye"></i> Preview</span>
-        <a href="https://{{ domain }}/{{ page.id }}.html" target="_blank" class="btn btn-sm btn-outline-secondary">
+        <button class="btn btn-sm btn-outline-secondary" onclick="openFullPreview()" title="Open full preview">
           <i class="bi bi-box-arrow-up-right"></i>
-        </a>
+        </button>
       </div>
       <div class="card-body p-0">
         <iframe id="previewFrame" src="{{ url_for('builder_preview', page_id=page.id) }}"
@@ -425,12 +383,103 @@
     font-style: italic;
     width: 100%;
   }
+
+  /* Nested Component Slot Styles */
+  .componentslot-container {
+    background: #f8f9fa;
+  }
+  .nested-component-item {
+    transition: all 0.2s;
+  }
+  .nested-component-item:hover {
+    background: #e9ecef !important;
+    border-color: #0d6efd !important;
+  }
+  .slot-component-list:empty::after {
+    content: 'No components in this slot';
+    display: block;
+    padding: 0.5rem;
+    text-align: center;
+    color: #aaa;
+    font-style: italic;
+  }
+
+  /* Ensure image browser modal appears above nested edit modals */
+  #imageBrowserModal {
+    z-index: 1070 !important;
+  }
+  #imageBrowserModal + .modal-backdrop {
+    z-index: 1065 !important;
+  }
+  #nestedEditModal {
+    z-index: 1060 !important;
+  }
+  #nestedEditModal + .modal-backdrop {
+    z-index: 1055 !important;
+  }
+
+  /* Rich Text Editor Styles */
+  .richtext-editor-container {
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    overflow: hidden;
+  }
+  .richtext-toolbar {
+    border-bottom: 1px solid #dee2e6;
+    border-radius: 0.375rem 0.375rem 0 0 !important;
+    flex-wrap: wrap;
+  }
+  .richtext-toolbar .btn {
+    padding: 0.25rem 0.5rem;
+  }
+  .richtext-editor {
+    border: none !important;
+    border-radius: 0 0 0.375rem 0.375rem !important;
+    background: white;
+  }
+  .richtext-editor:focus {
+    box-shadow: none;
+    outline: none;
+  }
+  .richtext-editor p {
+    margin-bottom: 0.5rem;
+  }
+  .richtext-editor a {
+    color: var(--bs-primary);
+    text-decoration: underline;
+  }
+  .emoji-popup {
+    display: flex;
+    flex-wrap: wrap;
+    max-width: 250px;
+  }
+
+  /* Component Section Styles */
+  .component-section {
+    overflow: hidden;
+  }
+  .component-section .section-header {
+    border-bottom: 1px solid #dee2e6;
+    user-select: none;
+  }
+  .component-section .section-header:hover {
+    background-color: #e9ecef !important;
+  }
+  .component-section .section-content {
+    background: #fafafa;
+  }
+  .component-section .section-content .mb-3:last-child {
+    margin-bottom: 0 !important;
+  }
 </style>
 
 <script>
+  console.log('Page editor script starting...');
   const pageId = '{{ page.id }}';
   let pageData = {{ page | tojson | safe }};
+  console.log('pageData:', pageData);
   let componentsLib = {{ components | tojson | safe }};
+  console.log('componentsLib:', componentsLib);
   let editModal;
   let deletePageModal;
   let currentEditingComponent = null;
@@ -473,15 +522,15 @@
   }
 
   function renderAllSlots() {
-    const slots = ['hero', 'main', 'sidebar'];
-    slots.forEach(slot => {
-      renderSlot(slot);
-    });
+    renderSlot('main');
   }
 
   function renderSlot(slotName) {
+    console.log('renderSlot called for:', slotName);
     const container = document.getElementById('slot-' + slotName);
+    console.log('container:', container);
     const components = pageData.slots[slotName] || [];
+    console.log('components to render:', components);
 
     container.innerHTML = '';
 
@@ -503,10 +552,13 @@
             <span class="text-muted small ms-2">${getComponentPreview(comp)}</span>
           </div>
           <div class="component-actions">
-            <button class="btn btn-sm btn-outline-primary" onclick="editComponent('${slotName}', ${index})">
+            <button class="btn btn-sm btn-outline-secondary" onclick="duplicateComponent('${slotName}', ${index})" title="Duplicate">
+              <i class="bi bi-copy"></i>
+            </button>
+            <button class="btn btn-sm btn-outline-primary" onclick="editComponent('${slotName}', ${index})" title="Edit">
               <i class="bi bi-pencil"></i>
             </button>
-            <button class="btn btn-sm btn-outline-danger" onclick="removeComponent('${slotName}', ${index})">
+            <button class="btn btn-sm btn-outline-danger" onclick="removeComponent('${slotName}', ${index})" title="Delete">
               <i class="bi bi-trash"></i>
             </button>
           </div>
@@ -518,33 +570,38 @@
   }
 
   function getComponentPreview(comp) {
-    if (comp.data.title) return comp.data.title.substring(0, 30) + (comp.data.title.length > 30 ? '...' : '');
-    if (comp.data.heading) return comp.data.heading.substring(0, 30) + (comp.data.heading.length > 30 ? '...' : '');
-    if (comp.data.site_name) return comp.data.site_name;
-    return '';
+    if (!comp || !comp.data) return '';
+
+    let preview = '';
+    if (comp.data.title) preview = comp.data.title.substring(0, 30) + (comp.data.title.length > 30 ? '...' : '');
+    else if (comp.data.heading) preview = comp.data.heading.substring(0, 30) + (comp.data.heading.length > 30 ? '...' : '');
+    else if (comp.data.site_name) preview = comp.data.site_name;
+
+    // Show anchor_id if present
+    if (comp.data.anchor_id) {
+      const idDisplay = `<span class="text-primary opacity-75">#${comp.data.anchor_id}</span>`;
+      return preview ? `${preview} ${idDisplay}` : idDisplay;
+    }
+    return preview;
   }
 
-  const slotNames = {
-    hero: 'Hero Section',
-    main: 'Main Content',
-    sidebar: 'Sidebar'
-  };
+  // Full preview opens in new tab
+  function openFullPreview() {
+    // Create a form to POST the current page data to preview
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '/builder/preview/{{ page.id }}';
+    form.target = '_blank';
 
-  function updateSlotBadge() {
-    const slot = document.getElementById('componentSlot').value;
-    document.getElementById('targetSlotBadge').textContent = slotNames[slot] || slot;
-  }
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'page_data';
+    input.value = JSON.stringify(pageData);
+    form.appendChild(input);
 
-  function selectSlotAndScroll(slotName) {
-    // Update the dropdown
-    document.getElementById('componentSlot').value = slotName;
-    updateSlotBadge();
-
-    // Scroll to and highlight the component panel
-    const addCard = document.getElementById('addComponentCard');
-    addCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    addCard.classList.add('border-primary');
-    setTimeout(() => addCard.classList.remove('border-primary'), 2000);
+    document.body.appendChild(form);
+    form.submit();
+    document.body.removeChild(form);
   }
 
   function showToast(message, type = 'success') {
@@ -617,9 +674,20 @@
     document.getElementById('componentPreviewPopup').style.display = 'none';
   }
 
+  function generateComponentAnchorId(componentType) {
+    // Generate timestamp-based ID: component-type-YYYYMMDD-HHMMSS
+    const now = new Date();
+    const timestamp = now.getFullYear().toString() +
+      (now.getMonth() + 1).toString().padStart(2, '0') +
+      now.getDate().toString().padStart(2, '0') + '-' +
+      now.getHours().toString().padStart(2, '0') +
+      now.getMinutes().toString().padStart(2, '0') +
+      now.getSeconds().toString().padStart(2, '0');
+    return `${componentType}-${timestamp}`;
+  }
+
   function addComponent(componentId) {
     hideComponentPreview(); // Hide preview when adding
-    const slot = document.getElementById('componentSlot').value;
     const compDef = componentsLib.find(c => c.id === componentId);
 
     if (!compDef) {
@@ -636,19 +704,24 @@
       data: JSON.parse(JSON.stringify(compDef.default_data))
     };
 
-    if (!pageData.slots[slot]) {
-      pageData.slots[slot] = [];
+    // Auto-generate anchor_id if the component has that field
+    if (compDef.editable_fields.some(f => f.name === 'anchor_id')) {
+      newComponent.data.anchor_id = generateComponentAnchorId(componentId);
     }
 
-    pageData.slots[slot].push(newComponent);
-    renderSlot(slot);
+    if (!pageData.slots.main) {
+      pageData.slots.main = [];
+    }
+
+    pageData.slots.main.push(newComponent);
+    renderSlot('main');
     refreshPreview();
 
     // Show success feedback
-    showToast(`Added "${compDef.name}" to ${slotNames[slot]}`);
+    showToast(`Added "${compDef.name}"`);
 
     // Highlight the slot where component was added
-    const slotEl = document.getElementById('slot-' + slot);
+    const slotEl = document.getElementById('slot-main');
     slotEl.classList.add('bg-success-subtle');
     setTimeout(() => slotEl.classList.remove('bg-success-subtle'), 1000);
   }
@@ -657,6 +730,9 @@
     currentEditingSlot = slotName;
     currentEditingIndex = index;
     currentEditingComponent = pageData.slots[slotName][index];
+
+    console.log('=== Editing component ===');
+    console.log('Component data:', JSON.stringify(currentEditingComponent.data, null, 2));
 
     const compDef = componentsLib.find(c => c.id === currentEditingComponent.type);
     if (!compDef) {
@@ -669,10 +745,129 @@
     const body = document.getElementById('editComponentBody');
     body.innerHTML = '';
 
-    compDef.editable_fields.forEach(field => {
-      const value = currentEditingComponent.data[field.name] || field.default || '';
-      body.appendChild(createFieldEditor(field, value));
-    });
+    if (compDef.has_sections) {
+      // Group fields by section, preserving order
+      const sections = {};
+      const sectionOrder = [];
+      const noSection = [];
+
+      compDef.editable_fields.forEach(field => {
+        if (field.section) {
+          if (!sections[field.section]) {
+            sections[field.section] = [];
+            sectionOrder.push(field.section);
+          }
+          sections[field.section].push(field);
+        } else {
+          noSection.push(field);
+        }
+      });
+
+      // Render each section in order
+      sectionOrder.forEach(sectionName => {
+        const sectionFields = sections[sectionName];
+        const toggleField = sectionFields.find(f => f.type === 'section_toggle');
+        const otherFields = sectionFields.filter(f => f.type !== 'section_toggle');
+
+        const sectionDiv = document.createElement('div');
+        sectionDiv.className = 'component-section mb-3 border rounded';
+
+        // Section header with separate collapse and enable controls
+        const header = document.createElement('div');
+        header.className = 'section-header d-flex align-items-center p-2 bg-light rounded-top';
+
+        // Collapse/expand icon (left side) - starts collapsed
+        const collapseBtn = document.createElement('button');
+        collapseBtn.type = 'button';
+        collapseBtn.className = 'btn btn-sm btn-link p-0 me-2 text-muted';
+        collapseBtn.innerHTML = '<i class="bi bi-chevron-right"></i>';
+        collapseBtn.title = 'Collapse/Expand';
+
+        // Enable checkbox (separate from collapse)
+        const toggleValue = toggleField ? (currentEditingComponent.data[toggleField.name] !== undefined ? currentEditingComponent.data[toggleField.name] : toggleField.default) : true;
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.className = 'form-check-input me-2';
+        checkbox.checked = toggleValue === true || toggleValue === 'true';
+        checkbox.dataset.fieldKey = toggleField ? toggleField.name : '';
+        checkbox.id = 'section_enable_' + sectionName;
+        checkbox.title = 'Enable/Disable this section';
+
+        const headerLabel = document.createElement('label');
+        headerLabel.className = 'form-check-label fw-medium flex-grow-1 mb-0';
+        headerLabel.htmlFor = checkbox.id;
+        headerLabel.textContent = toggleField ? toggleField.label : sectionName;
+        headerLabel.style.cursor = 'pointer';
+
+        header.appendChild(collapseBtn);
+        header.appendChild(checkbox);
+        header.appendChild(headerLabel);
+        sectionDiv.appendChild(header);
+
+        // Section content (collapsible) - starts collapsed
+        const content = document.createElement('div');
+        content.className = 'section-content p-2';
+        content.style.display = 'none'; // Start collapsed
+
+        otherFields.forEach(field => {
+          const value = currentEditingComponent.data[field.name] !== undefined ? currentEditingComponent.data[field.name] : (field.default !== undefined ? field.default : '');
+          content.appendChild(createFieldEditor(field, value));
+        });
+
+        sectionDiv.appendChild(content);
+
+        // Collapse button only controls visibility (not enable/disable)
+        const toggleCollapse = () => {
+          const isCollapsed = content.style.display === 'none';
+          content.style.display = isCollapsed ? 'block' : 'none';
+          collapseBtn.innerHTML = isCollapsed ? '<i class="bi bi-chevron-down"></i>' : '<i class="bi bi-chevron-right"></i>';
+        };
+
+        collapseBtn.onclick = (e) => {
+          e.stopPropagation();
+          toggleCollapse();
+        };
+
+        // Clicking the label also toggles collapse
+        headerLabel.onclick = (e) => {
+          if (e.target === checkbox) return;
+          toggleCollapse();
+        };
+
+        // Visual feedback when section is disabled
+        const updateDisabledState = () => {
+          content.style.opacity = checkbox.checked ? '1' : '0.5';
+          headerLabel.style.textDecoration = checkbox.checked ? 'none' : 'line-through';
+        };
+        checkbox.onchange = () => {
+          updateDisabledState();
+          // Auto-initialize timestamp field when timestamp section is enabled
+          if (checkbox.checked && sectionName === 'timestamp') {
+            const datetimeInput = content.querySelector('input[type="datetime-local"]');
+            if (datetimeInput && !datetimeInput.value) {
+              // Set to current date/time
+              const now = new Date();
+              datetimeInput.value = now.toISOString().substring(0, 16);
+            }
+          }
+        };
+        updateDisabledState();
+
+        body.appendChild(sectionDiv);
+      });
+
+      // Render fields without section
+      noSection.forEach(field => {
+        const value = currentEditingComponent.data[field.name] !== undefined ? currentEditingComponent.data[field.name] : (field.default !== undefined ? field.default : '');
+        body.appendChild(createFieldEditor(field, value));
+      });
+    } else {
+      // No sections - render fields normally
+      compDef.editable_fields.forEach(field => {
+        const value = currentEditingComponent.data[field.name] !== undefined ? currentEditingComponent.data[field.name] : (field.default !== undefined ? field.default : '');
+        body.appendChild(createFieldEditor(field, value));
+      });
+    }
 
     editModal.show();
   }
@@ -689,12 +884,135 @@
     let input;
 
     switch (field.type) {
+      case 'section_toggle':
+        // Section toggles are handled by editComponent's section grouping
+        // Return an empty div if somehow rendered directly
+        return div;
+
       case 'textarea':
-      case 'richtext':
         input = document.createElement('textarea');
         input.className = 'form-control';
         input.rows = 4;
         input.value = value;
+        break;
+
+      case 'richtext': {
+        // Rich text editor with formatting toolbar
+        const rtContainer = document.createElement('div');
+        rtContainer.className = 'richtext-editor-container';
+        rtContainer.dataset.fieldKey = field.name;
+
+        // Toolbar
+        const toolbar = document.createElement('div');
+        toolbar.className = 'richtext-toolbar btn-toolbar mb-1 p-1 border rounded-top bg-light';
+        toolbar.innerHTML = `
+          <div class="btn-group btn-group-sm me-1">
+            <button type="button" class="btn btn-outline-secondary" onclick="rtExec('bold')" title="Bold"><i class="bi bi-type-bold"></i></button>
+            <button type="button" class="btn btn-outline-secondary" onclick="rtExec('italic')" title="Italic"><i class="bi bi-type-italic"></i></button>
+            <button type="button" class="btn btn-outline-secondary" onclick="rtExec('underline')" title="Underline"><i class="bi bi-type-underline"></i></button>
+            <button type="button" class="btn btn-outline-secondary" onclick="rtExec('strikeThrough')" title="Strikethrough"><i class="bi bi-type-strikethrough"></i></button>
+          </div>
+          <div class="btn-group btn-group-sm me-1">
+            <button type="button" class="btn btn-outline-secondary" onclick="rtExec('hiliteColor', 'yellow')" title="Highlight"><i class="bi bi-highlighter"></i></button>
+            <button type="button" class="btn btn-outline-secondary" onclick="rtPromptColor()" title="Text Color"><i class="bi bi-palette"></i></button>
+          </div>
+          <div class="btn-group btn-group-sm me-1">
+            <button type="button" class="btn btn-outline-secondary" onclick="rtPromptLink()" title="Insert Link"><i class="bi bi-link-45deg"></i></button>
+            <button type="button" class="btn btn-outline-secondary" onclick="rtExec('unlink')" title="Remove Link"><i class="bi bi-link"></i></button>
+          </div>
+          <div class="btn-group btn-group-sm me-1">
+            <button type="button" class="btn btn-outline-secondary" onclick="rtExec('insertUnorderedList')" title="Bullet List"><i class="bi bi-list-ul"></i></button>
+            <button type="button" class="btn btn-outline-secondary" onclick="rtExec('insertOrderedList')" title="Numbered List"><i class="bi bi-list-ol"></i></button>
+          </div>
+          <div class="btn-group btn-group-sm me-1">
+            <select class="form-select form-select-sm" onchange="rtExec('fontName', this.value); this.value='';" style="width: auto;">
+              <option value="">Font...</option>
+              <option value="inherit">Default</option>
+              <option value="Arial">Arial</option>
+              <option value="Georgia">Georgia</option>
+              <option value="Times New Roman">Times</option>
+              <option value="Verdana">Verdana</option>
+              <option value="monospace">Monospace</option>
+            </select>
+            <select class="form-select form-select-sm" onchange="rtExec('fontSize', this.value); this.value='';" style="width: auto;">
+              <option value="">Size...</option>
+              <option value="1">Small</option>
+              <option value="3">Normal</option>
+              <option value="5">Large</option>
+              <option value="7">X-Large</option>
+            </select>
+          </div>
+          <div class="btn-group btn-group-sm">
+            <button type="button" class="btn btn-outline-secondary" onclick="rtInsertEmoji(this)" title="Emoji"><i class="bi bi-emoji-smile"></i></button>
+          </div>
+        `;
+        rtContainer.appendChild(toolbar);
+
+        // Editable area
+        const editor = document.createElement('div');
+        editor.className = 'richtext-editor form-control';
+        editor.contentEditable = 'true';
+        editor.style.minHeight = '150px';
+        editor.style.maxHeight = '400px';
+        editor.style.overflow = 'auto';
+        editor.innerHTML = value || '<p></p>';
+        rtContainer.appendChild(editor);
+
+        // Hidden input to store value
+        const hiddenInput = document.createElement('input');
+        hiddenInput.type = 'hidden';
+        hiddenInput.dataset.fieldKey = field.name;
+        hiddenInput.value = value || '';
+        rtContainer.appendChild(hiddenInput);
+
+        // Sync editor content to hidden input on changes
+        editor.addEventListener('input', () => {
+          hiddenInput.value = editor.innerHTML;
+        });
+        editor.addEventListener('blur', () => {
+          hiddenInput.value = editor.innerHTML;
+        });
+
+        div.appendChild(rtContainer);
+        return div;
+      }
+
+      case 'range': {
+        // Range slider with value display
+        const rangeContainer = document.createElement('div');
+        rangeContainer.className = 'd-flex align-items-center gap-2';
+
+        input = document.createElement('input');
+        input.type = 'range';
+        input.className = 'form-range flex-grow-1';
+        input.min = field.min || 0;
+        input.max = field.max || 100;
+        input.value = value !== undefined && value !== '' ? value : (field.default || 50);
+
+        const rangeValue = document.createElement('span');
+        rangeValue.className = 'badge bg-secondary';
+        rangeValue.style.minWidth = '40px';
+        rangeValue.textContent = input.value + '%';
+
+        input.addEventListener('input', () => {
+          rangeValue.textContent = input.value + '%';
+        });
+
+        rangeContainer.appendChild(input);
+        rangeContainer.appendChild(rangeValue);
+        input.dataset.fieldKey = field.name;
+        div.appendChild(rangeContainer);
+        return div;
+      }
+
+      case 'datetime':
+        input = document.createElement('input');
+        input.type = 'datetime-local';
+        input.className = 'form-control';
+        // Convert ISO string to datetime-local format if needed
+        if (value) {
+          input.value = value.substring(0, 16);
+        }
         break;
 
       case 'select':
@@ -712,7 +1030,7 @@
         });
         break;
 
-      case 'image':
+      case 'image': {
         // Container for preview + input
         const imageContainer = document.createElement('div');
         imageContainer.className = 'd-flex gap-3 align-items-start';
@@ -786,15 +1104,50 @@
         div.appendChild(imageContainer);
         input.dataset.fieldKey = field.name;
         return div;
+      }
 
-      case 'color':
+      case 'color': {
+        // Container for color picker with "use default" option
+        const colorContainer = document.createElement('div');
+        colorContainer.className = 'd-flex align-items-center gap-2';
+
+        // Checkbox for "use theme default"
+        const useDefaultCheck = document.createElement('input');
+        useDefaultCheck.type = 'checkbox';
+        useDefaultCheck.className = 'form-check-input';
+        useDefaultCheck.id = 'color_default_' + field.name;
+        useDefaultCheck.checked = !value || value === '';
+
+        const useDefaultLabel = document.createElement('label');
+        useDefaultLabel.className = 'form-check-label small text-muted';
+        useDefaultLabel.htmlFor = useDefaultCheck.id;
+        useDefaultLabel.textContent = 'Use theme';
+
         input = document.createElement('input');
         input.type = 'color';
         input.className = 'form-control form-control-color';
         input.value = value || '#000000';
-        break;
+        input.disabled = useDefaultCheck.checked;
+        input.style.opacity = useDefaultCheck.checked ? '0.5' : '1';
 
-      case 'checkbox':
+        // Store empty value for theme default
+        input.dataset.useDefault = useDefaultCheck.checked ? 'true' : 'false';
+
+        useDefaultCheck.onchange = () => {
+          input.disabled = useDefaultCheck.checked;
+          input.style.opacity = useDefaultCheck.checked ? '0.5' : '1';
+          input.dataset.useDefault = useDefaultCheck.checked ? 'true' : 'false';
+        };
+
+        colorContainer.appendChild(input);
+        colorContainer.appendChild(useDefaultCheck);
+        colorContainer.appendChild(useDefaultLabel);
+        input.dataset.fieldKey = field.name;
+        div.appendChild(colorContainer);
+        return div;
+      }
+
+      case 'checkbox': {
         input = document.createElement('input');
         input.type = 'checkbox';
         input.className = 'form-check-input';
@@ -810,8 +1163,9 @@
         div.appendChild(checkDiv);
         input.dataset.fieldKey = field.name;
         return div;
+      }
 
-      case 'imagelist':
+      case 'imagelist': {
         // Multi-image selector for galleries
         const imageListContainer = document.createElement('div');
         imageListContainer.className = 'imagelist-container';
@@ -837,8 +1191,48 @@
 
         div.appendChild(imageListContainer);
         return div;
+      }
 
-      case 'array':
+      case 'componentslot': {
+        const slotContainer = document.createElement('div');
+        slotContainer.className = 'componentslot-container border rounded p-2';
+        slotContainer.dataset.fieldKey = field.name;
+        slotContainer.dataset.allowedCategories = JSON.stringify(field.allowed_categories || []);
+
+        // Initialize _nestedComponents with existing data (deep copy to avoid mutations)
+        const slotComponents = Array.isArray(value) ? JSON.parse(JSON.stringify(value)) : [];
+        slotContainer._nestedComponents = slotComponents;
+
+        // List of nested components
+        const slotList = document.createElement('div');
+        slotList.className = 'slot-component-list mb-2';
+
+        slotComponents.forEach((nestedComp, idx) => {
+          slotList.appendChild(createNestedComponentItem(nestedComp, idx, field.name));
+        });
+        slotContainer.appendChild(slotList);
+
+        // Empty state
+        if (slotComponents.length === 0) {
+          const emptyMsg = document.createElement('p');
+          emptyMsg.className = 'text-muted small mb-2 empty-slot-message';
+          emptyMsg.textContent = 'No components yet';
+          slotList.appendChild(emptyMsg);
+        }
+
+        // Add component button
+        const addSlotBtn = document.createElement('button');
+        addSlotBtn.type = 'button';
+        addSlotBtn.className = 'btn btn-sm btn-outline-primary';
+        addSlotBtn.innerHTML = '<i class="bi bi-plus"></i> Add Component';
+        addSlotBtn.onclick = () => openNestedComponentPicker(field.name, field.allowed_categories || []);
+        slotContainer.appendChild(addSlotBtn);
+
+        div.appendChild(slotContainer);
+        return div;
+      }
+
+      case 'array': {
         const arrayContainer = document.createElement('div');
         arrayContainer.className = 'array-field-container';
         arrayContainer.dataset.fieldKey = field.name;
@@ -864,6 +1258,7 @@
 
         div.appendChild(arrayContainer);
         return div;
+      }
 
       default:
         input = document.createElement('input');
@@ -918,14 +1313,30 @@
     const body = document.getElementById('editComponentBody');
 
     // Regular fields (exclude containers that are handled separately)
-    body.querySelectorAll('[data-field-key]:not(.imagelist-container):not(.array-field-container)').forEach(input => {
+    console.log('=== Saving component edits ===');
+    const allFieldElements = body.querySelectorAll('[data-field-key]:not(.imagelist-container):not(.array-field-container):not(.componentslot-container):not(.richtext-editor-container)');
+    console.log('Found', allFieldElements.length, 'field elements');
+    allFieldElements.forEach(input => {
       const key = input.dataset.fieldKey;
+      if (!key) return; // Skip elements with empty field key
       if (input.type === 'checkbox') {
         currentEditingComponent.data[key] = input.checked;
+        console.log('Saved checkbox:', key, '=', input.checked);
+      } else if (input.type === 'color') {
+        // Check if "use theme default" is checked
+        if (input.dataset.useDefault === 'true') {
+          currentEditingComponent.data[key] = '';
+          console.log('Saved color (theme default):', key, '= ""');
+        } else {
+          currentEditingComponent.data[key] = input.value;
+          console.log('Saved color:', key, '=', input.value);
+        }
       } else {
         currentEditingComponent.data[key] = input.value;
+        console.log('Saved field:', key, '=', input.value, '(type:', input.type, ')');
       }
     });
+    console.log('Final component data:', JSON.stringify(currentEditingComponent.data, null, 2));
 
     // Image list fields (for gallery component)
     body.querySelectorAll('.imagelist-container').forEach(container => {
@@ -953,6 +1364,21 @@
       currentEditingComponent.data[key] = items;
     });
 
+    // Component slot fields (for two-column and other container components)
+    body.querySelectorAll('.componentslot-container').forEach(container => {
+      const key = container.dataset.fieldKey;
+      currentEditingComponent.data[key] = container._nestedComponents || [];
+    });
+
+    // Rich text fields
+    body.querySelectorAll('.richtext-editor-container').forEach(container => {
+      const key = container.dataset.fieldKey;
+      const editor = container.querySelector('.richtext-editor');
+      if (editor) {
+        currentEditingComponent.data[key] = editor.innerHTML;
+      }
+    });
+
     pageData.slots[currentEditingSlot][currentEditingIndex] = currentEditingComponent;
     renderSlot(currentEditingSlot);
     refreshPreview();
@@ -975,6 +1401,28 @@
       renderSlot(slotName);
       refreshPreview();
     }
+  }
+
+  function duplicateComponent(slotName, index) {
+    const original = pageData.slots[slotName][index];
+    // Deep copy the component
+    const copy = JSON.parse(JSON.stringify(original));
+    // Generate new unique ID
+    copy.id = 'comp-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+
+    // Generate new anchor_id if the component has one
+    const compDef = componentsLib.find(c => c.id === copy.type);
+    if (compDef && compDef.editable_fields.some(f => f.name === 'anchor_id')) {
+      copy.data.anchor_id = generateComponentAnchorId(copy.type);
+    }
+
+    // Insert copy right after the original
+    pageData.slots[slotName].splice(index + 1, 0, copy);
+    renderSlot(slotName);
+    refreshPreview();
+
+    const compName = compDef ? compDef.name : copy.type;
+    showToast(`Duplicated "${compName}"`);
   }
 
   function initDragAndDrop() {
@@ -1286,6 +1734,311 @@
     document.getElementById('imageBrowserDoneText').style.display = 'none';
   });
 
+  // Nested Component Functions for Two-Column and other slot-based components
+  let currentNestedSlotName = null;
+  let currentNestedSlotCategories = [];
+
+  function createNestedComponentItem(nestedComp, idx, slotName) {
+    const compDef = componentsLib.find(c => c.id === nestedComp.type);
+    const compName = compDef ? compDef.name : nestedComp.type;
+
+    const item = document.createElement('div');
+    item.className = 'nested-component-item d-flex justify-content-between align-items-center p-2 mb-1 border rounded bg-light';
+    item.dataset.nestedIndex = idx;
+    item.dataset.slotName = slotName;
+
+    item.innerHTML = `
+      <div class="d-flex align-items-center">
+        <i class="bi bi-grip-vertical text-muted me-2"></i>
+        <span class="small fw-medium">${compName}</span>
+        <span class="text-muted small ms-2">${getNestedComponentPreview(nestedComp)}</span>
+      </div>
+      <div class="btn-group btn-group-sm">
+        <button type="button" class="btn btn-outline-secondary" onclick="duplicateNestedComponent('${slotName}', ${idx})" title="Duplicate">
+          <i class="bi bi-copy"></i>
+        </button>
+        <button type="button" class="btn btn-outline-primary" onclick="editNestedComponent('${slotName}', ${idx})" title="Edit">
+          <i class="bi bi-pencil"></i>
+        </button>
+        <button type="button" class="btn btn-outline-danger" onclick="removeNestedComponent('${slotName}', ${idx})" title="Remove">
+          <i class="bi bi-x"></i>
+        </button>
+      </div>
+    `;
+
+    return item;
+  }
+
+  function getNestedComponentPreview(comp) {
+    if (comp.data.title) return comp.data.title.substring(0, 20) + (comp.data.title.length > 20 ? '...' : '');
+    if (comp.data.heading) return comp.data.heading.substring(0, 20) + (comp.data.heading.length > 20 ? '...' : '');
+    return '';
+  }
+
+  function openNestedComponentPicker(slotName, allowedCategories) {
+    currentNestedSlotName = slotName;
+    currentNestedSlotCategories = allowedCategories;
+
+    // Build list of allowed components
+    const allowedComponents = componentsLib.filter(c => {
+      // Exclude navigation, footer, sidebar - they shouldn't be nested
+      if (['navigation', 'footer', 'sidebar'].includes(c.category)) return false;
+      // Exclude components that have slots (like two-column) to prevent deep nesting
+      if (c.has_slots) return false;
+      // If no categories specified, allow all non-excluded
+      if (!allowedCategories || allowedCategories.length === 0) return true;
+      return allowedCategories.includes(c.category);
+    });
+
+    // Create picker modal content
+    let modalContent = `
+      <div class="modal fade" id="nestedComponentPickerModal" tabindex="-1">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title"><i class="bi bi-plus-square"></i> Add Component to ${slotName.replace('_', ' ')}</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <div class="list-group">
+    `;
+
+    allowedComponents.forEach(comp => {
+      modalContent += `
+        <button type="button" class="list-group-item list-group-item-action" onclick="addNestedComponent('${comp.id}')">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <strong>${comp.name}</strong>
+              <div class="text-muted small">${comp.description}</div>
+            </div>
+            <i class="bi bi-plus-circle text-success"></i>
+          </div>
+        </button>
+      `;
+    });
+
+    modalContent += `
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Remove existing picker modal if any
+    const existingPicker = document.getElementById('nestedComponentPickerModal');
+    if (existingPicker) existingPicker.remove();
+
+    // Add new modal to DOM
+    document.body.insertAdjacentHTML('beforeend', modalContent);
+
+    // Show the modal
+    const pickerModal = new bootstrap.Modal(document.getElementById('nestedComponentPickerModal'));
+    pickerModal.show();
+  }
+
+  function addNestedComponent(componentId) {
+    const compDef = componentsLib.find(c => c.id === componentId);
+    if (!compDef) return;
+
+    // Create new component with default data
+    const newComponent = {
+      id: 'nested-' + Date.now(),
+      type: componentId,
+      data: JSON.parse(JSON.stringify(compDef.default_data))
+    };
+
+    // Auto-generate anchor_id if the component has that field
+    if (compDef.editable_fields.some(f => f.name === 'anchor_id')) {
+      newComponent.data.anchor_id = generateComponentAnchorId(componentId);
+    }
+
+    // Find the slot container in the edit modal
+    const slotContainer = document.querySelector(`.componentslot-container[data-field-key="${currentNestedSlotName}"]`);
+    if (slotContainer) {
+      const slotList = slotContainer.querySelector('.slot-component-list');
+
+      // Remove empty message if present
+      const emptyMsg = slotList.querySelector('.empty-slot-message');
+      if (emptyMsg) emptyMsg.remove();
+
+      // Count existing items
+      const existingCount = slotList.querySelectorAll('.nested-component-item').length;
+
+      // Add the new component to the list
+      slotList.appendChild(createNestedComponentItem(newComponent, existingCount, currentNestedSlotName));
+
+      // Store the actual component data
+      if (!slotContainer._nestedComponents) {
+        slotContainer._nestedComponents = [];
+      }
+      slotContainer._nestedComponents.push(newComponent);
+    }
+
+    // Close the picker modal
+    const pickerModal = bootstrap.Modal.getInstance(document.getElementById('nestedComponentPickerModal'));
+    if (pickerModal) pickerModal.hide();
+
+    showToast(`Added "${compDef.name}" to ${currentNestedSlotName.replace('_', ' ')}`);
+  }
+
+  function editNestedComponent(slotName, idx) {
+    const slotContainer = document.querySelector(`.componentslot-container[data-field-key="${slotName}"]`);
+    if (!slotContainer || !slotContainer._nestedComponents) return;
+
+    const nestedComp = slotContainer._nestedComponents[idx];
+    if (!nestedComp) return;
+
+    const compDef = componentsLib.find(c => c.id === nestedComp.type);
+    if (!compDef) return;
+
+    // Build a nested edit modal
+    let editContent = `
+      <div class="modal fade" id="nestedEditModal" tabindex="-1">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Edit ${compDef.name}</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="nestedEditBody">
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+              <button type="button" class="btn btn-primary" onclick="saveNestedComponentEdits('${slotName}', ${idx})">Save</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Remove existing modal if any
+    const existingModal = document.getElementById('nestedEditModal');
+    if (existingModal) existingModal.remove();
+
+    document.body.insertAdjacentHTML('beforeend', editContent);
+
+    // Build form fields
+    const body = document.getElementById('nestedEditBody');
+    compDef.editable_fields.forEach(field => {
+      // Skip componentslot fields to prevent further nesting
+      if (field.type === 'componentslot') return;
+
+      const value = nestedComp.data[field.name] || field.default || '';
+      body.appendChild(createFieldEditor(field, value));
+    });
+
+    const nestedModal = new bootstrap.Modal(document.getElementById('nestedEditModal'));
+    nestedModal.show();
+  }
+
+  function saveNestedComponentEdits(slotName, idx) {
+    const slotContainer = document.querySelector(`.componentslot-container[data-field-key="${slotName}"]`);
+    if (!slotContainer || !slotContainer._nestedComponents) return;
+
+    const nestedComp = slotContainer._nestedComponents[idx];
+    if (!nestedComp) return;
+
+    const body = document.getElementById('nestedEditBody');
+
+    // Collect field values (exclude containers)
+    body.querySelectorAll('[data-field-key]:not(.richtext-editor-container):not(.imagelist-container)').forEach(input => {
+      const key = input.dataset.fieldKey;
+      if (input.type === 'checkbox') {
+        nestedComp.data[key] = input.checked;
+      } else {
+        nestedComp.data[key] = input.value;
+      }
+    });
+
+    // Rich text fields
+    body.querySelectorAll('.richtext-editor-container').forEach(container => {
+      const key = container.dataset.fieldKey;
+      const editor = container.querySelector('.richtext-editor');
+      if (editor) {
+        nestedComp.data[key] = editor.innerHTML;
+      }
+    });
+
+    // Image list fields
+    body.querySelectorAll('.imagelist-container').forEach(container => {
+      const key = container.dataset.fieldKey;
+      const images = [];
+      container.querySelectorAll('.image-thumb[data-image-url]').forEach(thumb => {
+        images.push(thumb.dataset.imageUrl);
+      });
+      nestedComp.data[key] = images;
+    });
+
+    // Update the display
+    const slotList = slotContainer.querySelector('.slot-component-list');
+    const items = slotList.querySelectorAll('.nested-component-item');
+    if (items[idx]) {
+      items[idx].replaceWith(createNestedComponentItem(nestedComp, idx, slotName));
+    }
+
+    // Close modal
+    const nestedModal = bootstrap.Modal.getInstance(document.getElementById('nestedEditModal'));
+    if (nestedModal) nestedModal.hide();
+
+    showToast('Component updated');
+  }
+
+  function removeNestedComponent(slotName, idx) {
+    const slotContainer = document.querySelector(`.componentslot-container[data-field-key="${slotName}"]`);
+    if (!slotContainer || !slotContainer._nestedComponents) return;
+
+    // Remove from data
+    slotContainer._nestedComponents.splice(idx, 1);
+
+    // Remove from display and re-index
+    const slotList = slotContainer.querySelector('.slot-component-list');
+    slotList.innerHTML = '';
+
+    if (slotContainer._nestedComponents.length === 0) {
+      const emptyMsg = document.createElement('p');
+      emptyMsg.className = 'text-muted small mb-2 empty-slot-message';
+      emptyMsg.textContent = 'No components yet';
+      slotList.appendChild(emptyMsg);
+    } else {
+      slotContainer._nestedComponents.forEach((comp, newIdx) => {
+        slotList.appendChild(createNestedComponentItem(comp, newIdx, slotName));
+      });
+    }
+
+    showToast('Component removed');
+  }
+
+  function duplicateNestedComponent(slotName, idx) {
+    const slotContainer = document.querySelector(`.componentslot-container[data-field-key="${slotName}"]`);
+    if (!slotContainer || !slotContainer._nestedComponents) return;
+
+    const original = slotContainer._nestedComponents[idx];
+    // Deep copy the component
+    const copy = JSON.parse(JSON.stringify(original));
+    // Generate new unique ID
+    copy.id = 'nested-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+
+    // Generate new anchor_id if the component has one
+    const compDef = componentsLib.find(c => c.id === copy.type);
+    if (compDef && compDef.editable_fields.some(f => f.name === 'anchor_id')) {
+      copy.data.anchor_id = generateComponentAnchorId(copy.type);
+    }
+
+    // Insert copy right after the original
+    slotContainer._nestedComponents.splice(idx + 1, 0, copy);
+
+    // Re-render the list
+    const slotList = slotContainer.querySelector('.slot-component-list');
+    slotList.innerHTML = '';
+    slotContainer._nestedComponents.forEach((comp, newIdx) => {
+      slotList.appendChild(createNestedComponentItem(comp, newIdx, slotName));
+    });
+
+    const compName = compDef ? compDef.name : copy.type;
+    showToast(`Duplicated "${compName}"`);
+  }
+
   async function uploadImageFile(file, inputElement, previewElement) {
     // Validate
     const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
@@ -1366,6 +2119,81 @@
     } catch (error) {
       console.error('Preview error:', error);
     }
+  }
+
+  // Rich Text Editor Helper Functions
+  function rtExec(command, value = null) {
+    document.execCommand(command, false, value);
+    // Re-focus the editor
+    const activeEditor = document.querySelector('.richtext-editor:focus');
+    if (activeEditor) activeEditor.focus();
+  }
+
+  function rtPromptColor() {
+    // Create a temporary color picker
+    const colorInput = document.createElement('input');
+    colorInput.type = 'color';
+    colorInput.value = '#000000';
+    colorInput.style.position = 'absolute';
+    colorInput.style.opacity = '0';
+    document.body.appendChild(colorInput);
+    colorInput.addEventListener('input', (e) => {
+      document.execCommand('foreColor', false, e.target.value);
+    });
+    colorInput.addEventListener('change', () => {
+      colorInput.remove();
+    });
+    colorInput.click();
+  }
+
+  function rtPromptLink() {
+    const url = prompt('Enter URL:', 'https://');
+    if (url) {
+      document.execCommand('createLink', false, url);
+    }
+  }
+
+  function rtInsertEmoji(btn) {
+    // Common emoji picker
+    const emojis = ['😀', '😊', '😂', '❤️', '👍', '👎', '🎉', '✨', '🔥', '💡', '📌', '✅', '❌', '⭐', '🚀', '💬'];
+
+    // Create emoji popup
+    let popup = document.getElementById('emojiPopup');
+    if (popup) popup.remove();
+
+    popup = document.createElement('div');
+    popup.id = 'emojiPopup';
+    popup.className = 'emoji-popup position-absolute bg-white border rounded shadow p-2';
+    popup.style.zIndex = '1100';
+    popup.innerHTML = emojis.map(e => `<span class="emoji-item" onclick="rtInsertEmojiChar('${e}')" style="cursor:pointer;font-size:1.5rem;padding:2px;">${e}</span>`).join('');
+
+    const rect = btn.getBoundingClientRect();
+    popup.style.top = (rect.bottom + window.scrollY + 5) + 'px';
+    popup.style.left = rect.left + 'px';
+
+    document.body.appendChild(popup);
+
+    // Close on click outside
+    setTimeout(() => {
+      document.addEventListener('click', function closePopup(e) {
+        if (!popup.contains(e.target) && e.target !== btn) {
+          popup.remove();
+          document.removeEventListener('click', closePopup);
+        }
+      });
+    }, 100);
+  }
+
+  function rtInsertEmojiChar(emoji) {
+    // Focus the active editor and insert emoji at cursor
+    const editor = document.querySelector('.richtext-editor');
+    if (editor) {
+      editor.focus();
+      // Use insertHTML instead of insertText for better emoji support
+      document.execCommand('insertHTML', false, emoji);
+    }
+    const popup = document.getElementById('emojiPopup');
+    if (popup) popup.remove();
   }
 </script>
 {% endblock %}

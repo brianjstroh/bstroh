@@ -1,0 +1,278 @@
+{% set is_slideshow = images and images|length > 1 %}
+{% set has_image = images and images|length > 0 %}
+
+<!-- DEBUG: border_color="{{ border_color }}", timestamp_color="{{ timestamp_color }}" -->
+{% set border_color_val = border_color if border_color else 'var(--color-border)' %}
+{% set gradient_end_val = border_gradient_end if border_gradient_end else 'var(--color-accent)' %}
+
+{% set border_style = '' %}
+{% if show_border %}
+  {% if border_use_gradient %}
+    {% set border_style = 'border: ' ~ border_thickness ~ ' solid transparent; background: linear-gradient(var(--color-surface), var(--color-surface)) padding-box, linear-gradient(135deg, ' ~ border_color_val ~ ', ' ~ gradient_end_val ~ ') border-box; border-radius: 8px;' %}
+  {% else %}
+    {% set border_style = 'border: ' ~ border_thickness ~ ' solid ' ~ border_color_val ~ '; border-radius: 8px;' %}
+  {% endif %}
+{% endif %}
+
+{% set text_style = '' %}
+{% if text_font and text_font != 'inherit' %}
+  {% set text_style = text_style ~ 'font-family: ' ~ text_font ~ ';' %}
+{% endif %}
+{% if text_color %}
+  {% set text_style = text_style ~ 'color: ' ~ text_color ~ ';' %}
+{% endif %}
+
+{% set size_class = {
+  'small': 'content-block-text-sm',
+  'normal': 'content-block-text-md',
+  'large': 'content-block-text-lg',
+  'x-large': 'content-block-text-xl'
+}[text_size] or 'content-block-text-md' %}
+
+{% set ts_size_class = {
+  'small': 'content-block-ts-sm',
+  'normal': 'content-block-ts-md',
+  'large': 'content-block-ts-lg'
+}[timestamp_size] or 'content-block-ts-sm' %}
+
+{% set ts_align_class = {
+  'left': 'text-start',
+  'center': 'text-center',
+  'right': 'text-end'
+}[timestamp_align] or 'text-start' %}
+
+{% set overlay_v_class = {
+  'top': 'overlay-top',
+  'middle': 'overlay-middle',
+  'bottom': 'overlay-bottom'
+}[overlay_v_align] or 'overlay-bottom' %}
+
+{% set overlay_h_class = {
+  'left': 'overlay-left',
+  'center': 'overlay-center',
+  'right': 'overlay-right'
+}[overlay_h_align] or 'overlay-center' %}
+
+{% set has_custom_bg = overlay_bg_enabled == true or overlay_bg_enabled == 'true' %}
+
+{% set max_width_style = '' %}
+{% if max_width and max_width != 'none' %}
+  {% set max_width_style = 'max-width: ' ~ max_width ~ '; margin-left: auto; margin-right: auto;' %}
+{% endif %}
+
+<div class="content-block" {% if anchor_id %}id="{{ anchor_id }}"{% endif %} style="{{ border_style }} {% if show_border %}padding: 1.5rem;{% endif %} {{ max_width_style }}">
+
+  {% if show_timestamp and not timestamp_value %}
+  <!-- DEBUG: Timestamp enabled but no value set. show_timestamp={{ show_timestamp }}, timestamp_value="{{ timestamp_value }}" -->
+  {% endif %}
+  {% if show_timestamp and timestamp_value %}
+  <div class="content-block-timestamp {{ ts_size_class }} {{ ts_align_class }}" style="{% if timestamp_color %}color: {{ timestamp_color }};{% else %}color: var(--color-text-muted);{% endif %} opacity: {{ (timestamp_opacity|default(70)|int)/100 }};">
+    {% if timestamp_format == 'date-only' %}
+      {{ timestamp_value[:10] }}
+    {% elif timestamp_format == 'time-only' %}
+      {{ timestamp_value[11:16] if timestamp_value|length > 11 else timestamp_value }}
+    {% else %}
+      {{ timestamp_value[:16]|replace('T', ' ') }}
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% if show_image and has_image %}
+  <div class="content-block-media" style="position: relative; {% if show_text %}margin-bottom: 1rem;{% endif %}">
+    {% if is_slideshow %}
+    <div class="content-block-slideshow" data-slideshow {% if slideshow_auto %}data-auto="{{ slideshow_interval|default('20') }}"{% endif %} style="opacity: {{ (image_opacity|default(100)|int)/100 }};">
+      {% for img in images %}
+      <img src="{{ img }}" alt="Slide {{ loop.index }}" class="content-block-slide {% if loop.first %}active{% endif %}" style="width: 100%; border-radius: 4px; {% if not loop.first %}display: none;{% endif %}">
+      {% endfor %}
+      <button class="slideshow-prev" onclick="slideshowPrev(this)" aria-label="Previous">&#8249;</button>
+      <button class="slideshow-next" onclick="slideshowNext(this)" aria-label="Next">&#8250;</button>
+      <div class="slideshow-dots">
+        {% for img in images %}
+        <span class="slideshow-dot {% if loop.first %}active{% endif %}" onclick="slideshowGoto(this, {{ loop.index0 }})"></span>
+        {% endfor %}
+      </div>
+    </div>
+    {% else %}
+    <img src="{{ images[0] }}" alt="" class="content-block-image" style="width: 100%; border-radius: 4px; opacity: {{ (image_opacity|default(100)|int)/100 }};">
+    {% endif %}
+
+    {% if show_overlay and (overlay_text or overlay_button_text) %}
+    <div class="content-block-overlay {{ overlay_v_class }} {{ overlay_h_class }}{% if has_custom_bg %} custom-bg{% endif %}" {% if has_custom_bg %}style="--overlay-bg: {{ overlay_bg_color|default('#000000') }}; --overlay-bg-opacity: {{ (overlay_bg_opacity|default(50)|int) / 100 }};"{% endif %}>
+      {% if overlay_text %}
+      <div class="overlay-text">{{ overlay_text }}</div>
+      {% endif %}
+      {% if overlay_button_text and overlay_button_url %}
+      <a href="{{ overlay_button_url }}" class="overlay-button btn btn-light">{{ overlay_button_text }}</a>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% if show_text and text_content %}
+  <div class="content-block-text {{ size_class }}" style="{{ text_style }}">
+    {{ text_content | safe }}
+  </div>
+  {% endif %}
+</div>
+
+<style>
+.content-block {
+  margin-bottom: 1.5rem;
+}
+.content-block-timestamp {
+  margin-bottom: 0.5rem;
+}
+.content-block-ts-sm { font-size: 0.75rem; }
+.content-block-ts-md { font-size: 0.875rem; }
+.content-block-ts-lg { font-size: 1rem; }
+.content-block-text-sm { font-size: 0.875rem; }
+.content-block-text-md { font-size: 1rem; }
+.content-block-text-lg { font-size: 1.125rem; }
+.content-block-text-xl { font-size: 1.25rem; }
+.content-block-text p:last-child { margin-bottom: 0; }
+.content-block-media { position: relative; overflow: hidden; border-radius: 4px; }
+
+/* Overlay positioning - responsive */
+.content-block-overlay {
+  position: absolute;
+  left: 0;
+  right: 0;
+  color: white;
+  padding: clamp(0.5rem, 3vw, 2rem);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.25rem, 1.5vw, 0.75rem);
+}
+.content-block-overlay.overlay-top { top: 0; background: linear-gradient(rgba(0,0,0,0.7), transparent); padding-bottom: clamp(1rem, 5vw, 3rem); }
+.content-block-overlay.overlay-middle { top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.5); }
+.content-block-overlay.overlay-bottom { bottom: 0; background: linear-gradient(transparent, rgba(0,0,0,0.7)); padding-top: clamp(1rem, 5vw, 3rem); }
+.content-block-overlay.overlay-left { text-align: left; align-items: flex-start; }
+.content-block-overlay.overlay-center { text-align: center; align-items: center; }
+.content-block-overlay.overlay-right { text-align: right; align-items: flex-end; }
+/* Custom background - disables default gradients */
+.content-block-overlay.custom-bg {
+  background: none !important;
+  position: relative;
+}
+.content-block-overlay.custom-bg::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--overlay-bg, #000);
+  opacity: var(--overlay-bg-opacity, 0.5);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.content-block-overlay .overlay-text {
+  font-size: clamp(0.875rem, 3vw, 1.5rem);
+  font-weight: 500;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+  position: relative;
+  z-index: 1;
+}
+.content-block-overlay .overlay-button {
+  display: inline-block;
+  font-size: clamp(0.75rem, 2vw, 1rem);
+  padding: clamp(0.4rem, 1.5vw, 0.75rem) clamp(0.75rem, 3vw, 1.5rem);
+  position: relative;
+  z-index: 1;
+}
+
+/* Slideshow styles - responsive */
+.content-block-slideshow {
+  position: relative;
+}
+.slideshow-prev, .slideshow-next {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255,255,255,0.8);
+  border: none;
+  width: clamp(28px, 6vw, 44px);
+  height: clamp(28px, 6vw, 44px);
+  border-radius: 50%;
+  font-size: clamp(1rem, 3vw, 1.75rem);
+  cursor: pointer;
+  z-index: 10;
+  transition: background 0.2s;
+  line-height: 1;
+}
+.slideshow-prev:hover, .slideshow-next:hover { background: white; }
+.slideshow-prev { left: clamp(5px, 2vw, 12px); }
+.slideshow-next { right: clamp(5px, 2vw, 12px); }
+.slideshow-dots {
+  position: absolute;
+  bottom: clamp(5px, 2vw, 12px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: clamp(4px, 1vw, 10px);
+  z-index: 10;
+}
+.slideshow-dot {
+  width: clamp(6px, 1.5vw, 12px);
+  height: clamp(6px, 1.5vw, 12px);
+  border-radius: 50%;
+  background: rgba(255,255,255,0.5);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.slideshow-dot.active, .slideshow-dot:hover { background: white; }
+</style>
+
+<script>
+(function() {
+  // Initialize auto-slideshows
+  document.querySelectorAll('.content-block-slideshow[data-auto]').forEach(container => {
+    const interval = parseInt(container.dataset.auto) * 1000;
+    if (interval > 0) {
+      setInterval(() => {
+        const nextBtn = container.querySelector('.slideshow-next');
+        if (nextBtn) slideshowNext(nextBtn);
+      }, interval);
+    }
+  });
+})();
+
+function slideshowNext(btn) {
+  const container = btn.closest('.content-block-slideshow');
+  const slides = container.querySelectorAll('.content-block-slide');
+  const dots = container.querySelectorAll('.slideshow-dot');
+  let current = Array.from(slides).findIndex(s => s.classList.contains('active'));
+  slides[current].classList.remove('active');
+  slides[current].style.display = 'none';
+  if (dots[current]) dots[current].classList.remove('active');
+  current = (current + 1) % slides.length;
+  slides[current].classList.add('active');
+  slides[current].style.display = 'block';
+  if (dots[current]) dots[current].classList.add('active');
+}
+function slideshowPrev(btn) {
+  const container = btn.closest('.content-block-slideshow');
+  const slides = container.querySelectorAll('.content-block-slide');
+  const dots = container.querySelectorAll('.slideshow-dot');
+  let current = Array.from(slides).findIndex(s => s.classList.contains('active'));
+  slides[current].classList.remove('active');
+  slides[current].style.display = 'none';
+  if (dots[current]) dots[current].classList.remove('active');
+  current = (current - 1 + slides.length) % slides.length;
+  slides[current].classList.add('active');
+  slides[current].style.display = 'block';
+  if (dots[current]) dots[current].classList.add('active');
+}
+function slideshowGoto(dot, index) {
+  const container = dot.closest('.content-block-slideshow');
+  const slides = container.querySelectorAll('.content-block-slide');
+  const dots = container.querySelectorAll('.slideshow-dot');
+  slides.forEach((s, i) => {
+    s.classList.toggle('active', i === index);
+    s.style.display = i === index ? 'block' : 'none';
+  });
+  dots.forEach((d, i) => d.classList.toggle('active', i === index));
+}
+</script>

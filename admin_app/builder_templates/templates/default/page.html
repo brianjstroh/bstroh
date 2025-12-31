@@ -10,6 +10,7 @@
   {% if site.favicon_url %}
   <link rel="icon" href="{{ site.favicon_url }}">
   {% endif %}
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
   <style>
     {{ color_css | safe }}
 
@@ -560,19 +561,29 @@
   </style>
 </head>
 <body>
-  {% if slots.header %}
-  <header>
-    {% for component_html in slots.header %}
-    {{ component_html | safe }}
-    {% endfor %}
-  </header>
-  {% endif %}
-
-  {% if slots.hero %}
-  {% for component_html in slots.hero %}
-  {{ component_html | safe }}
-  {% endfor %}
-  {% endif %}
+  <nav class="site-nav">
+    <div class="container">
+      <a href="/" class="logo">
+        {% if site.logo_url %}
+        <img src="{{ site.logo_url }}" alt="{{ site.site_name }}">
+        {% else %}
+        {{ site.site_name }}
+        {% endif %}
+      </a>
+      <button class="mobile-menu-toggle" onclick="this.closest('.site-nav').classList.toggle('nav-open')">
+        <div class="hamburger-icon">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </button>
+      <ul class="nav-menu">
+        {% for nav_item in site.navigation %}
+        <li><a href="{{ nav_item.url }}">{{ nav_item.label }}</a></li>
+        {% endfor %}
+      </ul>
+    </div>
+  </nav>
 
   <div class="page-layout {% if not slots.sidebar or slots.sidebar|length == 0 %}no-sidebar{% endif %}">
     {% if slots.sidebar and slots.sidebar|length > 0 %}
@@ -603,13 +614,21 @@
     </main>
   </div>
 
-  {% if slots.footer %}
-  <footer>
-    {% for component_html in slots.footer %}
-    {{ component_html | safe }}
-    {% endfor %}
+  <footer class="site-footer">
+    <div class="container">
+      <p>{{ site.footer_text }}</p>
+      {% if site.social_links %}
+      <div class="social-links">
+        {% if site.social_links.facebook %}<a href="{{ site.social_links.facebook }}" target="_blank" title="Facebook"><i class="bi bi-facebook"></i></a>{% endif %}
+        {% if site.social_links.instagram %}<a href="{{ site.social_links.instagram }}" target="_blank" title="Instagram"><i class="bi bi-instagram"></i></a>{% endif %}
+        {% if site.social_links.twitter %}<a href="{{ site.social_links.twitter }}" target="_blank" title="X/Twitter"><i class="bi bi-twitter-x"></i></a>{% endif %}
+        {% if site.social_links.linkedin %}<a href="{{ site.social_links.linkedin }}" target="_blank" title="LinkedIn"><i class="bi bi-linkedin"></i></a>{% endif %}
+        {% if site.social_links.youtube %}<a href="{{ site.social_links.youtube }}" target="_blank" title="YouTube"><i class="bi bi-youtube"></i></a>{% endif %}
+        {% if site.social_links.email %}<a href="mailto:{{ site.social_links.email }}" title="Email"><i class="bi bi-envelope"></i></a>{% endif %}
+      </div>
+      {% endif %}
+    </div>
   </footer>
-  {% endif %}
 
   <script>
     // Back to top button

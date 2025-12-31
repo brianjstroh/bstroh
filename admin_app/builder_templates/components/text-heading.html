@@ -1,9 +1,9 @@
-<section class="content-section" {% if anchor_id %}id="{{ anchor_id }}"{% endif %}>
+<section class="content-section" {% if anchor_id %}id="{{ anchor_id }}"{% endif %} style="padding-top: {{ spacing_top|default('2rem') }}; padding-bottom: {{ spacing_bottom|default('1rem') }}; margin: 0;">
   <div class="container">
     <div class="section-heading text-{{ alignment }}">
-      <h2>{{ heading }}</h2>
+      <h2 style="margin: 0;">{{ heading }}</h2>
       {% if subtitle %}
-      <p class="subtitle">{{ subtitle }}</p>
+      <p class="subtitle" style="margin: 0.5rem 0 0 0;">{{ subtitle }}</p>
       {% endif %}
     </div>
   </div>

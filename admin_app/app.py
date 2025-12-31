@@ -240,6 +240,7 @@ def builder_dashboard() -> Any:
       site=site_config,
       pages=pages,
       color_schemes=gen.get_color_schemes(),
+      components=gen.get_components(),
     )
 
 
@@ -330,6 +331,27 @@ def builder_site_settings() -> Any:
       return jsonify({"success": True})
 
   return jsonify({"site": site_config})
+
+
+@app.route("/builder/site/sidebar", methods=["POST"])
+@login_required
+def builder_site_sidebar() -> Any:
+  """Update site-wide sidebar components."""
+  gen = get_generator()
+  site_config = gen.get_site_config()
+
+  if not site_config:
+    return jsonify({"error": "Site not initialized"}), 404
+
+  data = request.get_json()
+  if data and "sidebar" in data:
+    site_config["sidebar"] = data["sidebar"]
+    gen.save_site_config(site_config)
+    # Republish all pages so sidebar changes take effect
+    gen.publish_all()
+    return jsonify({"success": True})
+
+  return jsonify({"error": "No sidebar data provided"}), 400
 
 
 @app.route("/builder/pages")
@@ -504,8 +526,12 @@ def builder_preview(page_id: str) -> Any:
 
   try:
     if request.method == "POST":
-      # Preview unsaved changes
-      page_data = request.get_json()
+      # Preview unsaved changes - handle both JSON and form data
+      page_data = request.get_json(silent=True)
+      if not page_data and request.form.get("page_data"):
+        import json
+
+        page_data = json.loads(request.form.get("page_data", "{}"))
       if page_data:
         html_content = gen.generate_page_html_preview(page_data)
       else:

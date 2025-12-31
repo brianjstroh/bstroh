@@ -1,25 +1,27 @@
-<section class="content-section">
+<section class="content-section two-column-container">
   <div class="container">
     <div class="two-column ratio-{{ column_ratio|default('50-50') }}">
       <div class="column column-left">
-        {% if left_image %}
-        <img src="{{ left_image }}" alt="" class="column-image">
+        {% if left_slot_rendered %}
+        {% for component_html in left_slot_rendered %}
+        {{ component_html | safe }}
+        {% endfor %}
+        {% elif left_slot and left_slot|length > 0 %}
+        <p class="text-muted">Components will render here</p>
+        {% else %}
+        <p class="text-muted empty-slot">Left column - add components</p>
         {% endif %}
-        <div class="column-content">
-          {% for paragraph in left_content.split('\n\n') %}
-          <p>{{ paragraph }}</p>
-          {% endfor %}
-        </div>
       </div>
       <div class="column column-right">
-        {% if right_image %}
-        <img src="{{ right_image }}" alt="" class="column-image">
+        {% if right_slot_rendered %}
+        {% for component_html in right_slot_rendered %}
+        {{ component_html | safe }}
+        {% endfor %}
+        {% elif right_slot and right_slot|length > 0 %}
+        <p class="text-muted">Components will render here</p>
+        {% else %}
+        <p class="text-muted empty-slot">Right column - add components</p>
         {% endif %}
-        <div class="column-content">
-          {% for paragraph in right_content.split('\n\n') %}
-          <p>{{ paragraph }}</p>
-          {% endfor %}
-        </div>
       </div>
     </div>
   </div>

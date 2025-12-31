@@ -14,22 +14,10 @@
           "max_items": 1
         },
         {
-          "id": "hero",
-          "name": "Hero Section",
-          "allowed_categories": ["hero"],
-          "max_items": 1
-        },
-        {
           "id": "main",
           "name": "Main Content",
           "allowed_categories": ["content", "gallery", "contact"],
           "max_items": 20
-        },
-        {
-          "id": "sidebar",
-          "name": "Sidebar",
-          "allowed_categories": ["sidebar"],
-          "max_items": 10
         },
         {
           "id": "footer",
