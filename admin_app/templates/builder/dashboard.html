@@ -39,9 +39,6 @@
         <button class="list-group-item list-group-item-action" onclick="publishAll()">
           <i class="bi bi-cloud-upload"></i> Publish All Pages
         </button>
-        <a href="{{ url_for('browse', prefix='') }}" class="list-group-item list-group-item-action text-muted">
-          <i class="bi bi-folder"></i> File Manager
-        </a>
       </div>
     </div>
   </div>
@@ -119,6 +116,103 @@
                      value="{{ site.color_overrides.background or '#f8fafc' }}">
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Navigation Links -->
+    <div class="card mb-4">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-list"></i> Main Navigation</span>
+        <button class="btn btn-sm btn-outline-primary" onclick="addNavLink()">
+          <i class="bi bi-plus"></i> Add Link
+        </button>
+      </div>
+      <div class="card-body">
+        <p class="text-muted small mb-3">Configure the navigation links shown in the header. These links appear on all pages.</p>
+        <div id="navLinksContainer">
+          {% for nav_item in site.navigation %}
+          <div class="nav-link-item d-flex align-items-center gap-2 mb-2" data-index="{{ loop.index0 }}">
+            <i class="bi bi-grip-vertical text-muted" style="cursor: grab;"></i>
+            <input type="text" class="form-control form-control-sm" placeholder="Label" value="{{ nav_item.label }}" style="width: 120px;" onchange="updateNavLinks()">
+            <input type="text" class="form-control form-control-sm flex-grow-1" placeholder="URL (e.g., /about.html)" value="{{ nav_item.url }}" onchange="updateNavLinks()">
+            <button class="btn btn-sm btn-outline-danger" onclick="removeNavLink(this)" title="Remove link">
+              <i class="bi bi-trash"></i>
+            </button>
+          </div>
+          {% endfor %}
+        </div>
+        <div class="mt-3 d-flex justify-content-end">
+          <button class="btn btn-primary btn-sm" onclick="saveNavLinks()">
+            <i class="bi bi-check"></i> Save Navigation
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer Settings -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <i class="bi bi-window-dock"></i> Footer
+      </div>
+      <div class="card-body">
+        <p class="text-muted small mb-3">Configure the footer that appears on all pages.</p>
+        <div class="mb-3">
+          <label class="form-label small">Footer Text</label>
+          <input type="text" class="form-control form-control-sm" id="footerText" value="{{ site.footer_text }}" placeholder="© 2025 Your Company. All rights reserved.">
+        </div>
+
+        <hr>
+        <h6 class="mb-3"><i class="bi bi-share"></i> Social Links</h6>
+        <p class="text-muted small mb-2">Add links to your social media profiles. Leave empty to hide.</p>
+
+        <div class="row g-2 mb-2">
+          <div class="col-6">
+            <label class="form-label small"><i class="bi bi-facebook"></i> Facebook</label>
+            <input type="url" class="form-control form-control-sm" id="socialFacebook"
+                   value="{{ site.social_links.facebook if site.social_links else '' }}"
+                   placeholder="https://facebook.com/yourpage">
+          </div>
+          <div class="col-6">
+            <label class="form-label small"><i class="bi bi-instagram"></i> Instagram</label>
+            <input type="url" class="form-control form-control-sm" id="socialInstagram"
+                   value="{{ site.social_links.instagram if site.social_links else '' }}"
+                   placeholder="https://instagram.com/yourpage">
+          </div>
+        </div>
+        <div class="row g-2 mb-2">
+          <div class="col-6">
+            <label class="form-label small"><i class="bi bi-twitter-x"></i> X (Twitter)</label>
+            <input type="url" class="form-control form-control-sm" id="socialTwitter"
+                   value="{{ site.social_links.twitter if site.social_links else '' }}"
+                   placeholder="https://x.com/yourhandle">
+          </div>
+          <div class="col-6">
+            <label class="form-label small"><i class="bi bi-linkedin"></i> LinkedIn</label>
+            <input type="url" class="form-control form-control-sm" id="socialLinkedin"
+                   value="{{ site.social_links.linkedin if site.social_links else '' }}"
+                   placeholder="https://linkedin.com/in/yourprofile">
+          </div>
+        </div>
+        <div class="row g-2 mb-3">
+          <div class="col-6">
+            <label class="form-label small"><i class="bi bi-youtube"></i> YouTube</label>
+            <input type="url" class="form-control form-control-sm" id="socialYoutube"
+                   value="{{ site.social_links.youtube if site.social_links else '' }}"
+                   placeholder="https://youtube.com/@yourchannel">
+          </div>
+          <div class="col-6">
+            <label class="form-label small"><i class="bi bi-envelope"></i> Email</label>
+            <input type="email" class="form-control form-control-sm" id="socialEmail"
+                   value="{{ site.social_links.email if site.social_links else '' }}"
+                   placeholder="contact@yoursite.com">
+          </div>
+        </div>
+
+        <div class="d-flex justify-content-end">
+          <button class="btn btn-primary btn-sm" onclick="saveFooterSettings()">
+            <i class="bi bi-check"></i> Save Footer
+          </button>
         </div>
       </div>
     </div>
@@ -351,6 +445,112 @@
       default:
         frame.style.width = '100%';
         frame.style.margin = '0';
+    }
+  }
+
+  // Navigation management
+  function addNavLink() {
+    const container = document.getElementById('navLinksContainer');
+    const index = container.children.length;
+    const html = `
+      <div class="nav-link-item d-flex align-items-center gap-2 mb-2" data-index="${index}">
+        <i class="bi bi-grip-vertical text-muted" style="cursor: grab;"></i>
+        <input type="text" class="form-control form-control-sm" placeholder="Label" style="width: 120px;" onchange="updateNavLinks()">
+        <input type="text" class="form-control form-control-sm flex-grow-1" placeholder="URL (e.g., /about.html)" onchange="updateNavLinks()">
+        <button class="btn btn-sm btn-outline-danger" onclick="removeNavLink(this)" title="Remove link">
+          <i class="bi bi-trash"></i>
+        </button>
+      </div>
+    `;
+    container.insertAdjacentHTML('beforeend', html);
+  }
+
+  function removeNavLink(button) {
+    button.closest('.nav-link-item').remove();
+    // Re-index items
+    const items = document.querySelectorAll('.nav-link-item');
+    items.forEach((item, idx) => item.dataset.index = idx);
+  }
+
+  function getNavLinksData() {
+    const items = document.querySelectorAll('.nav-link-item');
+    const links = [];
+    items.forEach(item => {
+      const inputs = item.querySelectorAll('input');
+      const label = inputs[0].value.trim();
+      const url = inputs[1].value.trim();
+      if (label && url) {
+        links.push({ label, url, children: [] });
+      }
+    });
+    return links;
+  }
+
+  async function saveNavLinks() {
+    const navigation = getNavLinksData();
+
+    try {
+      const response = await fetch('/builder/site/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ navigation })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Republish to apply changes
+        await publishAll();
+        alert('Navigation saved successfully!');
+      } else {
+        alert('Error: ' + data.error);
+      }
+    } catch (error) {
+      alert('Error saving navigation: ' + error.message);
+    }
+  }
+
+  // Footer management
+  async function saveFooterSettings() {
+    const footerText = document.getElementById('footerText').value;
+
+    // Collect social links (only include non-empty ones)
+    const socialLinks = {};
+    const facebook = document.getElementById('socialFacebook').value.trim();
+    const instagram = document.getElementById('socialInstagram').value.trim();
+    const twitter = document.getElementById('socialTwitter').value.trim();
+    const linkedin = document.getElementById('socialLinkedin').value.trim();
+    const youtube = document.getElementById('socialYoutube').value.trim();
+    const email = document.getElementById('socialEmail').value.trim();
+
+    if (facebook) socialLinks.facebook = facebook;
+    if (instagram) socialLinks.instagram = instagram;
+    if (twitter) socialLinks.twitter = twitter;
+    if (linkedin) socialLinks.linkedin = linkedin;
+    if (youtube) socialLinks.youtube = youtube;
+    if (email) socialLinks.email = email;
+
+    try {
+      const response = await fetch('/builder/site/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          footer_text: footerText,
+          social_links: socialLinks
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Republish to apply changes
+        await publishAll();
+        alert('Footer saved successfully!');
+      } else {
+        alert('Error: ' + data.error);
+      }
+    } catch (error) {
+      alert('Error saving footer: ' + error.message);
     }
   }
 </script>

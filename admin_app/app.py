@@ -62,9 +62,9 @@ def get_bucket_for_domain(domain: str) -> str:
 
 @app.route("/")
 def index() -> Any:
-  """Redirect to login or file browser."""
+  """Redirect to login or builder dashboard."""
   if session.get("authenticated"):
-    return redirect(url_for("browse", prefix=""))
+    return redirect(url_for("builder_dashboard"))
   return redirect(url_for("login"))
 
 
@@ -81,7 +81,7 @@ def login() -> Any:
       session["authenticated"] = True
       session["domain"] = domain
       session["bucket"] = get_bucket_for_domain(domain)
-      return redirect(url_for("browse", prefix=""))
+      return redirect(url_for("builder_dashboard"))
 
     return render_template("login.html", error="Invalid domain or password")
 
@@ -168,166 +168,6 @@ def change_password() -> Any:
   return render_template("change_password.html", domain=domain)
 
 
-@app.route("/files/")
-@app.route("/files/<path:prefix>")
-@login_required
-def browse(prefix: str = "") -> Any:
-  """Browse S3 bucket contents."""
-  bucket = session["bucket"]
-  domain = session["domain"]
-
-  # Ensure prefix ends with / if not empty
-  if prefix and not prefix.endswith("/"):
-    prefix = prefix + "/"
-
-  # List objects with pagination
-  items: list[dict[str, Any]] = []
-
-  try:
-    paginator = s3.get_paginator("list_objects_v2")
-
-    for page in paginator.paginate(
-      Bucket=bucket,
-      Prefix=prefix,
-      Delimiter="/",
-      MaxKeys=100,
-    ):
-      # Add folders (CommonPrefixes)
-      for cp in page.get("CommonPrefixes", []):
-        folder_key = cp["Prefix"]
-        folder_name = folder_key.rstrip("/").split("/")[-1]
-        items.append(
-          {
-            "type": "folder",
-            "name": folder_name,
-            "key": folder_key,
-          }
-        )
-
-      # Add files
-      for obj in page.get("Contents", []):
-        key = obj["Key"]
-        if key != prefix:  # Skip the prefix itself
-          name = key.split("/")[-1]
-          ext = os.path.splitext(name)[1].lower()
-          items.append(
-            {
-              "type": "file",
-              "name": name,
-              "key": key,
-              "size": _format_size(obj["Size"]),
-              "modified": obj["LastModified"].strftime("%Y-%m-%d %H:%M"),
-              "is_image": ext in IMAGE_EXTENSIONS,
-            }
-          )
-  except ClientError as e:
-    return render_template(
-      "files.html",
-      domain=domain,
-      prefix=prefix,
-      items=[],
-      parent_prefix=None,
-      error=str(e),
-    )
-
-  # Sort: folders first, then files alphabetically
-  items.sort(key=lambda x: (x["type"] != "folder", x["name"].lower()))
-
-  # Calculate parent prefix for navigation
-  parent_prefix = None
-  if prefix:
-    parts = prefix.rstrip("/").split("/")
-    parent_prefix = "/".join(parts[:-1]) + "/" if len(parts) > 1 else ""
-
-  return render_template(
-    "files.html",
-    domain=domain,
-    prefix=prefix,
-    items=items,
-    parent_prefix=parent_prefix,
-  )
-
-
-@app.route("/download/<path:key>")
-@login_required
-def download(key: str) -> Any:
-  """Stream file download from S3."""
-  bucket = session["bucket"]
-
-  try:
-    obj = s3.get_object(Bucket=bucket, Key=key)
-
-    def generate() -> Any:
-      yield from obj["Body"].iter_chunks(chunk_size=8192)
-
-    filename = key.split("/")[-1]
-    return Response(
-      generate(),
-      headers={
-        "Content-Disposition": f'attachment; filename="{filename}"',
-        "Content-Type": obj.get("ContentType", "application/octet-stream"),
-      },
-    )
-  except ClientError as e:
-    return str(e), 404
-
-
-@app.route("/upload", methods=["POST"])
-@login_required
-def upload() -> Any:
-  """Handle file upload to S3."""
-  bucket = session["bucket"]
-  prefix = request.form.get("prefix", "")
-
-  files = request.files.getlist("files")
-  if not files:
-    return "No files provided", 400
-
-  for file in files:
-    if file.filename:
-      key = prefix + file.filename if prefix else file.filename
-      s3.upload_fileobj(file, bucket, key)
-
-  return redirect(url_for("browse", prefix=prefix))
-
-
-@app.route("/delete", methods=["POST"])
-@login_required
-def delete() -> Any:
-  """Delete a file from S3."""
-  bucket = session["bucket"]
-  key = request.form.get("key", "")
-  prefix = request.form.get("prefix", "")
-
-  if not key:
-    return "No key provided", 400
-
-  try:
-    s3.delete_object(Bucket=bucket, Key=key)
-  except ClientError as e:
-    return str(e), 500
-
-  return redirect(url_for("browse", prefix=prefix))
-
-
-@app.route("/create-folder", methods=["POST"])
-@login_required
-def create_folder() -> Any:
-  """Create a new folder in S3."""
-  bucket = session["bucket"]
-  prefix = request.form.get("prefix", "")
-  folder_name = request.form.get("folder_name", "").strip()
-
-  if not folder_name:
-    return "No folder name provided", 400
-
-  # Create folder by putting an empty object with trailing slash
-  key = prefix + folder_name + "/"
-  s3.put_object(Bucket=bucket, Key=key, Body=b"")
-
-  return redirect(url_for("browse", prefix=prefix))
-
-
 def _format_size(size_bytes: int) -> str:
   """Format file size in human-readable format."""
   if size_bytes < 1024:
@@ -370,11 +210,27 @@ def builder_dashboard() -> Any:
     )
   else:
     # Existing site - show page list
+    # Check for orphaned pages and clean up site config if needed
     pages = []
+    valid_page_ids = []
     for page_id in site_config.get("pages", []):
       page_config = gen.get_page_config(page_id)
       if page_config:
         pages.append(page_config)
+        valid_page_ids.append(page_id)
+
+    # If any pages were missing, update site config to remove orphaned references
+    if len(valid_page_ids) != len(site_config.get("pages", [])):
+      site_config["pages"] = valid_page_ids
+      # Also clean up navigation entries for deleted pages
+      site_config["navigation"] = [
+        nav for nav in site_config.get("navigation", [])
+        if nav.get("url") == "/" or any(
+          nav.get("url") == f"/{pid}.html" for pid in valid_page_ids
+        )
+      ]
+      gen.save_site_config(site_config)
+
     return render_template(
       "builder/dashboard.html",
       domain=domain,
@@ -462,6 +318,8 @@ def builder_site_settings() -> Any:
         site_config["navigation"] = data["navigation"]
       if "logo_url" in data:
         site_config["logo_url"] = data["logo_url"]
+      if "social_links" in data:
+        site_config["social_links"] = data["social_links"]
 
       gen.save_site_config(site_config)
       return jsonify({"success": True})
@@ -630,6 +488,26 @@ def builder_preview(page_id: str) -> Any:
     return str(e), 404
 
 
+@app.route("/builder/component/preview", methods=["POST"])
+@login_required
+def builder_component_preview() -> Any:
+  """Generate preview HTML for a single component."""
+  gen = get_generator()
+
+  try:
+    data = request.get_json()
+    if not data:
+      return jsonify({"success": False, "error": "No data provided"})
+
+    component_type = data.get("component_type")
+    component_data = data.get("component_data", {})
+
+    html = gen.render_component_preview(component_type, component_data)
+    return jsonify({"success": True, "html": html})
+  except Exception as e:
+    return jsonify({"success": False, "error": str(e)})
+
+
 @app.route("/builder/assets")
 @login_required
 def builder_list_assets() -> Any:
@@ -725,6 +603,166 @@ def builder_upload_asset() -> Any:
     )
   except ClientError as e:
     return jsonify({"error": str(e)}), 500
+
+
+@app.route("/files/")
+@app.route("/files/<path:prefix>")
+@login_required
+def browse(prefix: str = "") -> Any:
+  """Browse S3 bucket contents."""
+  bucket = session["bucket"]
+  domain = session["domain"]
+
+  # Ensure prefix ends with / if not empty
+  if prefix and not prefix.endswith("/"):
+    prefix = prefix + "/"
+
+  # List objects with pagination
+  items: list[dict[str, Any]] = []
+
+  try:
+    paginator = s3.get_paginator("list_objects_v2")
+
+    for page in paginator.paginate(
+      Bucket=bucket,
+      Prefix=prefix,
+      Delimiter="/",
+      MaxKeys=100,
+    ):
+      # Add folders (CommonPrefixes)
+      for cp in page.get("CommonPrefixes", []):
+        folder_key = cp["Prefix"]
+        folder_name = folder_key.rstrip("/").split("/")[-1]
+        items.append(
+          {
+            "type": "folder",
+            "name": folder_name,
+            "key": folder_key,
+          }
+        )
+
+      # Add files
+      for obj in page.get("Contents", []):
+        key = obj["Key"]
+        if key != prefix:  # Skip the prefix itself
+          name = key.split("/")[-1]
+          ext = os.path.splitext(name)[1].lower()
+          items.append(
+            {
+              "type": "file",
+              "name": name,
+              "key": key,
+              "size": _format_size(obj["Size"]),
+              "modified": obj["LastModified"].strftime("%Y-%m-%d %H:%M"),
+              "is_image": ext in IMAGE_EXTENSIONS,
+            }
+          )
+  except ClientError as e:
+    return render_template(
+      "files.html",
+      domain=domain,
+      prefix=prefix,
+      items=[],
+      parent_prefix=None,
+      error=str(e),
+    )
+
+  # Sort: folders first, then files alphabetically
+  items.sort(key=lambda x: (x["type"] != "folder", x["name"].lower()))
+
+  # Calculate parent prefix for navigation
+  parent_prefix = None
+  if prefix:
+    parts = prefix.rstrip("/").split("/")
+    parent_prefix = "/".join(parts[:-1]) + "/" if len(parts) > 1 else ""
+
+  return render_template(
+    "files.html",
+    domain=domain,
+    prefix=prefix,
+    items=items,
+    parent_prefix=parent_prefix,
+  )
+
+
+@app.route("/download/<path:key>")
+@login_required
+def download(key: str) -> Any:
+  """Stream file download from S3."""
+  bucket = session["bucket"]
+
+  try:
+    obj = s3.get_object(Bucket=bucket, Key=key)
+
+    def generate() -> Any:
+      yield from obj["Body"].iter_chunks(chunk_size=8192)
+
+    filename = key.split("/")[-1]
+    return Response(
+      generate(),
+      headers={
+        "Content-Disposition": f'attachment; filename="{filename}"',
+        "Content-Type": obj.get("ContentType", "application/octet-stream"),
+      },
+    )
+  except ClientError as e:
+    return str(e), 404
+
+
+@app.route("/upload", methods=["POST"])
+@login_required
+def upload() -> Any:
+  """Handle file upload to S3."""
+  bucket = session["bucket"]
+  prefix = request.form.get("prefix", "")
+
+  files = request.files.getlist("files")
+  if not files:
+    return "No files provided", 400
+
+  for file in files:
+    if file.filename:
+      key = prefix + file.filename if prefix else file.filename
+      s3.upload_fileobj(file, bucket, key)
+
+  return redirect(url_for("browse", prefix=prefix))
+
+
+@app.route("/delete", methods=["POST"])
+@login_required
+def delete() -> Any:
+  """Delete a file from S3."""
+  bucket = session["bucket"]
+  key = request.form.get("key", "")
+  prefix = request.form.get("prefix", "")
+
+  if not key:
+    return "No key provided", 400
+
+  try:
+    s3.delete_object(Bucket=bucket, Key=key)
+  except ClientError as e:
+    return str(e), 500
+
+  return redirect(url_for("browse", prefix=prefix))
+
+
+@app.route("/create-folder", methods=["POST"])
+@login_required
+def create_folder() -> Any:
+  """Create a new folder in S3."""
+  bucket = session["bucket"]
+  prefix = request.form.get("prefix", "")
+  folder_name = request.form.get("folder_name", "").strip()
+
+  if not folder_name:
+    return "No folder name provided", 400
+
+  # Create folder by putting an empty object with trailing slash
+  key = prefix + folder_name + "/"
+  s3.put_object(Bucket=bucket, Key=key, Body=b"")
+
+  return redirect(url_for("browse", prefix=prefix))
 
 
 if __name__ == "__main__":

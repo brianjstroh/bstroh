@@ -1,18 +1,22 @@
 <nav class="site-nav">
   <div class="container">
     <a href="/" class="logo">
-      {% if logo_url %}
-      <img src="{{ logo_url }}" alt="{{ logo_text }}">
+      {% if site.logo_url %}
+      <img src="{{ site.logo_url }}" alt="{{ site.site_name }}">
       {% else %}
-      {{ logo_text }}
+      {{ site.site_name }}
       {% endif %}
     </a>
-    <ul>
-      {% for link in links.split('\n') %}
-      {% set parts = link.split('|') %}
-      {% if parts|length >= 2 %}
-      <li><a href="{{ parts[1].strip() }}">{{ parts[0].strip() }}</a></li>
-      {% endif %}
+    <button class="mobile-menu-toggle" aria-label="Toggle navigation menu" onclick="this.closest('.site-nav').classList.toggle('nav-open')">
+      <span class="hamburger-icon">
+        <span></span>
+        <span></span>
+        <span></span>
+      </span>
+    </button>
+    <ul class="nav-menu">
+      {% for nav_item in site.navigation %}
+      <li><a href="{{ nav_item.url }}">{{ nav_item.label }}</a></li>
       {% endfor %}
     </ul>
   </div>

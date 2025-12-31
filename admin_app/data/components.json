@@ -3,19 +3,11 @@
     {
       "id": "nav-main",
       "name": "Main Navigation",
-      "description": "Horizontal navigation bar with logo and menu links",
+      "description": "Site-wide navigation bar - links are managed in Site Settings",
       "category": "navigation",
       "thumbnail": "/static/components/nav-main.png",
-      "editable_fields": [
-        {"name": "logo_text", "type": "text", "label": "Logo Text", "required": true, "default": "My Site"},
-        {"name": "logo_url", "type": "image", "label": "Logo Image (optional)", "help_text": "Leave empty to use text"},
-        {"name": "links", "type": "textarea", "label": "Menu Links (one per line: Label|URL)", "default": "Home|/\nAbout|#about\nContact|#contact", "help_text": "Format: Label|URL"}
-      ],
-      "default_data": {
-        "logo_text": "My Site",
-        "logo_url": "",
-        "links": "Home|/\nAbout|#about\nContact|#contact"
-      }
+      "editable_fields": [],
+      "default_data": {}
     },
     {
       "id": "hero-image",
@@ -29,7 +21,7 @@
         {"name": "image", "type": "image", "label": "Background Image", "required": true},
         {"name": "overlay_opacity", "type": "select", "label": "Overlay Darkness", "options": ["none", "light", "medium", "dark"], "default": "medium"},
         {"name": "cta_text", "type": "text", "label": "Button Text", "default": "Learn More"},
-        {"name": "cta_link", "type": "url", "label": "Button Link", "default": "#about"},
+        {"name": "cta_link", "type": "url", "label": "Button Link", "default": "/about.html", "help_text": "Link to a page (e.g., /about.html) or section (#about)"},
         {"name": "height", "type": "select", "label": "Height", "options": ["small", "medium", "large", "fullscreen"], "default": "large"}
       ],
       "default_data": {
@@ -38,7 +30,7 @@
         "image": "",
         "overlay_opacity": "medium",
         "cta_text": "Learn More",
-        "cta_link": "#about",
+        "cta_link": "/about.html",
         "height": "large"
       }
     },
@@ -52,14 +44,14 @@
         {"name": "title", "type": "text", "label": "Headline", "required": true, "default": "Welcome"},
         {"name": "subtitle", "type": "textarea", "label": "Description", "default": "We're glad you're here. Explore our services below."},
         {"name": "cta_text", "type": "text", "label": "Button Text", "default": "Get Started"},
-        {"name": "cta_link", "type": "url", "label": "Button Link", "default": "#contact"},
+        {"name": "cta_link", "type": "url", "label": "Button Link", "default": "/contact.html", "help_text": "Link to a page (e.g., /contact.html) or section (#contact)"},
         {"name": "alignment", "type": "select", "label": "Text Alignment", "options": ["left", "center", "right"], "default": "center"}
       ],
       "default_data": {
         "title": "Welcome",
         "subtitle": "We're glad you're here. Explore our services below.",
         "cta_text": "Get Started",
-        "cta_link": "#contact",
+        "cta_link": "/contact.html",
         "alignment": "center"
       }
     },
@@ -167,17 +159,15 @@
     {
       "id": "footer-simple",
       "name": "Simple Footer",
-      "description": "Basic footer with copyright and social links",
+      "description": "Site-wide footer - text is managed in Site Settings",
       "category": "footer",
       "thumbnail": "/static/components/footer-simple.png",
       "editable_fields": [
-        {"name": "copyright_text", "type": "text", "label": "Copyright Text", "default": "2025 My Company. All rights reserved."},
-        {"name": "social_links", "type": "textarea", "label": "Social Links (Icon|URL per line)", "default": "facebook|https://facebook.com\ninstagram|https://instagram.com", "help_text": "Icons: facebook, instagram, twitter, linkedin, youtube, email"},
+        {"name": "social_links", "type": "textarea", "label": "Social Links (Icon|URL per line)", "default": "", "help_text": "Icons: facebook, instagram, twitter, linkedin, youtube, email"},
         {"name": "show_back_to_top", "type": "checkbox", "label": "Show Back to Top Button", "default": true}
       ],
       "default_data": {
-        "copyright_text": "2025 My Company. All rights reserved.",
-        "social_links": "facebook|https://facebook.com\ninstagram|https://instagram.com",
+        "social_links": "",
         "show_back_to_top": true
       }
     },

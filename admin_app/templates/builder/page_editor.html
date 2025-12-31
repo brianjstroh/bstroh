@@ -27,6 +27,12 @@
           <label class="form-label small">Meta Description</label>
           <textarea class="form-control form-control-sm" id="metaDescription" rows="2">{{ page.meta_description or '' }}</textarea>
         </div>
+        {% if page.id != 'index' %}
+        <hr>
+        <button type="button" class="btn btn-outline-danger btn-sm w-100" onclick="showDeletePageModal()">
+          <i class="bi bi-trash"></i> Delete This Page
+        </button>
+        {% endif %}
       </div>
     </div>
 
@@ -40,17 +46,20 @@
         <div class="mb-2">
           <label class="form-label small text-muted mb-1">Add to section:</label>
           <select class="form-select form-select-sm" id="componentSlot" onchange="updateSlotBadge()">
-            <option value="header">Header</option>
             <option value="hero">Hero</option>
             <option value="main" selected>Main Content</option>
             <option value="sidebar">Sidebar</option>
-            <option value="footer">Footer</option>
           </select>
         </div>
-        <p class="small text-muted mb-2">Click a component to add it:</p>
+        <p class="small text-muted mb-2">Click a component to add it (hover to preview):</p>
         <div class="component-list">
           {% for component in components %}
-          <div class="component-item p-2 mb-2 border rounded" data-component-id="{{ component.id }}" onclick="addComponent('{{ component.id }}')">
+          {% if component.category not in ['navigation', 'footer'] %}
+          <div class="component-item p-2 mb-2 border rounded"
+               data-component-id="{{ component.id }}"
+               onclick="addComponent('{{ component.id }}')"
+               onmouseenter="showComponentPreview('{{ component.id }}')"
+               onmouseleave="hideComponentPreview()">
             <div class="d-flex align-items-center">
               <i class="bi bi-{{ component.thumbnail }} me-2 text-primary"></i>
               <div class="flex-grow-1">
@@ -60,7 +69,17 @@
               <i class="bi bi-plus-circle text-success"></i>
             </div>
           </div>
+          {% endif %}
           {% endfor %}
+        </div>
+        <!-- Component Preview Popup -->
+        <div id="componentPreviewPopup" class="component-preview-popup" style="display: none;">
+          <div class="preview-header">
+            <span id="previewComponentName">Component Preview</span>
+          </div>
+          <div class="preview-content">
+            <iframe id="componentPreviewFrame" style="width: 100%; height: 200px; border: none; pointer-events: none;"></iframe>
+          </div>
         </div>
       </div>
     </div>
@@ -81,19 +100,6 @@
         </div>
       </div>
       <div class="card-body p-0">
-        <!-- Slot: Header -->
-        <div class="slot-section" data-slot="header">
-          <div class="slot-header bg-light px-3 py-2 border-bottom d-flex justify-content-between align-items-center">
-            <span><i class="bi bi-window-stack"></i> Header</span>
-            <button class="btn btn-sm btn-outline-primary" onclick="selectSlotAndScroll('header')" title="Add component to Header">
-              <i class="bi bi-plus"></i>
-            </button>
-          </div>
-          <div class="slot-content p-2" id="slot-header">
-            <!-- Components will be rendered here -->
-          </div>
-        </div>
-
         <!-- Slot: Hero -->
         <div class="slot-section" data-slot="hero">
           <div class="slot-header bg-light px-3 py-2 border-bottom d-flex justify-content-between align-items-center">
@@ -127,18 +133,6 @@
             </button>
           </div>
           <div class="slot-content p-2" id="slot-sidebar">
-          </div>
-        </div>
-
-        <!-- Slot: Footer -->
-        <div class="slot-section" data-slot="footer">
-          <div class="slot-header bg-light px-3 py-2 border-bottom d-flex justify-content-between align-items-center">
-            <span><i class="bi bi-window-dock"></i> Footer</span>
-            <button class="btn btn-sm btn-outline-primary" onclick="selectSlotAndScroll('footer')" title="Add component to Footer">
-              <i class="bi bi-plus"></i>
-            </button>
-          </div>
-          <div class="slot-content p-2" id="slot-footer">
           </div>
         </div>
       </div>
@@ -180,6 +174,28 @@
         </button>
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
         <button type="button" class="btn btn-primary" onclick="saveComponentEdits()">Save Changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Page Confirmation Modal -->
+<div class="modal fade" id="deletePageModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title"><i class="bi bi-exclamation-triangle"></i> Delete Page</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p>Are you sure you want to delete the page "<strong>{{ page.title }}</strong>"?</p>
+        <p class="text-danger mb-0"><i class="bi bi-exclamation-circle"></i> This action is permanent and cannot be undone. The page and all its content will be permanently deleted.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-danger" onclick="deletePage()">
+          <i class="bi bi-trash"></i> Delete Permanently
+        </button>
       </div>
     </div>
   </div>
@@ -249,6 +265,40 @@
   }
   .component-item .bi-plus-circle {
     transition: transform 0.2s;
+  }
+
+  /* Component Preview Popup */
+  .component-preview-popup {
+    position: absolute;
+    left: 105%;
+    top: 0;
+    width: 350px;
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 1000;
+    overflow: hidden;
+  }
+  .component-preview-popup .preview-header {
+    background: #f8f9fa;
+    padding: 8px 12px;
+    border-bottom: 1px solid #dee2e6;
+    font-weight: 500;
+    font-size: 0.875rem;
+  }
+  .component-preview-popup .preview-content {
+    background: #f0f0f0;
+    padding: 8px;
+  }
+  .component-preview-popup .preview-content iframe {
+    background: white;
+    border-radius: 4px;
+  }
+
+  /* Position the component list container as relative for popup positioning */
+  .component-list {
+    position: relative;
   }
 
   .slot-content {
@@ -382,20 +432,47 @@
   let pageData = {{ page | tojson | safe }};
   let componentsLib = {{ components | tojson | safe }};
   let editModal;
+  let deletePageModal;
   let currentEditingComponent = null;
   let currentEditingSlot = null;
   let currentEditingIndex = null;
 
   document.addEventListener('DOMContentLoaded', function() {
     editModal = new bootstrap.Modal(document.getElementById('editComponentModal'));
+    deletePageModal = new bootstrap.Modal(document.getElementById('deletePageModal'));
     renderAllSlots();
     initDragAndDrop();
     initImageBrowser();
     refreshPreview(); // Load initial preview
   });
 
+  function showDeletePageModal() {
+    deletePageModal.show();
+  }
+
+  async function deletePage() {
+    try {
+      const response = await fetch(`/builder/pages/${pageId}/delete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        window.location.href = '/builder';
+      } else {
+        alert('Error deleting page: ' + data.error);
+        deletePageModal.hide();
+      }
+    } catch (error) {
+      alert('Error deleting page: ' + error.message);
+      deletePageModal.hide();
+    }
+  }
+
   function renderAllSlots() {
-    const slots = ['header', 'hero', 'main', 'sidebar', 'footer'];
+    const slots = ['hero', 'main', 'sidebar'];
     slots.forEach(slot => {
       renderSlot(slot);
     });
@@ -447,11 +524,9 @@
   }
 
   const slotNames = {
-    header: 'Header',
     hero: 'Hero',
     main: 'Main Content',
-    sidebar: 'Sidebar',
-    footer: 'Footer'
+    sidebar: 'Sidebar'
   };
 
   function updateSlotBadge() {
@@ -495,7 +570,54 @@
     setTimeout(() => toast.remove(), 3000);
   }
 
+  // Component preview on hover
+  let previewTimeout = null;
+
+  function showComponentPreview(componentId) {
+    // Small delay to avoid flickering
+    previewTimeout = setTimeout(async () => {
+      const compDef = componentsLib.find(c => c.id === componentId);
+      if (!compDef) return;
+
+      const popup = document.getElementById('componentPreviewPopup');
+      const nameEl = document.getElementById('previewComponentName');
+      const iframe = document.getElementById('componentPreviewFrame');
+
+      nameEl.textContent = compDef.name;
+
+      // Fetch component preview
+      try {
+        const response = await fetch('/builder/component/preview', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            component_type: componentId,
+            component_data: compDef.default_data
+          })
+        });
+
+        const data = await response.json();
+        if (data.success) {
+          iframe.srcdoc = data.html;
+        }
+      } catch (error) {
+        console.error('Preview error:', error);
+      }
+
+      popup.style.display = 'block';
+    }, 200);
+  }
+
+  function hideComponentPreview() {
+    if (previewTimeout) {
+      clearTimeout(previewTimeout);
+      previewTimeout = null;
+    }
+    document.getElementById('componentPreviewPopup').style.display = 'none';
+  }
+
   function addComponent(componentId) {
+    hideComponentPreview(); // Hide preview when adding
     const slot = document.getElementById('componentSlot').value;
     const compDef = componentsLib.find(c => c.id === componentId);
 

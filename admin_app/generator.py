@@ -117,12 +117,13 @@ class SiteGenerator:
       "pages": ["index"],
       "navigation": [{"label": "Home", "url": "/", "children": []}],
       "footer_text": f"© {datetime.now().year} {site_name}. All rights reserved.",
+      "social_links": {},
       "created_at": now,
       "updated_at": now,
     }
 
-    # Create default index page with template components
-    index_page = self._create_default_page("index", "Home", template)
+    # Create default index page with template components (starter content for new sites)
+    index_page = self._create_default_page("index", "Home", template, include_starter=True)
 
     # Save to S3
     self.save_site_config(site_config)
@@ -131,12 +132,12 @@ class SiteGenerator:
     return site_config
 
   def _create_default_page(
-    self, page_id: str, title: str, template: dict[str, Any]
+    self, page_id: str, title: str, template: dict[str, Any], include_starter: bool = False
   ) -> dict[str, Any]:
-    """Create a default page with starter components."""
+    """Create a page. If include_starter is True, adds starter components."""
     now = datetime.now(UTC).isoformat()
 
-    # Initialize slots dict
+    # Initialize slots dict - all empty
     slots: dict[str, list[dict[str, Any]]] = {
       "header": [],
       "hero": [],
@@ -145,65 +146,67 @@ class SiteGenerator:
       "footer": [],
     }
 
-    comp_counter = 0
+    # Only add starter components for the initial index page during site setup
+    if include_starter:
+      comp_counter = 0
 
-    for slot in template.get("slots", []):
-      slot_id = slot["id"]
+      for slot in template.get("slots", []):
+        slot_id = slot["id"]
 
-      if slot_id == "header" and "navigation" in slot.get("allowed_categories", []):
-        nav_comp = self._components.get("nav-main", {})
-        slots["header"].append(
-          {
-            "id": f"comp-{comp_counter}",
-            "type": "nav-main",
-            "data": nav_comp.get("default_data", {}).copy(),
-          }
-        )
-        comp_counter += 1
+        if slot_id == "header" and "navigation" in slot.get("allowed_categories", []):
+          nav_comp = self._components.get("nav-main", {})
+          slots["header"].append(
+            {
+              "id": f"comp-{comp_counter}",
+              "type": "nav-main",
+              "data": nav_comp.get("default_data", {}).copy(),
+            }
+          )
+          comp_counter += 1
 
-      elif slot_id == "hero" and "hero" in slot.get("allowed_categories", []):
-        hero_comp = self._components.get("hero-text", {})
-        slots["hero"].append(
-          {
-            "id": f"comp-{comp_counter}",
-            "type": "hero-text",
-            "data": hero_comp.get("default_data", {}).copy(),
-          }
-        )
-        comp_counter += 1
+        elif slot_id == "hero" and "hero" in slot.get("allowed_categories", []):
+          hero_comp = self._components.get("hero-text", {})
+          slots["hero"].append(
+            {
+              "id": f"comp-{comp_counter}",
+              "type": "hero-text",
+              "data": hero_comp.get("default_data", {}).copy(),
+            }
+          )
+          comp_counter += 1
 
-      elif slot_id == "main":
-        # Add a heading and text block
-        heading_comp = self._components.get("text-heading", {})
-        text_comp = self._components.get("text-paragraph", {})
+        elif slot_id == "main":
+          # Add a heading and text block
+          heading_comp = self._components.get("text-heading", {})
+          text_comp = self._components.get("text-paragraph", {})
 
-        slots["main"].append(
-          {
-            "id": f"comp-{comp_counter}",
-            "type": "text-heading",
-            "data": heading_comp.get("default_data", {}).copy(),
-          }
-        )
-        comp_counter += 1
-        slots["main"].append(
-          {
-            "id": f"comp-{comp_counter}",
-            "type": "text-paragraph",
-            "data": text_comp.get("default_data", {}).copy(),
-          }
-        )
-        comp_counter += 1
+          slots["main"].append(
+            {
+              "id": f"comp-{comp_counter}",
+              "type": "text-heading",
+              "data": heading_comp.get("default_data", {}).copy(),
+            }
+          )
+          comp_counter += 1
+          slots["main"].append(
+            {
+              "id": f"comp-{comp_counter}",
+              "type": "text-paragraph",
+              "data": text_comp.get("default_data", {}).copy(),
+            }
+          )
+          comp_counter += 1
 
-      elif slot_id == "footer" and "footer" in slot.get("allowed_categories", []):
-        footer_comp = self._components.get("footer-simple", {})
-        slots["footer"].append(
-          {
-            "id": f"comp-{comp_counter}",
-            "type": "footer-simple",
-            "data": footer_comp.get("default_data", {}).copy(),
-          }
-        )
-        comp_counter += 1
+        elif slot_id == "footer" and "footer" in slot.get("allowed_categories", []):
+          footer_comp = self._components.get("footer-simple", {})
+          slots["footer"].append(
+            {
+              "id": f"comp-{comp_counter}",
+              "type": "footer-simple",
+              "data": footer_comp.get("default_data", {}).copy(),
+            }
+          )
+          comp_counter += 1
 
     return {
       "id": page_id,
@@ -249,7 +252,7 @@ class SiteGenerator:
     for slot_id, components in page_slots.items():
       rendered_slots[slot_id] = []
       for comp in components:
-        rendered = self._render_component(comp)
+        rendered = self._render_component(comp, site_config)
         rendered_slots[slot_id].append(rendered)
 
     # Generate CSS variables
@@ -272,14 +275,18 @@ class SiteGenerator:
       colors=colors,
     )
 
-  def _render_component(self, comp: dict[str, Any]) -> str:
+  def _render_component(self, comp: dict[str, Any], site_config: dict[str, Any]) -> str:
     """Render a single component to HTML."""
     comp_type = comp.get("type", "")
     comp_data = comp.get("data", {})
 
     try:
       template = self.jinja_env.get_template(f"components/{comp_type}.html")
-      return template.render(**comp_data, component_id=comp.get("id", ""))
+      return template.render(
+        **comp_data,
+        component_id=comp.get("id", ""),
+        site=site_config,
+      )
     except Exception as e:
       # Return placeholder if template not found
       return f'<div class="component-error">Component {comp_type} error: {e}</div>'
@@ -291,6 +298,86 @@ class SiteGenerator:
       css += f"  --color-{name}: {value};\n"
     css += "}\n"
     return css
+
+  def render_component_preview(
+    self, component_type: str, component_data: dict[str, Any]
+  ) -> str:
+    """Render a standalone component preview with basic styling."""
+    site_config = self.get_site_config() or {
+      "site_name": "Preview",
+      "navigation": [],
+      "footer_text": "",
+    }
+
+    # Get color scheme for styling
+    color_scheme = self._color_schemes.get(
+      site_config.get("color_scheme_id", "modern-blue"), {}
+    )
+    colors = color_scheme.get("colors", {
+      "primary": "#0066cc",
+      "text": "#1a1a2e",
+      "background": "#ffffff",
+      "surface": "#f8fafc",
+      "border": "#e2e8f0",
+    })
+
+    color_css = self._generate_color_css(colors)
+
+    # Render the component
+    comp = {"type": component_type, "data": component_data, "id": "preview"}
+    component_html = self._render_component(comp, site_config)
+
+    # Wrap in minimal HTML with styling
+    return f"""<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    {color_css}
+    * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+    body {{
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.6;
+      color: var(--color-text);
+      background: var(--color-background);
+      padding: 1rem;
+    }}
+    .btn {{
+      display: inline-block;
+      padding: 10px 20px;
+      background-color: var(--color-primary);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      text-decoration: none;
+    }}
+    .hero-section {{ padding: 2rem 0; text-align: center; }}
+    .hero-title {{ font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem; }}
+    .hero-subtitle {{ font-size: 0.9rem; color: #666; margin-bottom: 1rem; }}
+    .section-heading {{ margin-bottom: 1rem; }}
+    .section-heading h2 {{ font-size: 1.25rem; font-weight: 700; }}
+    .section-heading .subtitle {{ color: #666; font-size: 0.875rem; }}
+    .text-block p {{ margin-bottom: 0.5rem; font-size: 0.875rem; }}
+    .container {{ max-width: 100%; }}
+    .two-column {{ display: block; }}
+    .two-column h3 {{ font-size: 1rem; margin-bottom: 0.5rem; }}
+    .gallery-grid {{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }}
+    .gallery-item {{ aspect-ratio: 1; background: #eee; border-radius: 4px; }}
+    .contact-section {{ padding: 1rem 0; }}
+    .contact-form {{ max-width: 100%; }}
+    .form-group {{ margin-bottom: 0.75rem; }}
+    .form-group label {{ display: block; font-size: 0.75rem; margin-bottom: 0.25rem; }}
+    .form-group input, .form-group textarea {{
+      width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.75rem;
+    }}
+    .text-center {{ text-align: center; }}
+  </style>
+</head>
+<body>
+  {component_html}
+</body>
+</html>"""
 
   def publish_page(self, page_id: str) -> None:
     """Generate and upload HTML for a page."""

@@ -89,6 +89,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      flex-wrap: wrap;
     }
 
     .site-nav .logo {
@@ -102,7 +103,7 @@
       width: auto;
     }
 
-    .site-nav ul {
+    .site-nav .nav-menu {
       list-style: none;
       display: flex;
       gap: 2rem;
@@ -115,6 +116,42 @@
 
     .site-nav a:hover {
       color: var(--color-primary);
+    }
+
+    /* Mobile menu toggle button */
+    .mobile-menu-toggle {
+      display: none;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 8px;
+    }
+
+    .hamburger-icon {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      width: 24px;
+    }
+
+    .hamburger-icon span {
+      display: block;
+      height: 3px;
+      width: 100%;
+      background-color: var(--color-text);
+      border-radius: 2px;
+      transition: transform 0.3s, opacity 0.3s;
+    }
+
+    /* Animate hamburger to X when open */
+    .nav-open .hamburger-icon span:nth-child(1) {
+      transform: translateY(8px) rotate(45deg);
+    }
+    .nav-open .hamburger-icon span:nth-child(2) {
+      opacity: 0;
+    }
+    .nav-open .hamburger-icon span:nth-child(3) {
+      transform: translateY(-8px) rotate(-45deg);
     }
 
     /* Hero sections */
@@ -358,7 +395,34 @@
       .section-heading h2 { font-size: 1.75rem; }
       .two-column { grid-template-columns: 1fr; }
       .gallery-grid.cols-3, .gallery-grid.cols-4 { grid-template-columns: repeat(2, 1fr); }
-      .site-nav ul { display: none; }
+
+      /* Mobile navigation */
+      .mobile-menu-toggle {
+        display: block;
+      }
+
+      .site-nav .nav-menu {
+        display: none;
+        width: 100%;
+        flex-direction: column;
+        gap: 0;
+        padding-top: 1rem;
+        margin-top: 1rem;
+        border-top: 1px solid var(--color-border);
+      }
+
+      .site-nav .nav-menu li {
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--color-border);
+      }
+
+      .site-nav .nav-menu li:last-child {
+        border-bottom: none;
+      }
+
+      .site-nav.nav-open .nav-menu {
+        display: flex;
+      }
     }
   </style>
 </head>
