@@ -60,10 +60,6 @@
               <label class="form-label">Site Name</label>
               <input type="text" class="form-control" id="siteName" value="{{ site.site_name }}">
             </div>
-            <div class="mb-3">
-              <label class="form-label">Footer Text</label>
-              <input type="text" class="form-control" id="footerText" value="{{ site.footer_text }}">
-            </div>
           </div>
           <div class="col-md-6">
             <div class="mb-3">
@@ -363,7 +359,6 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           site_name: document.getElementById('siteName').value,
-          footer_text: document.getElementById('footerText').value,
           color_scheme_id: schemeId,
           logo_url: document.getElementById('logoUrl').value,
           color_overrides: colorOverrides

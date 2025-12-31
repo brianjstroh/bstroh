@@ -224,10 +224,10 @@ def builder_dashboard() -> Any:
       site_config["pages"] = valid_page_ids
       # Also clean up navigation entries for deleted pages
       site_config["navigation"] = [
-        nav for nav in site_config.get("navigation", [])
-        if nav.get("url") == "/" or any(
-          nav.get("url") == f"/{pid}.html" for pid in valid_page_ids
-        )
+        nav
+        for nav in site_config.get("navigation", [])
+        if nav.get("url") == "/"
+        or any(nav.get("url") == f"/{pid}.html" for pid in valid_page_ids)
       ]
       gen.save_site_config(site_config)
 
@@ -471,6 +471,7 @@ def builder_publish() -> Any:
 def builder_preview(page_id: str) -> Any:
   """Generate live preview of a page."""
   gen = get_generator()
+  domain = session.get("domain", "")
 
   try:
     if request.method == "POST":
@@ -483,6 +484,13 @@ def builder_preview(page_id: str) -> Any:
     else:
       # GET - preview saved version
       html_content = gen.generate_page_html(page_id)
+
+    # Inject base tag for proper URL resolution in iframe preview
+    # This helps when using srcdoc which doesn't have a natural base URL
+    if domain:
+      base_tag = f'<base href="https://{domain}/">'
+      html_content = html_content.replace("<head>", f"<head>\n  {base_tag}", 1)
+
     return Response(html_content, mimetype="text/html")
   except ValueError as e:
     return str(e), 404
@@ -493,6 +501,7 @@ def builder_preview(page_id: str) -> Any:
 def builder_component_preview() -> Any:
   """Generate preview HTML for a single component."""
   gen = get_generator()
+  domain = session.get("domain", "")
 
   try:
     data = request.get_json()
@@ -503,6 +512,12 @@ def builder_component_preview() -> Any:
     component_data = data.get("component_data", {})
 
     html = gen.render_component_preview(component_type, component_data)
+
+    # Inject base tag for proper URL resolution in iframe preview
+    if domain:
+      base_tag = f'<base href="https://{domain}/">'
+      html = html.replace("<head>", f"<head>\n  {base_tag}", 1)
+
     return jsonify({"success": True, "html": html})
   except Exception as e:
     return jsonify({"success": False, "error": str(e)})

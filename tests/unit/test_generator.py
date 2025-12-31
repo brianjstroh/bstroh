@@ -73,9 +73,7 @@ class TestGenerateColorCSS:
     css = generator._generate_color_css({})
     assert css == ":root {\n}\n"
 
-  def test_handles_color_names_with_hyphens(
-    self, generator: SiteGenerator
-  ) -> None:
+  def test_handles_color_names_with_hyphens(self, generator: SiteGenerator) -> None:
     """Test colors with hyphens in names."""
     colors = {"primary-hover": "#0052a3", "text-muted": "#6b7280"}
 
@@ -127,9 +125,7 @@ class TestRenderComponent:
     assert "Great to see you" in html
     assert "Get Started" in html
 
-  def test_renders_gallery_grid_with_images(
-    self, generator: SiteGenerator
-  ) -> None:
+  def test_renders_gallery_grid_with_images(self, generator: SiteGenerator) -> None:
     """Test rendering gallery-grid with image array."""
     comp = {
       "id": "comp-3",
@@ -152,9 +148,7 @@ class TestRenderComponent:
     assert "https://example.com/img2.jpg" in html
     assert "cols-3" in html
 
-  def test_renders_gallery_grid_empty_images(
-    self, generator: SiteGenerator
-  ) -> None:
+  def test_renders_gallery_grid_empty_images(self, generator: SiteGenerator) -> None:
     """Test rendering gallery-grid with empty images array."""
     comp = {
       "id": "comp-4",
@@ -174,9 +168,7 @@ class TestRenderComponent:
     # Should not have any gallery-item divs
     assert "gallery-item" not in html
 
-  def test_handles_missing_component_template(
-    self, generator: SiteGenerator
-  ) -> None:
+  def test_handles_missing_component_template(self, generator: SiteGenerator) -> None:
     """Test graceful handling of unknown component type."""
     comp = {
       "id": "comp-5",
@@ -209,9 +201,7 @@ class TestRenderComponent:
 class TestCreateDefaultPage:
   """Tests for _create_default_page method."""
 
-  def test_creates_page_with_correct_structure(
-    self, generator: SiteGenerator
-  ) -> None:
+  def test_creates_page_with_correct_structure(self, generator: SiteGenerator) -> None:
     """Test that page has correct slot structure."""
     template = {
       "id": "test-template",
@@ -254,9 +244,7 @@ class TestCreateDefaultPage:
     assert len(page["slots"]["header"]) == 1
     assert page["slots"]["header"][0]["type"] == "nav-main"
 
-  def test_populates_main_with_heading_and_text(
-    self, generator: SiteGenerator
-  ) -> None:
+  def test_populates_main_with_heading_and_text(self, generator: SiteGenerator) -> None:
     """Test that main slot gets heading and text components."""
     template = {
       "id": "test",
@@ -357,9 +345,7 @@ class TestGeneratePageHtmlPreview:
     assert "About" in html
     assert "--color-primary" in html  # CSS variables
 
-  def test_raises_error_without_site_config(
-    self, generator: SiteGenerator
-  ) -> None:
+  def test_raises_error_without_site_config(self, generator: SiteGenerator) -> None:
     """Test error when site not initialized."""
     page_config = {"id": "test", "slots": {}}
 
@@ -389,9 +375,7 @@ class TestInitSite:
     assert "_builder/site.json" in mock_s3.objects
     assert "_builder/pages/index.json" in mock_s3.objects
 
-  def test_raises_error_for_invalid_template(
-    self, generator: SiteGenerator
-  ) -> None:
+  def test_raises_error_for_invalid_template(self, generator: SiteGenerator) -> None:
     """Test error for non-existent template."""
     with pytest.raises(ValueError, match="Template .* not found"):
       generator.init_site(
@@ -404,9 +388,7 @@ class TestInitSite:
 class TestAddPage:
   """Tests for add_page method."""
 
-  def test_adds_new_page(
-    self, generator: SiteGenerator, mock_s3: MockS3Client
-  ) -> None:
+  def test_adds_new_page(self, generator: SiteGenerator, mock_s3: MockS3Client) -> None:
     """Test adding a new page to existing site."""
     # Initialize site first
     generator.init_site("business-classic", "ocean-blue", "Test Site")
@@ -434,9 +416,7 @@ class TestAddPage:
 class TestDeletePage:
   """Tests for delete_page method."""
 
-  def test_deletes_page(
-    self, generator: SiteGenerator, mock_s3: MockS3Client
-  ) -> None:
+  def test_deletes_page(self, generator: SiteGenerator, mock_s3: MockS3Client) -> None:
     """Test deleting a page."""
     # Initialize and add page
     generator.init_site("business-classic", "ocean-blue", "Test Site")
@@ -484,9 +464,7 @@ class TestGetComponents:
     for comp in hero_components:
       assert comp["category"] == "hero"
 
-  def test_returns_empty_for_unknown_category(
-    self, generator: SiteGenerator
-  ) -> None:
+  def test_returns_empty_for_unknown_category(self, generator: SiteGenerator) -> None:
     """Test filtering by non-existent category."""
     components = generator.get_components(category="nonexistent")
     assert components == []

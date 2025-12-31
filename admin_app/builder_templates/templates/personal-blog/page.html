@@ -388,6 +388,34 @@
       opacity: 1;
     }
 
+    /* Main with sidebar layout */
+    .main-with-sidebar {
+      display: grid;
+      grid-template-columns: 1fr 300px;
+      gap: 2rem;
+      padding: 2rem 0;
+    }
+
+    .main-content {
+      min-width: 0;
+    }
+
+    .sidebar {
+      background-color: var(--color-surface);
+      padding: 1.5rem;
+      border-radius: 8px;
+      border: 1px solid var(--color-border);
+      height: fit-content;
+      position: sticky;
+      top: 80px;
+    }
+
+    .sidebar > *:not(:last-child) {
+      margin-bottom: 1.5rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--color-border);
+    }
+
     /* Responsive */
     @media (max-width: 768px) {
       .hero-title { font-size: 2rem; }
@@ -395,6 +423,8 @@
       .section-heading h2 { font-size: 1.75rem; }
       .two-column { grid-template-columns: 1fr; }
       .gallery-grid.cols-3, .gallery-grid.cols-4 { grid-template-columns: repeat(2, 1fr); }
+      .main-with-sidebar { grid-template-columns: 1fr; }
+      .sidebar { position: static; }
 
       /* Mobile navigation */
       .mobile-menu-toggle {
@@ -435,17 +465,28 @@
   </header>
   {% endif %}
 
-  {% if slots.hero %}
-  {% for component_html in slots.hero %}
-  {{ component_html | safe }}
-  {% endfor %}
-  {% endif %}
-
   <main>
+    {% if slots.sidebar and slots.sidebar|length > 0 %}
+    <div class="container main-with-sidebar">
+      <div class="main-content">
+        {% if slots.main %}
+        {% for component_html in slots.main %}
+        {{ component_html | safe }}
+        {% endfor %}
+        {% endif %}
+      </div>
+      <aside class="sidebar">
+        {% for component_html in slots.sidebar %}
+        {{ component_html | safe }}
+        {% endfor %}
+      </aside>
+    </div>
+    {% else %}
     {% if slots.main %}
     {% for component_html in slots.main %}
     {{ component_html | safe }}
     {% endfor %}
+    {% endif %}
     {% endif %}
   </main>
 

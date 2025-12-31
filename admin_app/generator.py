@@ -123,7 +123,9 @@ class SiteGenerator:
     }
 
     # Create default index page with template components (starter content for new sites)
-    index_page = self._create_default_page("index", "Home", template, include_starter=True)
+    index_page = self._create_default_page(
+      "index", "Home", template, include_starter=True
+    )
 
     # Save to S3
     self.save_site_config(site_config)
@@ -132,12 +134,16 @@ class SiteGenerator:
     return site_config
 
   def _create_default_page(
-    self, page_id: str, title: str, template: dict[str, Any], include_starter: bool = False
+    self,
+    page_id: str,
+    title: str,
+    template: dict[str, Any],
+    include_starter: bool = False,
   ) -> dict[str, Any]:
-    """Create a page. If include_starter is True, adds starter components."""
+    """Create a page. Nav/footer always added. If include_starter, adds content too."""
     now = datetime.now(UTC).isoformat()
 
-    # Initialize slots dict - all empty
+    # Initialize slots dict
     slots: dict[str, list[dict[str, Any]]] = {
       "header": [],
       "hero": [],
@@ -146,25 +152,35 @@ class SiteGenerator:
       "footer": [],
     }
 
-    # Only add starter components for the initial index page during site setup
-    if include_starter:
-      comp_counter = 0
+    comp_counter = 0
 
+    # Always add navigation and footer (shared elements on all pages)
+    nav_comp = self._components.get("nav-main", {})
+    slots["header"].append(
+      {
+        "id": f"comp-{comp_counter}",
+        "type": "nav-main",
+        "data": nav_comp.get("default_data", {}).copy(),
+      }
+    )
+    comp_counter += 1
+
+    footer_comp = self._components.get("footer-simple", {})
+    slots["footer"].append(
+      {
+        "id": f"comp-{comp_counter}",
+        "type": "footer-simple",
+        "data": footer_comp.get("default_data", {}).copy(),
+      }
+    )
+    comp_counter += 1
+
+    # Only add starter content components for the initial index page
+    if include_starter:
       for slot in template.get("slots", []):
         slot_id = slot["id"]
 
-        if slot_id == "header" and "navigation" in slot.get("allowed_categories", []):
-          nav_comp = self._components.get("nav-main", {})
-          slots["header"].append(
-            {
-              "id": f"comp-{comp_counter}",
-              "type": "nav-main",
-              "data": nav_comp.get("default_data", {}).copy(),
-            }
-          )
-          comp_counter += 1
-
-        elif slot_id == "hero" and "hero" in slot.get("allowed_categories", []):
+        if slot_id == "hero" and "hero" in slot.get("allowed_categories", []):
           hero_comp = self._components.get("hero-text", {})
           slots["hero"].append(
             {
@@ -193,17 +209,6 @@ class SiteGenerator:
               "id": f"comp-{comp_counter}",
               "type": "text-paragraph",
               "data": text_comp.get("default_data", {}).copy(),
-            }
-          )
-          comp_counter += 1
-
-        elif slot_id == "footer" and "footer" in slot.get("allowed_categories", []):
-          footer_comp = self._components.get("footer-simple", {})
-          slots["footer"].append(
-            {
-              "id": f"comp-{comp_counter}",
-              "type": "footer-simple",
-              "data": footer_comp.get("default_data", {}).copy(),
             }
           )
           comp_counter += 1
@@ -313,13 +318,16 @@ class SiteGenerator:
     color_scheme = self._color_schemes.get(
       site_config.get("color_scheme_id", "modern-blue"), {}
     )
-    colors = color_scheme.get("colors", {
-      "primary": "#0066cc",
-      "text": "#1a1a2e",
-      "background": "#ffffff",
-      "surface": "#f8fafc",
-      "border": "#e2e8f0",
-    })
+    colors = color_scheme.get(
+      "colors",
+      {
+        "primary": "#0066cc",
+        "text": "#1a1a2e",
+        "background": "#ffffff",
+        "surface": "#f8fafc",
+        "border": "#e2e8f0",
+      },
+    )
 
     color_css = self._generate_color_css(colors)
 
@@ -362,14 +370,14 @@ class SiteGenerator:
     .container {{ max-width: 100%; }}
     .two-column {{ display: block; }}
     .two-column h3 {{ font-size: 1rem; margin-bottom: 0.5rem; }}
-    .gallery-grid {{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }}
+    .gallery-grid {{ display: grid; grid-template-columns: repeat(3,1fr); gap: .5rem; }}
     .gallery-item {{ aspect-ratio: 1; background: #eee; border-radius: 4px; }}
     .contact-section {{ padding: 1rem 0; }}
     .contact-form {{ max-width: 100%; }}
     .form-group {{ margin-bottom: 0.75rem; }}
     .form-group label {{ display: block; font-size: 0.75rem; margin-bottom: 0.25rem; }}
     .form-group input, .form-group textarea {{
-      width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.75rem;
+      width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;
     }}
     .text-center {{ text-align: center; }}
   </style>
