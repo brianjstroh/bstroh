@@ -15,19 +15,15 @@
 {% endif %}
 
 {% set text_style = '' %}
-{% if text_font and text_font != 'inherit' %}
-  {% set text_style = text_style ~ 'font-family: ' ~ text_font ~ ';' %}
-{% endif %}
 {% if text_color %}
   {% set text_style = text_style ~ 'color: ' ~ text_color ~ ';' %}
 {% endif %}
 
-{% set size_class = {
-  'small': 'content-block-text-sm',
-  'normal': 'content-block-text-md',
-  'large': 'content-block-text-lg',
-  'x-large': 'content-block-text-xl'
-}[text_size] or 'content-block-text-md' %}
+{# Normalize overlay button URL to be absolute #}
+{% set button_url = overlay_button_url|default('') %}
+{% if button_url and not button_url.startswith('http://') and not button_url.startswith('https://') and not button_url.startswith('/') and not button_url.startswith('#') and not button_url.startswith('mailto:') and not button_url.startswith('tel:') %}
+  {% set button_url = 'https://' ~ button_url %}
+{% endif %}
 
 {% set ts_size_class = {
   'small': 'content-block-ts-sm',
@@ -54,6 +50,7 @@
 }[overlay_h_align] or 'overlay-center' %}
 
 {% set has_custom_bg = overlay_bg_enabled == true or overlay_bg_enabled == 'true' %}
+{% set overlay_bg_val = overlay_bg_color if overlay_bg_color else 'var(--color-primary)' %}
 
 {% set max_width_style = '' %}
 {% if max_width and max_width != 'none' %}
@@ -97,12 +94,12 @@
     {% endif %}
 
     {% if show_overlay and (overlay_text or overlay_button_text) %}
-    <div class="content-block-overlay {{ overlay_v_class }} {{ overlay_h_class }}{% if has_custom_bg %} custom-bg{% endif %}" {% if has_custom_bg %}style="--overlay-bg: {{ overlay_bg_color|default('#000000') }}; --overlay-bg-opacity: {{ (overlay_bg_opacity|default(50)|int) / 100 }};"{% endif %}>
+    <div class="content-block-overlay {{ overlay_v_class }} {{ overlay_h_class }}{% if has_custom_bg %} custom-bg{% endif %}" {% if has_custom_bg %}style="--overlay-bg: {{ overlay_bg_val }}; --overlay-bg-opacity: {{ (overlay_bg_opacity|default(50)|int) / 100 }};"{% endif %}>
       {% if overlay_text %}
       <div class="overlay-text">{{ overlay_text }}</div>
       {% endif %}
-      {% if overlay_button_text and overlay_button_url %}
-      <a href="{{ overlay_button_url }}" class="overlay-button btn btn-light">{{ overlay_button_text }}</a>
+      {% if overlay_button_text and button_url %}
+      <a href="{{ button_url }}" class="overlay-button btn btn-light" {% if not button_url.startswith('/') and not button_url.startswith('#') %}target="_blank" rel="noopener"{% endif %}>{{ overlay_button_text }}</a>
       {% endif %}
     </div>
     {% endif %}
@@ -110,7 +107,7 @@
   {% endif %}
 
   {% if show_text and text_content %}
-  <div class="content-block-text {{ size_class }}" style="{{ text_style }}">
+  <div class="content-block-text" style="{{ text_style }}">
     {{ text_content | safe }}
   </div>
   {% endif %}
@@ -130,6 +127,9 @@
 .content-block-text-md { font-size: 1rem; }
 .content-block-text-lg { font-size: 1.125rem; }
 .content-block-text-xl { font-size: 1.25rem; }
+.content-block-text-2xl { font-size: 1.5rem; }
+.content-block-text-3xl { font-size: 2rem; }
+.content-block-text-hero { font-size: 2.5rem; line-height: 1.2; }
 .content-block-text p:last-child { margin-bottom: 0; }
 .content-block-media { position: relative; overflow: hidden; border-radius: 4px; }
 
@@ -153,7 +153,6 @@
 /* Custom background - disables default gradients */
 .content-block-overlay.custom-bg {
   background: none !important;
-  position: relative;
 }
 .content-block-overlay.custom-bg::before {
   content: '';
@@ -165,7 +164,11 @@
   background: var(--overlay-bg, #000);
   opacity: var(--overlay-bg-opacity, 0.5);
   pointer-events: none;
-  z-index: -1;
+}
+.content-block-overlay.custom-bg .overlay-text,
+.content-block-overlay.custom-bg .overlay-button {
+  position: relative;
+  z-index: 1;
 }
 
 .content-block-overlay .overlay-text {

@@ -3,6 +3,57 @@
 {% block title %}{{ site.site_name }} - Site Builder{% endblock %}
 
 {% block content %}
+{# Apply site theme colors to the editor #}
+{% set current_scheme = none %}
+{% for scheme in color_schemes %}
+  {% if scheme.id == site.color_scheme_id %}
+    {% set current_scheme = scheme %}
+  {% endif %}
+{% endfor %}
+{% if current_scheme %}
+{% set colors = current_scheme.colors.copy() %}
+{% for key, val in (site.color_overrides or {}).items() %}
+  {% set _ = colors.update({key: val}) %}
+{% endfor %}
+<style>
+  /* Site theme applied to dashboard */
+  .btn-primary {
+    background: linear-gradient(135deg, {{ colors.primary or '#0066cc' }} 0%, {{ colors.get('primary-hover') or colors.primary or '#0052a3' }} 100%) !important;
+    border: none !important;
+  }
+  .btn-primary:hover {
+    background: linear-gradient(135deg, {{ colors.get('primary-hover') or colors.primary or '#0052a3' }} 0%, {{ colors.accent or colors.primary or '#0066cc' }} 100%) !important;
+  }
+  .text-primary, .bi.text-primary {
+    color: {{ colors.primary or '#0066cc' }} !important;
+  }
+  .card-header {
+    background: linear-gradient(135deg, {{ colors.primary or '#0066cc' }} 0%, {{ colors.get('primary-hover') or colors.secondary or '#004499' }} 100%) !important;
+  }
+  .navbar {
+    background: linear-gradient(135deg, {{ colors.text or '#1a1a2e' }} 0%, {{ colors.primary or '#0066cc' }} 150%) !important;
+    border-bottom-color: {{ colors.accent or colors.primary or '#00ccff' }} !important;
+  }
+  .btn-outline-primary {
+    color: {{ colors.primary or '#0066cc' }} !important;
+    border-color: {{ colors.primary or '#0066cc' }} !important;
+  }
+  .btn-outline-primary:hover {
+    background: {{ colors.primary or '#0066cc' }} !important;
+    color: white !important;
+  }
+  .form-control:focus, .form-select:focus {
+    border-color: {{ colors.accent or colors.primary or '#0066cc' }} !important;
+    box-shadow: 0 0 0 0.2rem {{ colors.primary or '#0066cc' }}40 !important;
+  }
+  a:not(.btn):not(.nav-link):not(.list-group-item) {
+    color: {{ colors.primary or '#0066cc' }};
+  }
+  a:not(.btn):not(.nav-link):not(.list-group-item):hover {
+    color: {{ colors.get('primary-hover') or colors.primary or '#0052a3' }};
+  }
+</style>
+{% endif %}
 <div class="row">
   <!-- Sidebar -->
   <div class="col-md-3">
@@ -367,9 +418,33 @@
   </div>
 </div>
 
+<!-- Publish Confirmation Modal -->
+<div class="modal fade" id="publishModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title"><i class="bi bi-cloud-upload"></i> Publish All Pages</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body text-center py-4">
+        <i class="bi bi-globe" style="font-size: 3rem; color: var(--site-primary, #166534);"></i>
+        <h5 class="mt-3">Ready to go live?</h5>
+        <p class="text-muted mb-0">This will publish all your pages to your live website.<br>Your changes will be visible to all visitors.</p>
+      </div>
+      <div class="modal-footer justify-content-center">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="confirmPublish()">
+          <i class="bi bi-cloud-upload"></i> Publish Now
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
   let newPageModal;
   let sidebarWidgetModal;
+  let publishModal;
   let sidebarWidgets = {{ site.sidebar | tojson | safe if site.sidebar else '[]' }};
   let editingSidebarIndex = -1;
   const colorSchemes = {{ color_schemes | tojson | safe }};
@@ -384,6 +459,7 @@
   document.addEventListener('DOMContentLoaded', function() {
     newPageModal = new bootstrap.Modal(document.getElementById('newPageModal'));
     sidebarWidgetModal = new bootstrap.Modal(document.getElementById('sidebarWidgetModal'));
+    publishModal = new bootstrap.Modal(document.getElementById('publishModal'));
 
     // Auto-generate slug from title
     document.getElementById('newPageTitle').addEventListener('input', function() {
@@ -542,7 +618,13 @@
     }
   }
 
-  async function publishAll() {
+  function publishAll() {
+    publishModal.show();
+  }
+
+  async function confirmPublish() {
+    publishModal.hide();
+
     try {
       const response = await fetch('/builder/publish', { method: 'POST' });
       const data = await response.json();
@@ -550,12 +632,29 @@
       if (data.success) {
         // Refresh preview
         document.getElementById('previewFrame').src = document.getElementById('previewFrame').src;
+        showToast('All pages published successfully!', 'success');
       } else {
-        alert('Error publishing: ' + data.error);
+        showToast('Error publishing: ' + data.error, 'danger');
       }
     } catch (error) {
-      alert('Error publishing: ' + error.message);
+      showToast('Error publishing: ' + error.message, 'danger');
     }
+  }
+
+  function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    const icon = type === 'success' ? 'check-circle-fill' : (type === 'danger' ? 'exclamation-circle-fill' : 'info-circle-fill');
+    const bgColor = type === 'success' ? '#166534' : (type === 'danger' ? '#dc2626' : '#0066cc');
+    toast.className = 'position-fixed shadow-lg';
+    toast.style.cssText = `
+      top: 20px; right: 20px; z-index: 9999; min-width: 280px;
+      background: ${bgColor}; color: white;
+      padding: 1rem 1.25rem; border-radius: 8px;
+      font-weight: 500; font-size: 0.95rem;
+    `;
+    toast.innerHTML = `<i class="bi bi-${icon} me-2"></i>${message}`;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
   }
 
   async function uploadLogo(input) {

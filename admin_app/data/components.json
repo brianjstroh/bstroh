@@ -56,7 +56,7 @@
         {"name": "title", "type": "text", "label": "Gallery Title", "default": "Our Work"},
         {"name": "images", "type": "imagelist", "label": "Gallery Images"},
         {"name": "columns", "type": "select", "label": "Columns", "options": ["2", "3", "4"], "default": "3"},
-        {"name": "show_lightbox", "type": "checkbox", "label": "Enable Lightbox", "default": true}
+        {"name": "show_lightbox", "type": "checkbox", "label": "Enable Lightbox", "default": true, "tooltip": "Lightbox opens images in a full-screen overlay when clicked, allowing visitors to view larger versions and navigate between images"}
       ],
       "default_data": {
         "title": "Our Work",
@@ -119,8 +119,8 @@
     },
     {
       "id": "content-block",
-      "name": "Content Block",
-      "description": "Flexible block with optional image, text, timestamp, and styling",
+      "name": "General",
+      "description": "Your all-purpose component for text and images",
       "category": "content",
       "has_sections": true,
       "editable_fields": [
@@ -133,17 +133,15 @@
         {"name": "show_overlay", "type": "section_toggle", "label": "Image Overlay", "section": "overlay", "default": false},
         {"name": "overlay_text", "type": "text", "label": "Overlay Text", "section": "overlay"},
         {"name": "overlay_button_text", "type": "text", "label": "Button Text", "section": "overlay"},
-        {"name": "overlay_button_url", "type": "url", "label": "Button Link", "section": "overlay"},
+        {"name": "overlay_button_url", "type": "url", "label": "Button Link (use full URL for external sites)", "section": "overlay"},
         {"name": "overlay_v_align", "type": "select", "label": "Vertical Position", "options": ["top", "middle", "bottom"], "default": "bottom", "section": "overlay"},
         {"name": "overlay_h_align", "type": "select", "label": "Horizontal Position", "options": ["left", "center", "right"], "default": "center", "section": "overlay"},
-        {"name": "overlay_bg_enabled", "type": "checkbox", "label": "Enable Background", "default": false, "section": "overlay"},
-        {"name": "overlay_bg_color", "type": "color", "label": "Background Color", "default": "#000000", "section": "overlay"},
+        {"name": "overlay_bg_enabled", "type": "checkbox", "label": "Use Theme Background", "default": true, "section": "overlay"},
+        {"name": "overlay_bg_color", "type": "color", "label": "Background Color", "default": "", "section": "overlay"},
         {"name": "overlay_bg_opacity", "type": "range", "label": "Background Opacity", "min": 0, "max": 100, "default": 50, "section": "overlay"},
 
         {"name": "show_text", "type": "section_toggle", "label": "Text Content", "section": "text", "default": true},
         {"name": "text_content", "type": "richtext", "label": "Content", "default": "<p>Enter your content here...</p>", "section": "text"},
-        {"name": "text_font", "type": "select", "label": "Font Family", "options": ["inherit", "serif", "sans-serif", "monospace", "Georgia", "Times New Roman", "Arial", "Helvetica", "Verdana"], "default": "inherit", "section": "text"},
-        {"name": "text_size", "type": "select", "label": "Font Size", "options": ["small", "normal", "large", "x-large"], "default": "normal", "section": "text"},
         {"name": "text_color", "type": "color", "label": "Text Color (blank = theme)", "default": "", "section": "text"},
 
         {"name": "show_timestamp", "type": "section_toggle", "label": "Timestamp", "section": "timestamp", "default": false},
@@ -160,7 +158,7 @@
         {"name": "border_gradient_end", "type": "color", "label": "Gradient End (blank = theme accent)", "default": "", "section": "border"},
         {"name": "border_thickness", "type": "select", "label": "Thickness", "options": ["1px", "2px", "3px", "4px", "5px"], "default": "2px", "section": "border"},
 
-        {"name": "max_width", "type": "select", "label": "Max Width", "options": [{"value": "none", "label": "Full Width"}, {"value": "1400px", "label": "Extra Large (1400px)"}, {"value": "1200px", "label": "Large (1200px)"}, {"value": "900px", "label": "Medium (900px)"}, {"value": "700px", "label": "Small (700px)"}], "default": "none"},
+        {"name": "max_width", "type": "select", "label": "Max Width", "options": [{"value": "none", "label": "Full Width"}, {"value": "1400px", "label": "Extra Large (1400px)"}, {"value": "1200px", "label": "Large (1200px)"}, {"value": "900px", "label": "Medium (900px)"}, {"value": "700px", "label": "Small (700px)"}], "default": "1200px"},
         {"name": "anchor_id", "type": "text", "label": "Section ID (for anchor links)", "placeholder": "auto-generated"}
       ],
       "default_data": {
@@ -175,13 +173,11 @@
         "overlay_button_url": "",
         "overlay_v_align": "bottom",
         "overlay_h_align": "center",
-        "overlay_bg_enabled": false,
-        "overlay_bg_color": "#000000",
+        "overlay_bg_enabled": true,
+        "overlay_bg_color": "",
         "overlay_bg_opacity": 50,
         "show_text": true,
         "text_content": "<p>Enter your content here...</p>",
-        "text_font": "inherit",
-        "text_size": "normal",
         "text_color": "",
         "show_timestamp": false,
         "timestamp_value": "",
@@ -195,7 +191,7 @@
         "border_use_gradient": false,
         "border_gradient_end": "",
         "border_thickness": "2px",
-        "max_width": "none",
+        "max_width": "1200px",
         "anchor_id": ""
       }
     }
