@@ -1,0 +1,106 @@
+{
+  "color_schemes": [
+    {
+      "id": "ocean-blue",
+      "name": "Ocean Blue",
+      "colors": {
+        "primary": "#0066cc",
+        "primary-hover": "#0052a3",
+        "secondary": "#004499",
+        "accent": "#00ccff",
+        "background": "#f8fafc",
+        "surface": "#ffffff",
+        "text": "#1a1a2e",
+        "text-muted": "#6b7280",
+        "border": "#e5e7eb",
+        "success": "#10b981",
+        "error": "#ef4444"
+      }
+    },
+    {
+      "id": "slate-minimal",
+      "name": "Slate Minimal",
+      "colors": {
+        "primary": "#334155",
+        "primary-hover": "#1e293b",
+        "secondary": "#475569",
+        "accent": "#94a3b8",
+        "background": "#f8fafc",
+        "surface": "#ffffff",
+        "text": "#0f172a",
+        "text-muted": "#64748b",
+        "border": "#e2e8f0",
+        "success": "#22c55e",
+        "error": "#ef4444"
+      }
+    },
+    {
+      "id": "vibrant-coral",
+      "name": "Vibrant Coral",
+      "colors": {
+        "primary": "#f97316",
+        "primary-hover": "#ea580c",
+        "secondary": "#c2410c",
+        "accent": "#fbbf24",
+        "background": "#fffbeb",
+        "surface": "#ffffff",
+        "text": "#1c1917",
+        "text-muted": "#78716c",
+        "border": "#e7e5e4",
+        "success": "#22c55e",
+        "error": "#dc2626"
+      }
+    },
+    {
+      "id": "warm-earth",
+      "name": "Warm Earth",
+      "colors": {
+        "primary": "#92400e",
+        "primary-hover": "#78350f",
+        "secondary": "#a16207",
+        "accent": "#d97706",
+        "background": "#fefce8",
+        "surface": "#ffffff",
+        "text": "#1c1917",
+        "text-muted": "#57534e",
+        "border": "#d6d3d1",
+        "success": "#16a34a",
+        "error": "#dc2626"
+      }
+    },
+    {
+      "id": "forest-green",
+      "name": "Forest Green",
+      "colors": {
+        "primary": "#166534",
+        "primary-hover": "#14532d",
+        "secondary": "#15803d",
+        "accent": "#22c55e",
+        "background": "#f0fdf4",
+        "surface": "#ffffff",
+        "text": "#14532d",
+        "text-muted": "#4b5563",
+        "border": "#d1d5db",
+        "success": "#10b981",
+        "error": "#ef4444"
+      }
+    },
+    {
+      "id": "royal-purple",
+      "name": "Royal Purple",
+      "colors": {
+        "primary": "#7c3aed",
+        "primary-hover": "#6d28d9",
+        "secondary": "#5b21b6",
+        "accent": "#a78bfa",
+        "background": "#faf5ff",
+        "surface": "#ffffff",
+        "text": "#1e1b4b",
+        "text-muted": "#6b7280",
+        "border": "#e5e7eb",
+        "success": "#10b981",
+        "error": "#ef4444"
+      }
+    }
+  ]
+}

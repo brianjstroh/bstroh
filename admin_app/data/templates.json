@@ -1,0 +1,31 @@
+{
+  "templates": [
+    {
+      "id": "default",
+      "name": "Default",
+      "description": "Clean, professional template with flexible layout options",
+      "category": "general",
+      "default_color_scheme": "ocean-blue",
+      "slots": [
+        {
+          "id": "header",
+          "name": "Header",
+          "allowed_categories": ["navigation"],
+          "max_items": 1
+        },
+        {
+          "id": "main",
+          "name": "Main Content",
+          "allowed_categories": ["content", "gallery", "contact"],
+          "max_items": 20
+        },
+        {
+          "id": "footer",
+          "name": "Footer",
+          "allowed_categories": ["footer"],
+          "max_items": 1
+        }
+      ]
+    }
+  ]
+}

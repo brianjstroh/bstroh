@@ -1,0 +1,28 @@
+<section class="content-section two-column-container">
+  <div class="container">
+    <div class="two-column ratio-{{ column_ratio|default('50-50') }}">
+      <div class="column column-left">
+        {% if left_slot_rendered %}
+        {% for component_html in left_slot_rendered %}
+        {{ component_html | safe }}
+        {% endfor %}
+        {% elif left_slot and left_slot|length > 0 %}
+        <p class="text-muted">Components will render here</p>
+        {% else %}
+        <p class="text-muted empty-slot">Left column - add components</p>
+        {% endif %}
+      </div>
+      <div class="column column-right">
+        {% if right_slot_rendered %}
+        {% for component_html in right_slot_rendered %}
+        {{ component_html | safe }}
+        {% endfor %}
+        {% elif right_slot and right_slot|length > 0 %}
+        <p class="text-muted">Components will render here</p>
+        {% else %}
+        <p class="text-muted empty-slot">Right column - add components</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</section>

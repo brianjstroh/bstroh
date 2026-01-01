@@ -1,0 +1,199 @@
+{
+  "components": [
+    {
+      "id": "nav-main",
+      "name": "Main Navigation",
+      "description": "Site-wide navigation bar - links are managed in Site Settings",
+      "category": "navigation",
+      "editable_fields": [],
+      "default_data": {}
+    },
+    {
+      "id": "text-heading",
+      "name": "Section Heading",
+      "description": "Large heading with optional subtitle for section titles",
+      "category": "content",
+      "editable_fields": [
+        {"name": "heading", "type": "text", "label": "Heading", "required": true, "default": "About Us"},
+        {"name": "subtitle", "type": "text", "label": "Subtitle", "default": "Learn more about what we do"},
+        {"name": "alignment", "type": "select", "label": "Alignment", "options": ["left", "center", "right"], "default": "center"},
+        {"name": "spacing_top", "type": "select", "label": "Spacing Above", "options": [{"value": "0", "label": "None"}, {"value": "0.5rem", "label": "Extra Small"}, {"value": "1rem", "label": "Small"}, {"value": "2rem", "label": "Medium"}, {"value": "3rem", "label": "Large"}, {"value": "4rem", "label": "Extra Large"}], "default": "2rem"},
+        {"name": "spacing_bottom", "type": "select", "label": "Spacing Below", "options": [{"value": "0", "label": "None"}, {"value": "0.5rem", "label": "Extra Small"}, {"value": "1rem", "label": "Small"}, {"value": "2rem", "label": "Medium"}, {"value": "3rem", "label": "Large"}, {"value": "4rem", "label": "Extra Large"}], "default": "1rem"},
+        {"name": "anchor_id", "type": "text", "label": "Section ID (for links)", "placeholder": "about"}
+      ],
+      "default_data": {
+        "heading": "About Us",
+        "subtitle": "Learn more about what we do",
+        "alignment": "center",
+        "spacing_top": "2rem",
+        "spacing_bottom": "1rem",
+        "anchor_id": ""
+      }
+    },
+    {
+      "id": "two-column",
+      "name": "Two Column Layout",
+      "description": "Two-column container that can hold other components",
+      "category": "content",
+      "has_slots": true,
+      "editable_fields": [
+        {"name": "column_ratio", "type": "select", "label": "Column Ratio", "options": ["50-50", "60-40", "40-60", "70-30", "30-70"], "default": "50-50"},
+        {"name": "left_slot", "type": "componentslot", "label": "Left Column", "allowed_categories": ["content", "gallery", "contact"]},
+        {"name": "right_slot", "type": "componentslot", "label": "Right Column", "allowed_categories": ["content", "gallery", "contact"]}
+      ],
+      "default_data": {
+        "column_ratio": "50-50",
+        "left_slot": [],
+        "right_slot": []
+      }
+    },
+    {
+      "id": "gallery-grid",
+      "name": "Image Gallery",
+      "description": "Grid of images with optional lightbox view",
+      "category": "gallery",
+      "editable_fields": [
+        {"name": "title", "type": "text", "label": "Gallery Title", "default": "Our Work"},
+        {"name": "images", "type": "imagelist", "label": "Gallery Images"},
+        {"name": "columns", "type": "select", "label": "Columns", "options": ["2", "3", "4"], "default": "3"},
+        {"name": "show_lightbox", "type": "checkbox", "label": "Enable Lightbox", "default": true, "tooltip": "Lightbox opens images in a full-screen overlay when clicked, allowing visitors to view larger versions and navigate between images"}
+      ],
+      "default_data": {
+        "title": "Our Work",
+        "images": [],
+        "columns": "3",
+        "show_lightbox": true
+      }
+    },
+    {
+      "id": "contact-form",
+      "name": "Contact Form",
+      "description": "Simple contact form with name, email, and message fields",
+      "category": "contact",
+      "editable_fields": [
+        {"name": "title", "type": "text", "label": "Form Title", "default": "Get in Touch"},
+        {"name": "subtitle", "type": "text", "label": "Subtitle", "default": "We'd love to hear from you"},
+        {"name": "email", "type": "email", "label": "Send submissions to", "required": true, "placeholder": "your@email.com"},
+        {"name": "show_phone", "type": "checkbox", "label": "Include Phone Field", "default": true},
+        {"name": "submit_text", "type": "text", "label": "Button Text", "default": "Send Message"},
+        {"name": "success_message", "type": "text", "label": "Success Message", "default": "Thanks! We'll be in touch soon."},
+        {"name": "anchor_id", "type": "text", "label": "Section ID", "default": "contact"}
+      ],
+      "default_data": {
+        "title": "Get in Touch",
+        "subtitle": "We'd love to hear from you",
+        "email": "",
+        "show_phone": true,
+        "submit_text": "Send Message",
+        "success_message": "Thanks! We'll be in touch soon.",
+        "anchor_id": "contact"
+      }
+    },
+    {
+      "id": "footer-simple",
+      "name": "Footer",
+      "description": "Site-wide footer - text and social links managed in Site Settings",
+      "category": "footer",
+      "editable_fields": [
+        {"name": "show_back_to_top", "type": "checkbox", "label": "Show Back to Top Button", "default": true}
+      ],
+      "default_data": {
+        "show_back_to_top": true
+      }
+    },
+    {
+      "id": "sidebar-about",
+      "name": "About Widget",
+      "description": "Small about section for sidebar",
+      "category": "sidebar",
+      "editable_fields": [
+        {"name": "title", "type": "text", "label": "Title", "default": "About"},
+        {"name": "image", "type": "image", "label": "Photo"},
+        {"name": "content", "type": "textarea", "label": "Bio", "default": "A brief description about yourself or your business."}
+      ],
+      "default_data": {
+        "title": "About",
+        "image": "",
+        "content": "A brief description about yourself or your business."
+      }
+    },
+    {
+      "id": "content-block",
+      "name": "General",
+      "description": "Your all-purpose component for text and images",
+      "category": "content",
+      "has_sections": true,
+      "editable_fields": [
+        {"name": "show_image", "type": "section_toggle", "label": "Image / Slideshow", "section": "image", "default": false},
+        {"name": "images", "type": "imagelist", "label": "Images (multiple for slideshow)", "section": "image"},
+        {"name": "image_opacity", "type": "range", "label": "Image Opacity", "min": 0, "max": 100, "default": 100, "section": "image"},
+        {"name": "slideshow_auto", "type": "checkbox", "label": "Auto-advance slides", "default": true, "section": "image"},
+        {"name": "slideshow_interval", "type": "select", "label": "Slide Interval (seconds)", "options": [{"value": "3", "label": "3 seconds"}, {"value": "5", "label": "5 seconds"}, {"value": "10", "label": "10 seconds"}, {"value": "20", "label": "20 seconds"}, {"value": "30", "label": "30 seconds"}, {"value": "60", "label": "60 seconds"}], "default": "20", "section": "image"},
+
+        {"name": "show_overlay", "type": "section_toggle", "label": "Image Overlay", "section": "overlay", "default": false},
+        {"name": "overlay_text", "type": "text", "label": "Overlay Text", "section": "overlay"},
+        {"name": "overlay_button_text", "type": "text", "label": "Button Text", "section": "overlay"},
+        {"name": "overlay_button_url", "type": "url", "label": "Button Link (use full URL for external sites)", "section": "overlay"},
+        {"name": "overlay_v_align", "type": "select", "label": "Vertical Position", "options": ["top", "middle", "bottom"], "default": "bottom", "section": "overlay"},
+        {"name": "overlay_h_align", "type": "select", "label": "Horizontal Position", "options": ["left", "center", "right"], "default": "center", "section": "overlay"},
+        {"name": "overlay_bg_enabled", "type": "checkbox", "label": "Use Theme Background", "default": true, "section": "overlay"},
+        {"name": "overlay_bg_color", "type": "color", "label": "Background Color", "default": "", "section": "overlay"},
+        {"name": "overlay_bg_opacity", "type": "range", "label": "Background Opacity", "min": 0, "max": 100, "default": 50, "section": "overlay"},
+
+        {"name": "show_text", "type": "section_toggle", "label": "Text Content", "section": "text", "default": true},
+        {"name": "text_content", "type": "richtext", "label": "Content", "default": "<p>Enter your content here...</p>", "section": "text"},
+        {"name": "text_color", "type": "color", "label": "Text Color (blank = theme)", "default": "", "section": "text"},
+
+        {"name": "show_timestamp", "type": "section_toggle", "label": "Timestamp", "section": "timestamp", "default": false},
+        {"name": "timestamp_value", "type": "datetime", "label": "Date/Time", "section": "timestamp"},
+        {"name": "timestamp_format", "type": "select", "label": "Format", "options": ["date-only", "time-only", "date-time"], "default": "date-only", "section": "timestamp"},
+        {"name": "timestamp_align", "type": "select", "label": "Alignment", "options": ["left", "center", "right"], "default": "left", "section": "timestamp"},
+        {"name": "timestamp_size", "type": "select", "label": "Size", "options": ["small", "normal", "large"], "default": "small", "section": "timestamp"},
+        {"name": "timestamp_color", "type": "color", "label": "Color (blank = theme muted)", "default": "", "section": "timestamp"},
+        {"name": "timestamp_opacity", "type": "range", "label": "Opacity", "min": 0, "max": 100, "default": 90, "section": "timestamp"},
+
+        {"name": "show_border", "type": "section_toggle", "label": "Border", "section": "border", "default": false},
+        {"name": "border_color", "type": "color", "label": "Border Color (blank = theme)", "default": "", "section": "border"},
+        {"name": "border_use_gradient", "type": "checkbox", "label": "Use Gradient", "default": false, "section": "border"},
+        {"name": "border_gradient_end", "type": "color", "label": "Gradient End (blank = theme accent)", "default": "", "section": "border"},
+        {"name": "border_thickness", "type": "select", "label": "Thickness", "options": ["1px", "2px", "3px", "4px", "5px"], "default": "2px", "section": "border"},
+
+        {"name": "max_width", "type": "select", "label": "Max Width", "options": [{"value": "none", "label": "Full Width"}, {"value": "1400px", "label": "Extra Large (1400px)"}, {"value": "1200px", "label": "Large (1200px)"}, {"value": "900px", "label": "Medium (900px)"}, {"value": "700px", "label": "Small (700px)"}], "default": "1200px"},
+        {"name": "anchor_id", "type": "text", "label": "Section ID (for anchor links)", "placeholder": "auto-generated"}
+      ],
+      "default_data": {
+        "show_image": false,
+        "images": [],
+        "image_opacity": 100,
+        "slideshow_auto": true,
+        "slideshow_interval": "20",
+        "show_overlay": false,
+        "overlay_text": "",
+        "overlay_button_text": "",
+        "overlay_button_url": "",
+        "overlay_v_align": "bottom",
+        "overlay_h_align": "center",
+        "overlay_bg_enabled": true,
+        "overlay_bg_color": "",
+        "overlay_bg_opacity": 50,
+        "show_text": true,
+        "text_content": "<p>Enter your content here...</p>",
+        "text_color": "",
+        "show_timestamp": false,
+        "timestamp_value": "",
+        "timestamp_format": "date-only",
+        "timestamp_align": "left",
+        "timestamp_size": "small",
+        "timestamp_color": "",
+        "timestamp_opacity": 90,
+        "show_border": false,
+        "border_color": "",
+        "border_use_gradient": false,
+        "border_gradient_end": "",
+        "border_thickness": "2px",
+        "max_width": "1200px",
+        "anchor_id": ""
+      }
+    }
+  ]
+}

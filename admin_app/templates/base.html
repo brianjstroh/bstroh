@@ -7,72 +7,316 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
   <style>
-    body {
-      background: #f8f9fa;
+    :root {
+      --forest-darkest: #0f2318;
+      --forest-dark: #1a3a2f;
+      --forest-medium: #2d5a47;
+      --forest-light: #3d7a5f;
+      --forest-accent: #4a9970;
+      --bark-dark: #2d1f14;
+      --bark-medium: #4a3525;
+      --bark-light: #6b5240;
+      --mist-light: #e8f0e8;
+      --mist-lighter: #f2f7f2;
+      --mist-white: #f8fbf8;
     }
+
+    body {
+      background: var(--mist-lighter);
+      min-height: 100vh;
+      position: relative;
+    }
+
+    /* Animated forest background */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background:
+        linear-gradient(180deg, var(--mist-lighter) 0%, var(--mist-light) 100%);
+      z-index: -2;
+    }
+
+    /* SVG forest silhouette background */
+    body::after {
+      content: '';
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 40vh;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320' preserveAspectRatio='none'%3E%3Cdefs%3E%3ClinearGradient id='mist' x1='0%25' y1='0%25' x2='0%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%231a3a2f' stop-opacity='0.03'/%3E%3Cstop offset='100%25' stop-color='%231a3a2f' stop-opacity='0.08'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath fill='url(%23mist)' d='M0,320 L0,280 Q60,200 120,260 L120,260 Q140,180 160,240 L160,240 Q200,160 240,220 L240,220 Q280,140 320,200 L320,200 Q360,120 400,180 L400,180 Q440,100 480,160 L480,160 Q520,80 560,140 L560,140 Q600,60 640,120 L640,120 Q680,40 720,100 L720,100 Q760,60 800,120 L800,120 Q840,80 880,140 L880,140 Q920,100 960,160 L960,160 Q1000,120 1040,180 L1040,180 Q1080,140 1120,200 L1120,200 Q1160,160 1200,220 L1200,220 Q1240,180 1280,240 L1280,240 Q1320,200 1360,260 L1360,260 Q1400,220 1440,280 L1440,320 Z'/%3E%3Cpath fill='url(%23mist)' opacity='0.5' d='M0,320 L0,300 Q80,250 160,290 Q240,230 320,270 Q400,210 480,250 Q560,190 640,230 Q720,170 800,210 Q880,150 960,190 Q1040,130 1120,170 Q1200,110 1280,150 Q1360,90 1440,130 L1440,320 Z'/%3E%3C/svg%3E");
+      background-size: cover;
+      background-position: bottom;
+      z-index: -1;
+      pointer-events: none;
+      animation: sway 20s ease-in-out infinite;
+    }
+
+    @keyframes sway {
+      0%, 100% { transform: translateX(0); }
+      50% { transform: translateX(-10px); }
+    }
+
+    .navbar {
+      background: linear-gradient(135deg, var(--forest-darkest) 0%, var(--forest-dark) 100%) !important;
+      border-bottom: 3px solid var(--forest-accent);
+      box-shadow: 0 2px 15px rgba(15, 35, 24, 0.3);
+    }
+
     .navbar-brand {
       font-weight: 600;
+      color: var(--mist-light) !important;
     }
+
+    .navbar-brand:hover {
+      color: var(--mist-white) !important;
+    }
+
+    .nav-link {
+      color: var(--mist-light) !important;
+      transition: all 0.2s;
+    }
+
+    .nav-link:hover, .nav-link.active {
+      color: var(--mist-white) !important;
+      background: rgba(255,255,255,0.1);
+      border-radius: 4px;
+    }
+
+    .btn-outline-light {
+      border-color: var(--forest-accent);
+      color: var(--mist-light);
+    }
+
+    .btn-outline-light:hover {
+      background: var(--forest-accent);
+      border-color: var(--forest-accent);
+      color: var(--mist-white);
+    }
+
     .card {
       border: none;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      box-shadow: 0 4px 15px rgba(26, 58, 47, 0.1);
+      background: var(--mist-white);
+      border-radius: 12px;
     }
+
+    .card-header {
+      background: linear-gradient(135deg, var(--forest-dark) 0%, var(--forest-medium) 100%);
+      color: var(--mist-white);
+      border-radius: 12px 12px 0 0 !important;
+      border: none;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--forest-medium) 0%, var(--forest-light) 100%);
+      border: none;
+      box-shadow: 0 2px 8px rgba(45, 90, 71, 0.3);
+    }
+
+    .btn-primary:hover {
+      background: linear-gradient(135deg, var(--forest-light) 0%, var(--forest-accent) 100%);
+      box-shadow: 0 4px 12px rgba(45, 90, 71, 0.4);
+    }
+
+    .btn-success {
+      background: var(--forest-accent);
+      border-color: var(--forest-accent);
+    }
+
+    .btn-success:hover {
+      background: var(--forest-light);
+      border-color: var(--forest-light);
+    }
+
+    .text-primary {
+      color: var(--forest-medium) !important;
+    }
+
+    .bg-primary {
+      background-color: var(--forest-medium) !important;
+    }
+
+    a {
+      color: var(--forest-medium);
+    }
+
+    a:hover {
+      color: var(--forest-light);
+    }
+
     .file-icon {
       font-size: 1.2rem;
       margin-right: 0.5rem;
     }
+
     .folder-icon {
-      color: #ffc107;
+      color: var(--bark-light);
     }
+
     .file-row:hover {
-      background: #f8f9fa;
+      background: var(--mist-light);
     }
+
     .breadcrumb {
       background: transparent;
       padding: 0;
       margin-bottom: 1rem;
     }
+
+    .breadcrumb-item a {
+      color: var(--forest-medium);
+    }
+
     .upload-zone {
-      border: 2px dashed #dee2e6;
-      border-radius: 8px;
+      border: 2px dashed var(--forest-light);
+      border-radius: 12px;
       padding: 2rem;
       text-align: center;
       transition: all 0.2s;
       cursor: pointer;
+      background: rgba(232, 240, 232, 0.5);
     }
+
     .upload-zone:hover, .upload-zone.drag-over {
-      border-color: #0d6efd;
-      background: #f0f7ff;
+      border-color: var(--forest-accent);
+      background: var(--mist-light);
     }
+
     .upload-zone input[type="file"] {
       display: none;
+    }
+
+    .list-group-item {
+      border-color: var(--mist-light);
+    }
+
+    .list-group-item-action:hover {
+      background: var(--mist-light);
+      color: var(--forest-dark);
+    }
+
+    .alert-info {
+      background: var(--mist-light);
+      border-color: var(--forest-light);
+      color: var(--forest-dark);
+    }
+
+    .alert-success {
+      background: rgba(74, 153, 112, 0.15);
+      border-color: var(--forest-accent);
+      color: var(--forest-dark);
+    }
+
+    .form-control:focus, .form-select:focus {
+      border-color: var(--forest-accent);
+      box-shadow: 0 0 0 0.2rem rgba(74, 153, 112, 0.25);
+    }
+
+    .form-check-input:checked {
+      background-color: var(--forest-medium);
+      border-color: var(--forest-medium);
+    }
+
+    /* Scrollbar styling */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--mist-light);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--forest-light);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--forest-medium);
+    }
+
+    /* Badge styling */
+    .badge.bg-primary {
+      background: var(--forest-medium) !important;
+    }
+
+    .badge.bg-secondary {
+      background: var(--bark-medium) !important;
+    }
+
+    /* Table styling */
+    .table {
+      --bs-table-hover-bg: var(--mist-light);
+    }
+
+    .table thead th {
+      background: var(--forest-dark);
+      color: var(--mist-white);
+      border: none;
+    }
+
+    /* Progress bar */
+    .progress {
+      background: var(--mist-light);
+    }
+
+    .progress-bar {
+      background: linear-gradient(90deg, var(--forest-medium), var(--forest-accent));
+    }
+
+    /* Text colors */
+    .text-muted {
+      color: var(--bark-light) !important;
     }
   </style>
 </head>
 <body>
-  <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+  <nav class="navbar navbar-expand-lg navbar-dark mb-4">
     <div class="container">
-      <a class="navbar-brand" href="/">
-        <i class="bi bi-cloud"></i> Website Admin
+      <a class="navbar-brand" href="{{ url_for('builder_dashboard') }}">
+        <i class="bi bi-tree"></i> Site Builder
       </a>
       {% if session.authenticated %}
-      <div class="d-flex align-items-center">
-        <!-- Flux GPU Server Controls -->
-        <div class="me-3" id="fluxControls">
-          <button class="btn btn-outline-warning btn-sm" id="fluxBtn"
-                  onclick="toggleFluxServer()" title="AI Image Generator">
-            <i class="bi bi-gpu-card"></i>
-            <span id="fluxStatus">Flux</span>
-          </button>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav me-auto">
+          <li class="nav-item">
+            <a class="nav-link {% if request.endpoint and 'builder' in request.endpoint %}active{% endif %}"
+               href="{{ url_for('builder_dashboard') }}">
+              <i class="bi bi-house"></i> Dashboard
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link {% if request.endpoint == 'browse' %}active{% endif %}"
+               href="{{ url_for('browse', prefix='') }}">
+              <i class="bi bi-folder"></i> Files
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link {% if request.endpoint == 'builder_help' %}active{% endif %}"
+               href="{{ url_for('builder_help') }}">
+              <i class="bi bi-question-circle"></i> Help
+            </a>
+          </li>
+        </ul>
+        <div class="d-flex align-items-center">
+          <span class="text-light me-3">{{ session.domain }}</span>
+          <a href="{{ url_for('change_password') }}" class="btn btn-outline-light btn-sm me-2"
+             title="Change Password">
+            <i class="bi bi-key"></i>
+          </a>
+          <a href="{{ url_for('logout') }}" class="btn btn-outline-light btn-sm">
+            <i class="bi bi-box-arrow-right"></i> Logout
+          </a>
         </div>
-        <span class="text-light me-3">{{ session.domain }}</span>
-        <a href="{{ url_for('change_password') }}" class="btn btn-outline-light btn-sm me-2"
-           title="Change Password">
-          <i class="bi bi-key"></i>
-        </a>
-        <a href="{{ url_for('logout') }}" class="btn btn-outline-light btn-sm">
-          <i class="bi bi-box-arrow-right"></i> Logout
-        </a>
       </div>
       {% endif %}
     </div>
@@ -83,88 +327,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-  {% if session.authenticated %}
-  <script>
-    // Flux GPU Server Controls
-    let fluxState = 'unknown';
-
-    async function checkFluxStatus() {
-      try {
-        const response = await fetch('/gpu/flux/status');
-        const data = await response.json();
-        fluxState = data.status;
-        updateFluxButton();
-      } catch (error) {
-        console.error('Error checking Flux status:', error);
-      }
-    }
-
-    function updateFluxButton() {
-      const btn = document.getElementById('fluxBtn');
-      const status = document.getElementById('fluxStatus');
-
-      if (fluxState === 'running') {
-        btn.className = 'btn btn-success btn-sm';
-        status.textContent = 'Flux (Running)';
-        btn.title = 'Click to open ComfyUI or stop server';
-      } else if (fluxState === 'pending') {
-        btn.className = 'btn btn-warning btn-sm';
-        status.textContent = 'Flux (Starting...)';
-        btn.title = 'Server is starting up';
-      } else {
-        btn.className = 'btn btn-outline-secondary btn-sm';
-        status.textContent = 'Flux';
-        btn.title = 'Click to start AI image generator';
-      }
-    }
-
-    async function toggleFluxServer() {
-      const btn = document.getElementById('fluxBtn');
-      btn.disabled = true;
-
-      try {
-        if (fluxState === 'running') {
-          // Show options: open ComfyUI or stop
-          const action = confirm(
-            'Flux server is running.\\n\\n' +
-            'OK = Open ComfyUI in new tab\\n' +
-            'Cancel = Stop the server'
-          );
-          if (action) {
-            const response = await fetch('/gpu/flux/status');
-            const data = await response.json();
-            if (data.endpoint) {
-              window.open(data.endpoint.replace(':11434', ':8188'), '_blank');
-            }
-          } else {
-            await fetch('/gpu/flux/stop', { method: 'POST' });
-            fluxState = 'stopped';
-            updateFluxButton();
-          }
-        } else if (fluxState !== 'pending') {
-          // Start the server
-          const response = await fetch('/gpu/flux/start', { method: 'POST' });
-          const data = await response.json();
-          fluxState = 'pending';
-          updateFluxButton();
-          alert(
-            'Flux server starting!\\n\\n' +
-            'This takes 5-10 minutes for first boot.\\n' +
-            'The button will turn green when ready.'
-          );
-        }
-      } catch (error) {
-        alert('Error: ' + error.message);
-      } finally {
-        btn.disabled = false;
-      }
-    }
-
-    // Check status on page load and every 30 seconds
-    checkFluxStatus();
-    setInterval(checkFluxStatus, 30000);
-  </script>
-  {% endif %}
+  <script src="{{ url_for('static', filename='js/builder.js') }}"></script>
   {% block scripts %}{% endblock %}
 </body>
 </html>

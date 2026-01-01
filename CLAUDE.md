@@ -1,6 +1,6 @@
 # Claude Instructions for bstroh
 
-AWS CDK project for static website hosting with a web-based admin interface, plus on-demand GPU servers for AI workloads.
+AWS CDK project for static website hosting with a web-based admin interface and page builder.
 
 ## Architecture
 
@@ -16,15 +16,6 @@ AWS CDK project for static website hosting with a web-based admin interface, plu
 - Caddy for HTTPS (auto-certificates)
 - SSM Parameter Store for password hashes
 - IAM role with S3 access to all site buckets
-- Bedrock (Claude) for AI content assistance
-
-**GPU Servers** (on-demand, scale to zero):
-- g5.xlarge spot instances (24GB VRAM)
-- Auto-shutdown after 60 minutes idle
-- Lambda functions for start/stop/status
-- Two servers configured:
-  - `devstral`: Ollama + Devstral Small 2 (24B) for AI coding
-  - `flux`: ComfyUI + Flux for image generation
 
 ## Key Files
 
@@ -35,16 +26,70 @@ infrastructure/
   config.py                          # Config loader
   stacks/site_stack.py               # Static site stack
   stacks/admin_stack.py              # Admin server stack
-  stacks/gpu_server_stack.py         # GPU server stack (Devstral, Flux)
   cdk_constructs/                    # Reusable constructs
-  templates/                         # HTML templates (index, error, instructions)
 admin_app/
-  app.py                             # Flask app for file management + AI chat
-  templates/                         # Admin UI (login, file browser, chat)
+  app.py                             # Flask app (file management + page builder)
+  generator.py                       # Renders components to HTML
+  data/components.json               # Component definitions
+  templates/builder/                 # Page builder UI
+    page_editor.html                 # Main editor (complex JavaScript)
+    dashboard.html                   # Builder dashboard
+  builder_templates/
+    components/                      # Jinja2 component templates
+      content-block.html             # General-purpose component
+      text-heading.html              # Section headings
+      two-column.html                # Two-column layout with slots
 scripts/
   set_site_password.py               # Set admin password for a domain
-  start_devstral.sh                  # Start Devstral GPU server from CLI
 ```
+
+## Page Builder
+
+### Component System
+- Components defined in `admin_app/data/components.json`
+- Each component has: id, name, category, editable_fields, default_data
+- Templates in `admin_app/builder_templates/components/`
+- Rendered by `generator.py` using Jinja2
+
+### Content Block Component
+The main general-purpose component with collapsible sections:
+- **Image/Slideshow**: Multiple images auto-enable slideshow, opacity control
+- **Overlay**: Text/button overlay with alignment (top/middle/bottom, left/center/right)
+- **Text**: Rich text with formatting toolbar
+- **Timestamp**: Auto-initialized, configurable format/alignment
+- **Border**: Solid or gradient, theme colors supported
+
+### CRITICAL: JavaScript Switch Statement Scoping
+In `page_editor.html`, switch cases that declare `const` variables MUST be wrapped in curly braces:
+
+```javascript
+// WRONG - causes "Identifier already declared" errors
+case 'color':
+  const colorContainer = document.createElement('div');
+  // ...
+  break;
+
+// CORRECT - each case gets its own block scope
+case 'color': {
+  const colorContainer = document.createElement('div');
+  // ...
+  return div;
+}
+```
+
+This applies to: richtext, range, image, color, checkbox, imagelist, componentslot, array cases.
+
+### Color Fields with Theme Inheritance
+Color pickers have a "Use theme" checkbox. When checked, saves empty string so template falls back to CSS variables:
+```jinja2
+{% set border_color_val = border_color if border_color else 'var(--color-border)' %}
+```
+
+### Auto-Generated Component IDs
+Components get timestamp-based anchor IDs: `component-type-YYYYMMDD-HHMMSS`
+- Generated on add and duplicate
+- User can override in "Section ID" field
+- Displayed in component list with `#` prefix
 
 ## Commands
 
@@ -58,17 +103,10 @@ uv run ruff check .
 uv run ruff format .
 uv run mypy infrastructure tests
 
-# CDK (use --concurrency for 20+ stacks)
+# CDK
 uv run cdk synth
 uv run cdk diff
 uv run cdk deploy --all --concurrency 10
-uv run cdk destroy --all
-
-# GPU servers
-./scripts/start_devstral.sh --wait   # Start Devstral, wait for ready
-aws lambda invoke --function-name gpu-devstral-status /dev/stdout
-aws lambda invoke --function-name gpu-devstral-stop /dev/stdout
-aws lambda invoke --function-name gpu-flux-start /dev/stdout
 ```
 
 ## Adding a New Site
@@ -81,9 +119,7 @@ aws lambda invoke --function-name gpu-flux-start /dev/stdout
      email: owner@example.com
    ```
 3. Deploy: `uv run cdk deploy StaticSite-newsite-com`
-4. Set password:
-   - Single site: `uv run python scripts/set_site_password.py newsite.com "password"`
-   - All sites: `uv run python scripts/pw.py "password"` (sets same password for all 22 sites)
+4. Set password: `uv run python scripts/set_site_password.py newsite.com "password"`
 
 ## Code Style
 
@@ -93,11 +129,10 @@ aws lambda invoke --function-name gpu-flux-start /dev/stdout
 - Double quotes
 - Strict typing enforced (`mypy --strict`)
 
-
 ## Debugging
 
 ### Admin Server (EC2)
-We're using Caddy to create security certs, and there is a limit of 5 certs issued per subdomain within a 168 hour period. Any more instances issued in this period will fail to build correctly, and the subdomain will need to be changed, or we'll have to wait out the 168 hour period to retry.
+Caddy cert limit: 5 certs per subdomain per 168 hours. Exceeding this breaks the build.
 
 ```bash
 aws ssm start-session --target {instance-id}
@@ -105,11 +140,7 @@ sudo journalctl -u caddy --no-pager | tail -100
 sudo journalctl -u admin-app --no-pager | tail -100
 ```
 
-### GPU Server
-```bash
-aws ssm start-session --target {instance-id}
-sudo journalctl -u ollama --no-pager | tail -100      # For Devstral
-sudo journalctl -u comfyui --no-pager | tail -100     # For Flux
-sudo journalctl -u idle-monitor --no-pager | tail -100
-cat /var/log/user-data.log
-```
+### Page Builder Issues
+- Check browser console (F12) for JavaScript errors
+- Debug comments in templates show variable values: `<!-- DEBUG: var="{{ var }}" -->`
+- Console.log statements in page_editor.html trace save/load operations

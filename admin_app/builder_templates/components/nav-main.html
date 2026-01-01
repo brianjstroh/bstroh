@@ -1,0 +1,23 @@
+<nav class="site-nav">
+  <div class="container">
+    <a href="/" class="logo">
+      {% if site.logo_url %}
+      <img src="{{ site.logo_url }}" alt="{{ site.site_name }}">
+      {% else %}
+      {{ site.site_name }}
+      {% endif %}
+    </a>
+    <button class="mobile-menu-toggle" aria-label="Toggle navigation menu" onclick="this.closest('.site-nav').classList.toggle('nav-open')">
+      <span class="hamburger-icon">
+        <span></span>
+        <span></span>
+        <span></span>
+      </span>
+    </button>
+    <ul class="nav-menu">
+      {% for nav_item in site.navigation %}
+      <li><a href="{{ nav_item.url }}">{{ nav_item.label }}</a></li>
+      {% endfor %}
+    </ul>
+  </div>
+</nav>
