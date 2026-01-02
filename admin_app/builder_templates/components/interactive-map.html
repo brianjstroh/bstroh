@@ -1,0 +1,354 @@
+<section class="interactive-map-section" {% if anchor_id %}id="{{ anchor_id }}"{% endif %}>
+  <div class="container">
+    <div class="interactive-map-container" data-component-id="{{ component_id }}">
+      <!-- Map Container -->
+      <div class="map-wrapper"
+           id="map-{{ component_id }}"
+           data-center-lat="{{ center_lat }}"
+           data-center-lng="{{ center_lng }}"
+           data-zoom="{{ zoom_level }}"
+           style="height: {{ map_height }};">
+      </div>
+
+      <!-- Pin Data (JSON for JavaScript) -->
+      <script type="application/json" id="pins-data-{{ component_id }}">
+        {{ pins | tojson }}
+      </script>
+
+      <!-- Collapsible Pin List -->
+      {% if pins and pins|length > 0 %}
+      <div class="pin-list-container">
+        <button type="button" class="pin-list-header" onclick="togglePinList_{{ component_id | replace('-', '_') }}(this)">
+          <span><i class="bi bi-geo-alt-fill"></i> Locations ({{ pins|length }})</span>
+          <i class="bi bi-chevron-down pin-list-toggle"></i>
+        </button>
+        <div class="pin-list" id="pin-list-{{ component_id }}" style="display: none;">
+          {% for pin in pins %}
+          <div class="pin-list-item"
+               data-pin-index="{{ loop.index0 }}"
+               onclick="focusPin_{{ component_id | replace('-', '_') }}({{ loop.index0 }})">
+            <div class="pin-item-header">
+              {% if pin.images and pin.images|length > 0 %}
+              <img src="{{ pin.images[0] }}" alt="{{ pin.title }}" class="pin-thumbnail">
+              {% else %}
+              <div class="pin-marker-icon"><i class="bi bi-geo-alt-fill"></i></div>
+              {% endif %}
+              <div class="pin-item-info">
+                <strong>{{ pin.title }}</strong>
+                {% if pin.description %}
+                <p class="pin-description">{{ pin.description[:100] }}{% if pin.description|length > 100 %}...{% endif %}</p>
+                {% endif %}
+              </div>
+              <i class="bi bi-arrow-right pin-goto"></i>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+<style>
+.interactive-map-section {
+  padding: 1.5rem 0;
+}
+.interactive-map-container {
+  margin-bottom: 1.5rem;
+}
+.map-wrapper {
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  overflow: hidden;
+  z-index: 1;
+}
+.pin-list-container {
+  margin-top: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--color-surface);
+}
+.pin-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  margin: 0;
+  background: var(--color-surface);
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text);
+  text-align: left;
+}
+.pin-list-header:hover {
+  background: var(--color-background);
+}
+.pin-list-header span {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.pin-list-toggle {
+  transition: transform 0.2s;
+}
+.pin-list-header.expanded .pin-list-toggle {
+  transform: rotate(180deg);
+}
+.pin-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+.pin-list-item {
+  padding: 0.75rem 1rem;
+  border-top: 1px solid var(--color-border);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.pin-list-item:hover, .pin-list-item.active {
+  background: var(--color-background);
+}
+.pin-list-item.active {
+  border-left: 3px solid var(--color-primary);
+}
+.pin-item-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.pin-thumbnail {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+.pin-marker-icon {
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-background);
+  border-radius: 4px;
+  color: var(--color-primary);
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+.pin-item-info {
+  flex: 1;
+  min-width: 0;
+}
+.pin-item-info strong {
+  display: block;
+  color: var(--color-text);
+}
+.pin-description {
+  margin: 0.25rem 0 0;
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  line-height: 1.4;
+}
+.pin-goto {
+  color: var(--color-primary);
+  opacity: 0;
+  transition: opacity 0.2s;
+  flex-shrink: 0;
+}
+.pin-list-item:hover .pin-goto {
+  opacity: 1;
+}
+/* Custom Leaflet marker with image */
+.custom-marker-icon {
+  border-radius: 50%;
+  border: 3px solid var(--color-primary, #0066cc);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  background: white;
+}
+.leaflet-popup-content-wrapper {
+  border-radius: 8px;
+}
+.leaflet-popup-content {
+  margin: 12px;
+}
+.leaflet-popup-content img {
+  display: block;
+  margin-bottom: 8px;
+}
+</style>
+
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+
+<script>
+(function() {
+  var componentId = '{{ component_id }}';
+  var safeId = componentId.replace(/-/g, '_');
+  var mapEl = document.getElementById('map-' + componentId);
+  var pinsDataEl = document.getElementById('pins-data-' + componentId);
+
+  if (!mapEl || mapEl.dataset.initialized) return;
+  mapEl.dataset.initialized = 'true';
+
+  var centerLat = parseFloat(mapEl.dataset.centerLat) || 0;
+  var centerLng = parseFloat(mapEl.dataset.centerLng) || 0;
+  var zoom = parseInt(mapEl.dataset.zoom) || 10;
+
+  var pins = [];
+  if (pinsDataEl) {
+    try {
+      pins = JSON.parse(pinsDataEl.textContent);
+    } catch(e) {
+      console.error('Error parsing pins data:', e);
+    }
+  }
+
+  // Initialize map
+  var map = L.map(mapEl).setView([centerLat, centerLng], zoom);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+  }).addTo(map);
+
+  // Store markers for interaction
+  var markers = [];
+
+  // Get primary color from CSS variable
+  var primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim() || '#0066cc';
+
+  // Add pins
+  pins.forEach(function(pin, idx) {
+    if (!pin.lat || !pin.lng) return;
+
+    var lat = parseFloat(pin.lat);
+    var lng = parseFloat(pin.lng);
+    if (isNaN(lat) || isNaN(lng)) return;
+
+    var marker;
+    var hasImages = pin.images && pin.images.length > 0;
+
+    if (hasImages) {
+      // Custom marker with first image
+      var icon = L.divIcon({
+        className: 'custom-marker',
+        html: '<img src="' + pin.images[0] + '" class="custom-marker-icon" style="width:40px;height:40px;object-fit:cover;">',
+        iconSize: [40, 40],
+        iconAnchor: [20, 20],
+        popupAnchor: [0, -20]
+      });
+      marker = L.marker([lat, lng], { icon: icon }).addTo(map);
+    } else {
+      marker = L.marker([lat, lng]).addTo(map);
+    }
+
+    // Popup content with image gallery if multiple images
+    var popupContent = '';
+    if (hasImages) {
+      if (pin.images.length === 1) {
+        popupContent += '<img src="' + pin.images[0] + '" style="width:180px;height:120px;object-fit:cover;border-radius:4px;">';
+      } else {
+        // Image gallery with navigation
+        var galleryId = 'pin-gallery-' + componentId + '-' + idx;
+        popupContent += '<div class="pin-image-gallery" id="' + galleryId + '" data-current="0">';
+        popupContent += '<div class="gallery-images" style="position:relative;width:180px;height:120px;overflow:hidden;border-radius:4px;">';
+        pin.images.forEach(function(img, imgIdx) {
+          popupContent += '<img src="' + img + '" style="position:absolute;top:0;left:0;width:180px;height:120px;object-fit:cover;transition:opacity 0.3s;opacity:' + (imgIdx === 0 ? '1' : '0') + ';" data-img-idx="' + imgIdx + '">';
+        });
+        popupContent += '</div>';
+        popupContent += '<div class="gallery-nav" style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;">';
+        popupContent += '<button type="button" onclick="pinGalleryNav(\'' + galleryId + '\',-1)" style="background:none;border:none;cursor:pointer;padding:2px 6px;color:var(--color-primary);"><i class="bi bi-chevron-left"></i></button>';
+        popupContent += '<span class="gallery-counter" style="font-size:0.75rem;color:#666;">1 / ' + pin.images.length + '</span>';
+        popupContent += '<button type="button" onclick="pinGalleryNav(\'' + galleryId + '\',1)" style="background:none;border:none;cursor:pointer;padding:2px 6px;color:var(--color-primary);"><i class="bi bi-chevron-right"></i></button>';
+        popupContent += '</div>';
+        popupContent += '</div>';
+      }
+    }
+    popupContent += '<strong style="display:block;margin-top:' + (hasImages ? '8px' : '0') + ';">' + (pin.title || 'Location') + '</strong>';
+    if (pin.description) {
+      popupContent += '<p style="margin:4px 0 0;font-size:0.875rem;color:#666;">' + pin.description + '</p>';
+    }
+    marker.bindPopup(popupContent, { maxWidth: 220 });
+
+    // Click handler - highlight in list
+    marker.on('click', function() {
+      highlightPinInList(componentId, idx);
+    });
+
+    markers.push(marker);
+  });
+
+  // Pin gallery navigation function
+  window.pinGalleryNav = function(galleryId, direction) {
+    var gallery = document.getElementById(galleryId);
+    if (!gallery) return;
+    var images = gallery.querySelectorAll('.gallery-images img');
+    var current = parseInt(gallery.dataset.current) || 0;
+    var next = (current + direction + images.length) % images.length;
+    images[current].style.opacity = '0';
+    images[next].style.opacity = '1';
+    gallery.dataset.current = next;
+    gallery.querySelector('.gallery-counter').textContent = (next + 1) + ' / ' + images.length;
+  };
+
+  // Fit bounds if there are multiple pins
+  if (markers.length > 1) {
+    var group = new L.featureGroup(markers);
+    map.fitBounds(group.getBounds().pad(0.1));
+  }
+
+  // Store map and markers globally for interaction
+  window['mapData_' + safeId] = { map: map, markers: markers };
+
+  // Define functions on window for onclick handlers
+  window['togglePinList_' + safeId] = function(header) {
+    header.classList.toggle('expanded');
+    var list = header.nextElementSibling;
+    list.style.display = list.style.display === 'none' ? 'block' : 'none';
+  };
+
+  window['focusPin_' + safeId] = function(pinIndex) {
+    var mapData = window['mapData_' + safeId];
+    if (!mapData) return;
+
+    var marker = mapData.markers[pinIndex];
+    if (marker) {
+      mapData.map.setView(marker.getLatLng(), 14);
+      marker.openPopup();
+      highlightPinInList(componentId, pinIndex);
+    }
+  };
+
+  function highlightPinInList(compId, pinIndex) {
+    var list = document.getElementById('pin-list-' + compId);
+    if (!list) return;
+
+    // Expand list if collapsed
+    var header = list.previousElementSibling;
+    if (!header.classList.contains('expanded')) {
+      header.classList.add('expanded');
+      list.style.display = 'block';
+    }
+
+    // Highlight item
+    list.querySelectorAll('.pin-list-item').forEach(function(item, idx) {
+      if (idx === pinIndex) {
+        item.classList.add('active');
+      } else {
+        item.classList.remove('active');
+      }
+    });
+
+    // Scroll into view
+    var activeItem = list.querySelector('.pin-list-item.active');
+    if (activeItem) {
+      activeItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }
+})();
+</script>

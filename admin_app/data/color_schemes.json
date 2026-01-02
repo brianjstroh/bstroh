@@ -101,6 +101,23 @@
         "success": "#10b981",
         "error": "#ef4444"
       }
+    },
+    {
+      "id": "royal-blue",
+      "name": "Royal Blue",
+      "colors": {
+        "primary": "#4169E1",
+        "primary-hover": "#3457C9",
+        "secondary": "#1E40AF",
+        "accent": "#6495ED",
+        "background": "#F5F8FF",
+        "surface": "#ffffff",
+        "text": "#1E3A5F",
+        "text-muted": "#5B7BA0",
+        "border": "#B8C9E5",
+        "success": "#10b981",
+        "error": "#ef4444"
+      }
     }
   ]
 }

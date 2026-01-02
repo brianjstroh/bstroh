@@ -207,16 +207,43 @@
         </button>
       </div>
       <div class="card-body">
-        <p class="text-muted small mb-3">Configure the navigation links shown in the header. These links appear on all pages.</p>
+        <p class="text-muted small mb-3">Configure navigation links. Add children for dropdown menus. Start typing in URL fields to see page suggestions.</p>
         <div id="navLinksContainer">
           {% for nav_item in site.navigation %}
-          <div class="nav-link-item d-flex align-items-center gap-2 mb-2" data-index="{{ loop.index0 }}">
-            <i class="bi bi-grip-vertical text-muted" style="cursor: grab;"></i>
-            <input type="text" class="form-control form-control-sm" placeholder="Label" value="{{ nav_item.label }}" style="width: 120px;" onchange="updateNavLinks()">
-            <input type="text" class="form-control form-control-sm flex-grow-1" placeholder="URL (e.g., /about.html)" value="{{ nav_item.url }}" onchange="updateNavLinks()">
-            <button class="btn btn-sm btn-outline-danger" onclick="removeNavLink(this)" title="Remove link">
-              <i class="bi bi-trash"></i>
-            </button>
+          <div class="nav-link-item mb-2" data-index="{{ loop.index0 }}">
+            <div class="d-flex align-items-center gap-2 mb-1">
+              <i class="bi bi-grip-vertical text-muted" style="cursor: grab;"></i>
+              <input type="text" class="form-control form-control-sm nav-label" placeholder="Label" value="{{ nav_item.label }}" style="width: 120px;">
+              <div class="position-relative flex-grow-1">
+                <input type="text" class="form-control form-control-sm nav-url link-suggestion-input" placeholder="URL (e.g., /about.html)" value="{{ nav_item.url }}">
+                <div class="link-suggestions-dropdown"></div>
+              </div>
+              <button class="btn btn-sm btn-outline-secondary" onclick="toggleNavChildren(this)" title="Add/show dropdown children">
+                <i class="bi bi-chevron-down"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-danger" onclick="removeNavLink(this)" title="Remove link">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+            <!-- Children container for dropdown -->
+            <div class="nav-children ms-4 ps-2 border-start" style="display: {% if nav_item.children and nav_item.children|length > 0 %}block{% else %}none{% endif %};">
+              {% for child in nav_item.children %}
+              <div class="nav-child-item d-flex align-items-center gap-2 mb-1">
+                <i class="bi bi-dash text-muted"></i>
+                <input type="text" class="form-control form-control-sm nav-child-label" placeholder="Label" value="{{ child.label }}" style="width: 100px;">
+                <div class="position-relative flex-grow-1">
+                  <input type="text" class="form-control form-control-sm nav-child-url link-suggestion-input" placeholder="URL" value="{{ child.url }}">
+                  <div class="link-suggestions-dropdown"></div>
+                </div>
+                <button class="btn btn-sm btn-outline-danger" onclick="removeNavChild(this)" title="Remove child">
+                  <i class="bi bi-x"></i>
+                </button>
+              </div>
+              {% endfor %}
+              <button class="btn btn-sm btn-link text-primary p-0 ms-3" onclick="addNavChild(this)">
+                <i class="bi bi-plus"></i> Add dropdown item
+              </button>
+            </div>
           </div>
           {% endfor %}
         </div>
@@ -227,6 +254,41 @@
         </div>
       </div>
     </div>
+
+    <style>
+      .link-suggestions-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 0 0 4px 4px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        z-index: 1000;
+        max-height: 200px;
+        overflow-y: auto;
+        display: none;
+      }
+      .suggestion-item {
+        padding: 0.5rem 0.75rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.875rem;
+      }
+      .suggestion-item:hover {
+        background: #f8f9fa;
+      }
+      .suggestion-item small {
+        margin-left: auto;
+        color: #6c757d;
+      }
+      .nav-children {
+        border-color: #dee2e6 !important;
+      }
+    </style>
 
     <!-- Footer Settings -->
     <div class="card mb-4">
@@ -706,20 +768,157 @@
   }
 
   // Navigation management
+  let linkSuggestionsCache = null;
+
+  async function loadLinkSuggestions() {
+    if (linkSuggestionsCache) return linkSuggestionsCache;
+    try {
+      const response = await fetch('/builder/link-suggestions');
+      const data = await response.json();
+      linkSuggestionsCache = data.suggestions || [];
+      return linkSuggestionsCache;
+    } catch (e) {
+      console.error('Error loading suggestions:', e);
+      return [];
+    }
+  }
+
+  function initLinkSuggestions() {
+    // Delegate input events for link suggestion inputs
+    document.addEventListener('input', async function(e) {
+      if (!e.target.classList.contains('link-suggestion-input')) return;
+
+      const input = e.target;
+      const query = input.value.toLowerCase();
+      const suggestions = await loadLinkSuggestions();
+
+      // Filter suggestions
+      const filtered = suggestions.filter(s =>
+        s.label.toLowerCase().includes(query) ||
+        s.url.toLowerCase().includes(query)
+      ).slice(0, 10);
+
+      showSuggestions(input, filtered);
+    });
+
+    // Hide suggestions on blur (with delay for click)
+    document.addEventListener('blur', function(e) {
+      if (!e.target.classList.contains('link-suggestion-input')) return;
+      setTimeout(() => hideSuggestions(e.target), 200);
+    }, true);
+
+    // Handle focus to show suggestions
+    document.addEventListener('focus', async function(e) {
+      if (!e.target.classList.contains('link-suggestion-input')) return;
+      const input = e.target;
+      const query = input.value.toLowerCase();
+      const suggestions = await loadLinkSuggestions();
+      const filtered = suggestions.filter(s =>
+        s.label.toLowerCase().includes(query) ||
+        s.url.toLowerCase().includes(query)
+      ).slice(0, 10);
+      if (filtered.length > 0) {
+        showSuggestions(input, filtered);
+      }
+    }, true);
+  }
+
+  function showSuggestions(input, suggestions) {
+    let dropdown = input.parentElement.querySelector('.link-suggestions-dropdown');
+    if (!dropdown) {
+      dropdown = document.createElement('div');
+      dropdown.className = 'link-suggestions-dropdown';
+      input.parentElement.appendChild(dropdown);
+    }
+
+    if (suggestions.length === 0) {
+      dropdown.innerHTML = '';
+      dropdown.style.display = 'none';
+      return;
+    }
+
+    dropdown.innerHTML = suggestions.map(s => `
+      <div class="suggestion-item" data-url="${s.url}">
+        <i class="bi bi-${s.type === 'page' ? 'file-earmark' : 'hash'}"></i>
+        <span>${s.label}</span>
+        <small>${s.url}</small>
+      </div>
+    `).join('');
+    dropdown.style.display = 'block';
+
+    // Add click handlers
+    dropdown.querySelectorAll('.suggestion-item').forEach(item => {
+      item.addEventListener('mousedown', function(e) {
+        e.preventDefault();
+        input.value = this.dataset.url;
+        dropdown.style.display = 'none';
+      });
+    });
+  }
+
+  function hideSuggestions(input) {
+    const dropdown = input.parentElement.querySelector('.link-suggestions-dropdown');
+    if (dropdown) dropdown.style.display = 'none';
+  }
+
   function addNavLink() {
     const container = document.getElementById('navLinksContainer');
     const index = container.children.length;
     const html = `
-      <div class="nav-link-item d-flex align-items-center gap-2 mb-2" data-index="${index}">
-        <i class="bi bi-grip-vertical text-muted" style="cursor: grab;"></i>
-        <input type="text" class="form-control form-control-sm" placeholder="Label" style="width: 120px;" onchange="updateNavLinks()">
-        <input type="text" class="form-control form-control-sm flex-grow-1" placeholder="URL (e.g., /about.html)" onchange="updateNavLinks()">
-        <button class="btn btn-sm btn-outline-danger" onclick="removeNavLink(this)" title="Remove link">
-          <i class="bi bi-trash"></i>
-        </button>
+      <div class="nav-link-item mb-2" data-index="${index}">
+        <div class="d-flex align-items-center gap-2 mb-1">
+          <i class="bi bi-grip-vertical text-muted" style="cursor: grab;"></i>
+          <input type="text" class="form-control form-control-sm nav-label" placeholder="Label" style="width: 120px;">
+          <div class="position-relative flex-grow-1">
+            <input type="text" class="form-control form-control-sm nav-url link-suggestion-input" placeholder="URL (e.g., /about.html)">
+            <div class="link-suggestions-dropdown"></div>
+          </div>
+          <button class="btn btn-sm btn-outline-secondary" onclick="toggleNavChildren(this)" title="Add/show dropdown children">
+            <i class="bi bi-chevron-down"></i>
+          </button>
+          <button class="btn btn-sm btn-outline-danger" onclick="removeNavLink(this)" title="Remove link">
+            <i class="bi bi-trash"></i>
+          </button>
+        </div>
+        <div class="nav-children ms-4 ps-2 border-start" style="display: none;">
+          <button class="btn btn-sm btn-link text-primary p-0 ms-3" onclick="addNavChild(this)">
+            <i class="bi bi-plus"></i> Add dropdown item
+          </button>
+        </div>
       </div>
     `;
     container.insertAdjacentHTML('beforeend', html);
+  }
+
+  function toggleNavChildren(btn) {
+    const navItem = btn.closest('.nav-link-item');
+    const children = navItem.querySelector('.nav-children');
+    const isHidden = children.style.display === 'none';
+    children.style.display = isHidden ? 'block' : 'none';
+    btn.querySelector('i').classList.toggle('bi-chevron-down', !isHidden);
+    btn.querySelector('i').classList.toggle('bi-chevron-up', isHidden);
+  }
+
+  function addNavChild(btn) {
+    const container = btn.closest('.nav-children');
+    const html = `
+      <div class="nav-child-item d-flex align-items-center gap-2 mb-1">
+        <i class="bi bi-dash text-muted"></i>
+        <input type="text" class="form-control form-control-sm nav-child-label" placeholder="Label" style="width: 100px;">
+        <div class="position-relative flex-grow-1">
+          <input type="text" class="form-control form-control-sm nav-child-url link-suggestion-input" placeholder="URL">
+          <div class="link-suggestions-dropdown"></div>
+        </div>
+        <button class="btn btn-sm btn-outline-danger" onclick="removeNavChild(this)" title="Remove child">
+          <i class="bi bi-x"></i>
+        </button>
+      </div>
+    `;
+    btn.insertAdjacentHTML('beforebegin', html);
+  }
+
+  function removeNavChild(btn) {
+    btn.closest('.nav-child-item').remove();
   }
 
   function removeNavLink(button) {
@@ -730,14 +929,24 @@
   }
 
   function getNavLinksData() {
-    const items = document.querySelectorAll('.nav-link-item');
+    const items = document.querySelectorAll('#navLinksContainer > .nav-link-item');
     const links = [];
     items.forEach(item => {
-      const inputs = item.querySelectorAll('input');
-      const label = inputs[0].value.trim();
-      const url = inputs[1].value.trim();
+      const label = item.querySelector('.nav-label').value.trim();
+      const url = item.querySelector('.nav-url').value.trim();
+
+      // Collect children
+      const children = [];
+      item.querySelectorAll('.nav-child-item').forEach(child => {
+        const childLabel = child.querySelector('.nav-child-label').value.trim();
+        const childUrl = child.querySelector('.nav-child-url').value.trim();
+        if (childLabel && childUrl) {
+          children.push({ label: childLabel, url: childUrl });
+        }
+      });
+
       if (label && url) {
-        links.push({ label, url, children: [] });
+        links.push({ label, url, children });
       }
     });
     return links;
@@ -766,6 +975,11 @@
       alert('Error saving navigation: ' + error.message);
     }
   }
+
+  // Initialize link suggestions on DOM ready
+  document.addEventListener('DOMContentLoaded', function() {
+    initLinkSuggestions();
+  });
 
   // Sidebar widget management
   function addSidebarWidget() {

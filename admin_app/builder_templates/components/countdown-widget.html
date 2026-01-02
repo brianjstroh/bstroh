@@ -1,0 +1,162 @@
+<section class="countdown-widget text-{{ alignment }}" {% if anchor_id %}id="{{ anchor_id }}"{% endif %}>
+  <div class="container">
+    {% if title %}
+    <h2 class="countdown-title">{{ title }}</h2>
+    {% endif %}
+    {% if subtitle %}
+    <p class="countdown-subtitle">{{ subtitle }}</p>
+    {% endif %}
+
+    <div class="countdown-display"
+         data-end-datetime="{{ end_datetime }}"
+         data-show-precise="{{ show_precise|lower }}"
+         data-expired-message="{{ expired_message }}">
+      <div class="countdown-units">
+        <div class="countdown-unit" data-unit="years">
+          <span class="countdown-value">--</span>
+          <span class="countdown-label">Years</span>
+        </div>
+        <div class="countdown-unit" data-unit="days">
+          <span class="countdown-value">--</span>
+          <span class="countdown-label">Days</span>
+        </div>
+        <div class="countdown-unit countdown-precise" style="display: none;" data-unit="hours">
+          <span class="countdown-value">--</span>
+          <span class="countdown-label">Hours</span>
+        </div>
+        <div class="countdown-unit countdown-precise" style="display: none;" data-unit="minutes">
+          <span class="countdown-value">--</span>
+          <span class="countdown-label">Minutes</span>
+        </div>
+        <div class="countdown-unit countdown-precise" style="display: none;" data-unit="seconds">
+          <span class="countdown-value">--</span>
+          <span class="countdown-label">Seconds</span>
+        </div>
+      </div>
+      <div class="countdown-expired" style="display: none;"></div>
+    </div>
+  </div>
+</section>
+
+<style>
+.countdown-widget {
+  padding: 2rem 1rem;
+}
+.countdown-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0 0 0.5rem 0;
+}
+.countdown-subtitle {
+  font-size: 1rem;
+  color: var(--color-text-muted);
+  margin: 0 0 1.5rem 0;
+}
+.countdown-units {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+.countdown-widget.text-left .countdown-units {
+  justify-content: flex-start;
+}
+.countdown-widget.text-right .countdown-units {
+  justify-content: flex-end;
+}
+.countdown-unit {
+  text-align: center;
+  min-width: 80px;
+}
+.countdown-value {
+  display: block;
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  line-height: 1.2;
+}
+.countdown-label {
+  display: block;
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.countdown-expired {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+@media (max-width: 768px) {
+  .countdown-value { font-size: 1.75rem; }
+  .countdown-unit { min-width: 60px; }
+  .countdown-units { gap: 0.75rem; }
+}
+</style>
+
+<script>
+(function() {
+  document.querySelectorAll('.countdown-display').forEach(function(display) {
+    if (display.dataset.initialized) return;
+    display.dataset.initialized = 'true';
+
+    var endDatetime = display.dataset.endDatetime;
+    var showPrecise = display.dataset.showPrecise === 'true';
+    var expiredMessage = display.dataset.expiredMessage;
+
+    if (!endDatetime) return;
+
+    var endDate = new Date(endDatetime);
+
+    // Show precise units if enabled
+    if (showPrecise) {
+      display.querySelectorAll('.countdown-precise').forEach(function(el) {
+        el.style.display = '';
+      });
+    }
+
+    function updateCountdown() {
+      var now = new Date();
+      var diff = endDate - now;
+
+      if (diff <= 0) {
+        display.querySelector('.countdown-units').style.display = 'none';
+        var expiredEl = display.querySelector('.countdown-expired');
+        expiredEl.textContent = expiredMessage;
+        expiredEl.style.display = 'block';
+        return;
+      }
+
+      var years = Math.floor(diff / (365.25 * 24 * 60 * 60 * 1000));
+      var days = Math.floor((diff % (365.25 * 24 * 60 * 60 * 1000)) / (24 * 60 * 60 * 1000));
+      var hours = Math.floor((diff % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
+      var minutes = Math.floor((diff % (60 * 60 * 1000)) / (60 * 1000));
+      var seconds = Math.floor((diff % (60 * 1000)) / 1000);
+
+      var yearsUnit = display.querySelector('[data-unit="years"]');
+      var yearsEl = yearsUnit ? yearsUnit.querySelector('.countdown-value') : null;
+      var daysEl = display.querySelector('[data-unit="days"] .countdown-value');
+
+      // Hide years when value is 0
+      if (yearsUnit) {
+        yearsUnit.style.display = years === 0 ? 'none' : '';
+      }
+      if (yearsEl) yearsEl.textContent = years;
+      if (daysEl) daysEl.textContent = days;
+
+      if (showPrecise) {
+        var hoursEl = display.querySelector('[data-unit="hours"] .countdown-value');
+        var minutesEl = display.querySelector('[data-unit="minutes"] .countdown-value');
+        var secondsEl = display.querySelector('[data-unit="seconds"] .countdown-value');
+        if (hoursEl) hoursEl.textContent = hours;
+        if (minutesEl) minutesEl.textContent = minutes;
+        if (secondsEl) secondsEl.textContent = seconds;
+      }
+    }
+
+    updateCountdown();
+    setInterval(updateCountdown, 1000);
+  });
+})();
+</script>

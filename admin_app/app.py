@@ -386,6 +386,48 @@ def builder_pages() -> Any:
   return jsonify({"pages": pages})
 
 
+@app.route("/builder/link-suggestions")
+@login_required
+def builder_link_suggestions() -> Any:
+  """API: Get all available link suggestions (pages and anchors)."""
+  gen = get_generator()
+  site_config = gen.get_site_config()
+
+  if not site_config:
+    return jsonify({"suggestions": []})
+
+  suggestions = []
+
+  # Add all pages
+  for page_id in site_config.get("pages", []):
+    page_config = gen.get_page_config(page_id)
+    if page_config:
+      url = "/" if page_id == "index" else f"/{page_id}.html"
+      suggestions.append(
+        {
+          "type": "page",
+          "label": page_config["title"],
+          "url": url,
+        }
+      )
+
+      # Scan components for anchor_ids
+      for _slot_name, components in page_config.get("slots", {}).items():
+        for comp in components:
+          anchor_id = comp.get("data", {}).get("anchor_id", "")
+          if anchor_id:
+            base_url = "/" if page_id == "index" else f"/{page_id}.html"
+            suggestions.append(
+              {
+                "type": "anchor",
+                "label": f"{page_config['title']} > #{anchor_id}",
+                "url": f"{base_url}#{anchor_id}",
+              }
+            )
+
+  return jsonify({"suggestions": suggestions})
+
+
 @app.route("/builder/pages/<page_id>")
 @login_required
 def builder_edit_page(page_id: str) -> Any:

@@ -194,6 +194,53 @@
         "max_width": "1200px",
         "anchor_id": ""
       }
+    },
+    {
+      "id": "countdown-widget",
+      "name": "Countdown Timer",
+      "description": "Countdown to a specific date/time with real-time updates",
+      "category": "content",
+      "editable_fields": [
+        {"name": "end_datetime", "type": "datetime", "label": "End Date/Time", "required": true},
+        {"name": "show_precise", "type": "checkbox", "label": "Show hours, minutes, seconds", "default": false, "tooltip": "When unchecked, only years and days are shown"},
+        {"name": "title", "type": "text", "label": "Title (optional)", "default": ""},
+        {"name": "subtitle", "type": "text", "label": "Subtitle (optional)", "default": ""},
+        {"name": "expired_message", "type": "text", "label": "Message when countdown ends", "default": "The event has started!"},
+        {"name": "alignment", "type": "select", "label": "Alignment", "options": ["left", "center", "right"], "default": "center"},
+        {"name": "anchor_id", "type": "text", "label": "Section ID (for anchor links)", "placeholder": "auto-generated"}
+      ],
+      "default_data": {
+        "end_datetime": "",
+        "show_precise": false,
+        "title": "",
+        "subtitle": "",
+        "expired_message": "The event has started!",
+        "alignment": "center",
+        "anchor_id": ""
+      }
+    },
+    {
+      "id": "interactive-map",
+      "name": "Interactive Map",
+      "description": "Map with location pins, images, and interactive list",
+      "category": "content",
+      "custom_editor": "map",
+      "editable_fields": [
+        {"name": "center_lat", "type": "text", "label": "Center Latitude", "default": "40.0", "placeholder": "e.g., 40.7128"},
+        {"name": "center_lng", "type": "text", "label": "Center Longitude", "default": "-117.0", "placeholder": "e.g., -74.0060"},
+        {"name": "zoom_level", "type": "select", "label": "Default Zoom", "options": [{"value": "3", "label": "3 - Continent"}, {"value": "4", "label": "4 - Large Country"}, {"value": "5", "label": "5 - Country"}, {"value": "8", "label": "8 - Region"}, {"value": "10", "label": "10 - City"}, {"value": "13", "label": "13 - Neighborhood"}, {"value": "16", "label": "16 - Street"}], "default": "3"},
+        {"name": "map_height", "type": "select", "label": "Map Height", "options": [{"value": "300px", "label": "Small (300px)"}, {"value": "400px", "label": "Medium (400px)"}, {"value": "500px", "label": "Large (500px)"}, {"value": "600px", "label": "Extra Large (600px)"}], "default": "400px"},
+        {"name": "pins", "type": "mapPins", "label": "Map Pins"},
+        {"name": "anchor_id", "type": "text", "label": "Section ID (for anchor links)", "placeholder": "auto-generated"}
+      ],
+      "default_data": {
+        "center_lat": "40.0",
+        "center_lng": "-117.0",
+        "zoom_level": "3",
+        "map_height": "400px",
+        "pins": [],
+        "anchor_id": ""
+      }
     }
   ]
 }
