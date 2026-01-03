@@ -301,6 +301,12 @@
             </a>
           </li>
           <li class="nav-item">
+            <a class="nav-link {% if request.endpoint == 'ai_assistant' %}active{% endif %}"
+               href="{{ url_for('ai_assistant') }}">
+              <i class="bi bi-robot"></i> AI Assistant
+            </a>
+          </li>
+          <li class="nav-item">
             <a class="nav-link {% if request.endpoint == 'builder_help' %}active{% endif %}"
                href="{{ url_for('builder_help') }}">
               <i class="bi bi-question-circle"></i> Help

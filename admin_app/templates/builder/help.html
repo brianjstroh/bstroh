@@ -12,6 +12,7 @@
       </div>
       <div class="list-group list-group-flush">
         <a href="#getting-started" class="list-group-item list-group-item-action">Getting Started</a>
+        <a href="#ai-assistant" class="list-group-item list-group-item-action">AI Page Assistant</a>
         <a href="#dashboard" class="list-group-item list-group-item-action">Dashboard</a>
         <a href="#pages" class="list-group-item list-group-item-action">Managing Pages</a>
         <a href="#page-editor" class="list-group-item list-group-item-action">Page Editor</a>
@@ -65,6 +66,58 @@
 
         <div class="alert alert-info mt-4 mb-0">
           <i class="bi bi-lightbulb"></i> <strong>Quick Start:</strong> Begin by setting up your site name and colors on the Dashboard, then create your first page!
+        </div>
+      </div>
+    </div>
+
+    <!-- AI Page Assistant -->
+    <div class="card mb-4" id="ai-assistant">
+      <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-robot"></i> AI Page Assistant</h5>
+      </div>
+      <div class="card-body">
+        <p>The AI Page Assistant helps you create professional web pages by describing what you want in plain language. It's like having a web designer on call.</p>
+
+        <div class="row g-3 mb-4">
+          <div class="col-md-4">
+            <div class="border rounded p-3 h-100">
+              <h6><i class="bi bi-chat-dots text-primary"></i> Conversational</h6>
+              <p class="small mb-0">Describe what you need naturally. The AI asks clarifying questions just like a real designer would.</p>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="border rounded p-3 h-100">
+              <h6><i class="bi bi-eye text-primary"></i> Preview First</h6>
+              <p class="small mb-0">See exactly what will be created before applying changes. Accept, reject, or ask for revisions.</p>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="border rounded p-3 h-100">
+              <h6><i class="bi bi-robot text-primary"></i> Powered by Claude</h6>
+              <p class="small mb-0">Uses Claude 4.5 Haiku for fast, cost-effective page generation.</p>
+            </div>
+          </div>
+        </div>
+
+        <h6>How to Use</h6>
+        <ol>
+          <li>Click "AI Page Assistant" in the navigation or Quick Actions</li>
+          <li>Select a target page (or "Create new page")</li>
+          <li>Describe the page you want in the chat box</li>
+          <li>Review the generated preview on the right</li>
+          <li>Click "Apply Changes" to save, or ask for revisions</li>
+        </ol>
+
+        <h6 class="mt-4">Example Prompts</h6>
+        <ul>
+          <li>"Create a professional About Us page for a small consulting business"</li>
+          <li>"Make a services page with 3 offerings: web design, SEO, and marketing"</li>
+          <li>"Build a landing page for a product launch with a hero section and features list"</li>
+          <li>"Create a team page introducing our 4 team members with photos and short bios"</li>
+        </ul>
+
+        <div class="alert alert-success mb-0">
+          <i class="bi bi-lightbulb"></i> <strong>Tip:</strong> Be specific in your descriptions for better results. Include details like the type of business, target audience, and any specific content you want included.
         </div>
       </div>
     </div>
@@ -247,6 +300,16 @@
                 <td>Form with name, email, phone, and message fields</td>
                 <td>Contact pages</td>
               </tr>
+              <tr>
+                <td><strong>Countdown Timer</strong></td>
+                <td>Live countdown to a specific date/time with customizable display</td>
+                <td>Events, launches, deadlines</td>
+              </tr>
+              <tr>
+                <td><strong>Interactive Map</strong></td>
+                <td>Map with location pins, images, and interactive list</td>
+                <td>Travel logs, location guides, store locators</td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -261,6 +324,30 @@
           <li><strong>Border:</strong> Decorative border with solid or gradient styles</li>
           <li><strong>Max Width:</strong> Control the component's maximum width</li>
         </ul>
+
+        <h6 class="mt-4">Countdown Timer</h6>
+        <p>Create engaging countdowns to events, launches, or deadlines:</p>
+        <ul>
+          <li><strong>End Date/Time:</strong> When the countdown reaches zero</li>
+          <li><strong>Display Mode:</strong> Show just days, or include hours/minutes/seconds</li>
+          <li><strong>Title &amp; Subtitle:</strong> Optional text above the countdown</li>
+          <li><strong>Expired Message:</strong> Text shown when countdown completes</li>
+        </ul>
+        <div class="alert alert-light border">
+          <i class="bi bi-info-circle"></i> The countdown updates in real-time in visitors' browsers without requiring a page refresh.
+        </div>
+
+        <h6 class="mt-4">Interactive Map</h6>
+        <p>Display locations with pins, images, and descriptions:</p>
+        <ul>
+          <li><strong>Center &amp; Zoom:</strong> Set the default map view</li>
+          <li><strong>Map Pins:</strong> Add locations with titles, descriptions, and images</li>
+          <li><strong>Pin List:</strong> Visitors can click pins or use the sidebar list to navigate</li>
+          <li><strong>Pin Editor:</strong> Click "Edit Map" to add and position pins visually</li>
+        </ul>
+        <div class="alert alert-light border">
+          <i class="bi bi-lightbulb"></i> <strong>Tip:</strong> Use the map editor to click directly on the map to add pins. You can also drag pins to reposition them.
+        </div>
 
         <h6 class="mt-4">Component IDs</h6>
         <p>Each component has a unique ID (shown as <code>#component-id</code> in the list). You can customize this ID for anchor links. For example, set the ID to "about" to create a link like <code>yoursite.com/page.html#about</code>.</p>

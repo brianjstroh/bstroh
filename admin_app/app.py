@@ -8,6 +8,7 @@ from typing import Any
 
 import bcrypt
 import boto3
+from ai_generator import AIPageGenerator, get_available_models
 from botocore.exceptions import ClientError
 from flask import (
   Flask,
@@ -22,6 +23,9 @@ from flask import (
 from generator import SiteGenerator
 
 app = Flask(__name__)
+
+# Global AI generator instance (conversations stored in memory)
+ai_generator = AIPageGenerator()
 app.secret_key = os.environ.get("SECRET_KEY", os.urandom(24))
 
 # Initialize AWS clients
@@ -882,6 +886,190 @@ def create_folder() -> Any:
   s3.put_object(Bucket=bucket, Key=key, Body=b"")
 
   return redirect(url_for("browse", prefix=prefix))
+
+
+# AI Assistant Routes
+
+
+@app.route("/builder/ai-assistant")
+@app.route("/builder/ai-assistant/<page_id>")
+@login_required
+def ai_assistant(page_id: str | None = None) -> Any:
+  """AI page generation assistant."""
+  domain = session["domain"]
+  gen = get_generator()
+  site_config = gen.get_site_config()
+
+  if not site_config:
+    return redirect(url_for("builder_dashboard"))
+
+  # Get current page if editing
+  current_page = None
+  if page_id:
+    current_page = gen.get_page_config(page_id)
+
+  # Get list of pages for the page selector
+  pages = []
+  for pid in site_config.get("pages", []):
+    page_config = gen.get_page_config(pid)
+    if page_config:
+      pages.append({"id": pid, "title": page_config["title"]})
+
+  return render_template(
+    "builder/ai_assistant.html",
+    domain=domain,
+    site=site_config,
+    current_page=current_page,
+    pages=pages,
+    models=get_available_models(),
+    components=gen.get_components(),
+  )
+
+
+@app.route("/builder/ai-assistant/chat", methods=["POST"])
+@login_required
+def ai_chat() -> Any:
+  """Handle AI chat messages."""
+  data = request.get_json()
+  if not data or "message" not in data:
+    return jsonify({"error": "No message provided"}), 400
+
+  user_message = data["message"]
+  model_key = data.get("model", "haiku")
+  page_id = data.get("page_id")
+
+  # Use session ID for conversation tracking
+  session_id = session.sid if hasattr(session, "sid") else id(session)
+  conversation_id = f"{session['domain']}_{session_id}"
+
+  gen = get_generator()
+  site_config = gen.get_site_config()
+
+  # Get current page if specified
+  current_page = None
+  if page_id:
+    current_page = gen.get_page_config(page_id)
+
+  # Chat with AI
+  result = ai_generator.chat(
+    session_id=conversation_id,
+    user_message=user_message,
+    model_key=model_key,
+    site_config=site_config,
+    current_page=current_page,
+  )
+
+  return jsonify(result)
+
+
+@app.route("/builder/ai-assistant/clear", methods=["POST"])
+@login_required
+def ai_clear_conversation() -> Any:
+  """Clear the current conversation."""
+  session_id = session.sid if hasattr(session, "sid") else id(session)
+  conversation_id = f"{session['domain']}_{session_id}"
+  ai_generator.clear_conversation(conversation_id)
+  return jsonify({"success": True})
+
+
+@app.route("/builder/ai-assistant/preview", methods=["POST"])
+@login_required
+def ai_preview_page() -> Any:
+  """Generate preview HTML for AI-generated page data."""
+  data = request.get_json()
+  if not data or "page_data" not in data:
+    return jsonify({"error": "No page data provided"}), 400
+
+  gen = get_generator()
+  domain = session.get("domain", "")
+
+  try:
+    html_content = gen.generate_page_html_preview(data["page_data"])
+
+    # Inject base tag for proper URL resolution
+    if domain:
+      base_tag = f'<base href="https://{domain}/">'
+      html_content = html_content.replace("<head>", f"<head>\n  {base_tag}", 1)
+
+    return jsonify({"success": True, "html": html_content})
+  except Exception as e:
+    return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/builder/ai-assistant/apply", methods=["POST"])
+@login_required
+def ai_apply_page() -> Any:
+  """Apply AI-generated components to a page."""
+  data = request.get_json()
+  if not data:
+    return jsonify({"error": "No data provided"}), 400
+
+  page_id = data.get("page_id")
+  page_data = data.get("page_data")
+  create_new = data.get("create_new", False)
+  new_page_title = data.get("new_page_title", "AI Generated Page")
+
+  if not page_data:
+    return jsonify({"error": "No page data provided"}), 400
+
+  gen = get_generator()
+
+  try:
+    if create_new:
+      # Create a new page with the generated content
+      # Generate a safe page_id from the title
+      safe_id = re.sub(r"[^a-z0-9-]", "", new_page_title.lower().replace(" ", "-"))
+      if not safe_id:
+        safe_id = "ai-page"
+
+      # Check if page already exists and append number if needed
+      site_config = gen.get_site_config()
+      existing_pages = site_config.get("pages", [])
+      base_id = safe_id
+      counter = 1
+      while safe_id in existing_pages:
+        safe_id = f"{base_id}-{counter}"
+        counter += 1
+
+      # Create the page
+      new_page = gen.add_page(safe_id, new_page_title)
+
+      # Update with AI-generated content
+      new_page["slots"] = page_data.get("slots", {"main": []})
+      new_page["meta_description"] = page_data.get("meta_description", "")
+      gen.save_page_config(safe_id, new_page)
+      gen.publish_page(safe_id)
+
+      return jsonify({"success": True, "page_id": safe_id, "created": True})
+
+    elif page_id:
+      # Update existing page
+      existing_page = gen.get_page_config(page_id)
+      if not existing_page:
+        return jsonify({"error": "Page not found"}), 404
+
+      # Merge or replace components based on request
+      if data.get("replace", True):
+        existing_page["slots"] = page_data.get("slots", {"main": []})
+      else:
+        # Append components
+        existing_main = existing_page.get("slots", {}).get("main", [])
+        new_main = page_data.get("slots", {}).get("main", [])
+        existing_page["slots"] = {"main": existing_main + new_main}
+
+      if page_data.get("meta_description"):
+        existing_page["meta_description"] = page_data["meta_description"]
+
+      gen.save_page_config(page_id, existing_page)
+      gen.publish_page(page_id)
+
+      return jsonify({"success": True, "page_id": page_id, "created": False})
+
+    else:
+      return jsonify({"error": "No page_id or create_new specified"}), 400
+
+  except Exception as e:
+    return jsonify({"error": str(e)}), 500
 
 
 if __name__ == "__main__":
