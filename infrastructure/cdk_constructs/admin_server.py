@@ -122,13 +122,13 @@ class AdminServerConstruct(Construct):
       )
     )
 
-    # Bedrock access for AI content generation (Claude 4.5 Sonnet)
+    # Bedrock access for AI content generation (Claude models)
     self.role.add_to_policy(
       iam.PolicyStatement(
-        actions=["bedrock:InvokeModel"],
+        actions=["bedrock:InvokeModel", "bedrock:InvokeModelWithResponseStream"],
         resources=[
-          # Cross-region inference profile
-          "arn:aws:bedrock:us-east-1:*:inference-profile/us.anthropic.claude-*",
+          # Cross-region inference profiles (any region, any account)
+          "arn:aws:bedrock:*:*:inference-profile/us.anthropic.claude-*",
           # Foundation models (needed for cross-region inference)
           "arn:aws:bedrock:*::foundation-model/anthropic.claude-*",
         ],
