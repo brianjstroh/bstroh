@@ -2,17 +2,14 @@
 
 import sys
 from pathlib import Path
-from typing import Any
 from unittest.mock import MagicMock, patch
-
-import pytest
 
 # Add admin_app to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "admin_app"))
 
 from ai_generator import (
-  AIPageGenerator,
   CLAUDE_MODELS,
+  AIPageGenerator,
   build_system_prompt,
   get_available_models,
   get_component_schema,
@@ -408,9 +405,7 @@ class TestAIPageGeneratorPreparePageData:
     assert page_data["title"] == "AI Generated Page"
 
   @patch("ai_generator.boto3.client")
-  def test_uses_default_page_id_when_not_provided(
-    self, mock_boto: MagicMock
-  ) -> None:
+  def test_uses_default_page_id_when_not_provided(self, mock_boto: MagicMock) -> None:
     """Test default page_id is used when not provided."""
     generator = AIPageGenerator()
     parsed_data = {"components": []}
@@ -434,7 +429,7 @@ class TestAIPageGeneratorChat:
     mock_bedrock.converse.return_value = {
       "output": {
         "message": {
-          "content": [{"text": "Here's a page for you: {\"action\": \"generate_page\"}"}]
+          "content": [{"text": 'Here\'s a page for you: {"action": "generate_page"}'}]
         }
       },
       "usage": {"inputTokens": 100, "outputTokens": 50},
@@ -454,9 +449,7 @@ class TestAIPageGeneratorChat:
     assert result["usage"]["output_tokens"] == 50
 
   @patch("ai_generator.boto3.client")
-  def test_chat_adds_to_conversation_history(
-    self, mock_boto_client: MagicMock
-  ) -> None:
+  def test_chat_adds_to_conversation_history(self, mock_boto_client: MagicMock) -> None:
     """Test that chat messages are added to history."""
     mock_bedrock = MagicMock()
     mock_boto_client.return_value = mock_bedrock
@@ -519,9 +512,7 @@ class TestAIPageGeneratorChat:
     assert "Bedrock unavailable" in result["error"]
 
   @patch("ai_generator.boto3.client")
-  def test_chat_parses_json_from_response(
-    self, mock_boto_client: MagicMock
-  ) -> None:
+  def test_chat_parses_json_from_response(self, mock_boto_client: MagicMock) -> None:
     """Test that JSON is parsed from AI response."""
     mock_bedrock = MagicMock()
     mock_boto_client.return_value = mock_bedrock
@@ -529,9 +520,7 @@ class TestAIPageGeneratorChat:
       "output": {
         "message": {
           "content": [
-            {
-              "text": '```json\n{"action": "generate_page", "page_title": "Test"}\n```'
-            }
+            {"text": '```json\n{"action": "generate_page", "page_title": "Test"}\n```'}
           ]
         }
       },
