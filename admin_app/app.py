@@ -1,5 +1,6 @@
 """Minimal Flask app for S3 file management and website builder."""
 
+import mimetypes
 import os
 import re
 import uuid
@@ -846,7 +847,10 @@ def upload() -> Any:
   for file in files:
     if file.filename:
       key = prefix + file.filename if prefix else file.filename
-      s3.upload_fileobj(file, bucket, key)
+      content_type = (
+        mimetypes.guess_type(file.filename)[0] or "application/octet-stream"
+      )
+      s3.upload_fileobj(file, bucket, key, ExtraArgs={"ContentType": content_type})
 
   return redirect(url_for("browse", prefix=prefix))
 
