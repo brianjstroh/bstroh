@@ -114,11 +114,22 @@ class AdminServerConstruct(Construct):
       )
     )
 
-    # SSM parameter access for site passwords
+    # SSM parameter access for site passwords and contact form emails
     self.role.add_to_policy(
       iam.PolicyStatement(
         actions=["ssm:GetParameter", "ssm:PutParameter"],
         resources=["arn:aws:ssm:*:*:parameter/sites/*"],
+      )
+    )
+
+    # SES permissions for contact form email verification
+    self.role.add_to_policy(
+      iam.PolicyStatement(
+        actions=[
+          "ses:VerifyEmailIdentity",
+          "ses:GetIdentityVerificationAttributes",
+        ],
+        resources=["*"],
       )
     )
 

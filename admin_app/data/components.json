@@ -68,24 +68,44 @@
     {
       "id": "contact-form",
       "name": "Contact Form",
-      "description": "Simple contact form with name, email, and message fields",
+      "description": "Customizable contact form with dynamic fields",
       "category": "contact",
       "editable_fields": [
         {"name": "title", "type": "text", "label": "Form Title", "default": "Get in Touch"},
         {"name": "subtitle", "type": "text", "label": "Subtitle", "default": "We'd love to hear from you"},
-        {"name": "email", "type": "email", "label": "Send submissions to", "required": true, "placeholder": "your@email.com"},
-        {"name": "show_phone", "type": "checkbox", "label": "Include Phone Field", "default": true},
+        {"name": "email", "type": "email", "label": "Send submissions to", "required": true, "placeholder": "your@email.com", "help_text": "A verification email will be sent to this address"},
+        {"name": "form_fields", "type": "formfields", "label": "Form Fields"},
         {"name": "submit_text", "type": "text", "label": "Button Text", "default": "Send Message"},
         {"name": "success_message", "type": "text", "label": "Success Message", "default": "Thanks! We'll be in touch soon."},
+        {"name": "confirmation_message", "type": "textarea", "label": "Confirmation Email Message", "default": "Thank you for contacting us! We have received your message and will get back to you soon.", "help_text": "Sent to user if they provide an email address. Leave empty to disable."},
+        {"name": "show_border", "type": "checkbox", "label": "Show Border", "default": true},
+        {"name": "font_family", "type": "select", "label": "Font Family", "options": [
+          {"value": "", "label": "Theme Default"},
+          {"value": "system-ui, -apple-system, sans-serif", "label": "System UI"},
+          {"value": "'Inter', sans-serif", "label": "Inter"},
+          {"value": "'Open Sans', sans-serif", "label": "Open Sans"},
+          {"value": "'Roboto', sans-serif", "label": "Roboto"},
+          {"value": "'Lato', sans-serif", "label": "Lato"},
+          {"value": "'Playfair Display', serif", "label": "Playfair Display"},
+          {"value": "Georgia, serif", "label": "Georgia"}
+        ], "default": ""},
         {"name": "anchor_id", "type": "text", "label": "Section ID", "default": "contact"}
       ],
       "default_data": {
         "title": "Get in Touch",
         "subtitle": "We'd love to hear from you",
         "email": "",
-        "show_phone": true,
+        "form_fields": [
+          {"id": "field-1", "type": "text", "data": {"label": "Name", "placeholder": "Your name", "required": true, "max_length": 100}},
+          {"id": "field-2", "type": "email", "data": {"label": "Email", "placeholder": "you@example.com", "required": true}},
+          {"id": "field-3", "type": "phone", "data": {"label": "Phone", "placeholder": "(555) 555-5555", "required": false}},
+          {"id": "field-4", "type": "textarea", "data": {"label": "Message", "placeholder": "How can we help?", "required": true, "max_length": 5000, "rows": "5"}}
+        ],
         "submit_text": "Send Message",
         "success_message": "Thanks! We'll be in touch soon.",
+        "confirmation_message": "Thank you for contacting us! We have received your message and will get back to you soon.",
+        "show_border": true,
+        "font_family": "",
         "anchor_id": "contact"
       }
     },
