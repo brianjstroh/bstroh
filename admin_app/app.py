@@ -560,23 +560,23 @@ def builder_save_page(page_id: str) -> Any:
 
       # Validate required fields for contact forms
       if not email:
-        return jsonify({
-          "error": f'Contact form "{form_title}" is missing the destination email. '
-                   f'Please fill in the "Send submissions to" field.'
-        }), 400
+        return jsonify(
+          {
+            "error": f'Contact form "{form_title}" is missing the destination email. '
+            f'Please fill in the "Send submissions to" field.'
+          }
+        ), 400
       if not form_id:
-        return jsonify({
-          "error": f'Contact form "{form_title}" is missing a Section ID.'
-        }), 400
+        return jsonify(
+          {"error": f'Contact form "{form_title}" is missing a Section ID.'}
+        ), 400
 
       # Store email in SSM for Lambda to look up
       try:
         store_contact_email(domain, form_id, email)
       except ClientError as e:
         app.logger.error(f"Failed to store contact email: {e}")
-        return jsonify({
-          "error": f"Failed to configure contact form: {e}"
-        }), 500
+        return jsonify({"error": f"Failed to configure contact form: {e}"}), 500
 
       # Trigger email verification
       verification = verify_email(email)
@@ -1184,10 +1184,9 @@ def api_contact_mock() -> Any:
   """Mock contact form endpoint for local preview testing."""
   if request.method == "OPTIONS":
     return "", 204
-  return jsonify({
-    "success": True,
-    "message": "Form submission simulated (preview mode)"
-  })
+  return jsonify(
+    {"success": True, "message": "Form submission simulated (preview mode)"}
+  )
 
 
 @app.route("/api/form-upload-url", methods=["POST", "OPTIONS"])
@@ -1198,10 +1197,12 @@ def api_upload_url_mock() -> Any:
   # Return mock URLs for preview testing (actual upload will fail silently)
   data = request.get_json() or {}
   filename = data.get("filename", "file.txt")
-  return jsonify({
-    "upload_url": "data:text/plain,mock-upload-disabled-in-preview",
-    "file_url": f"https://example.com/preview-mock/{filename}"
-  })
+  return jsonify(
+    {
+      "upload_url": "data:text/plain,mock-upload-disabled-in-preview",
+      "file_url": f"https://example.com/preview-mock/{filename}",
+    }
+  )
 
 
 if __name__ == "__main__":
