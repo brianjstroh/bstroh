@@ -37,7 +37,13 @@ class StorageBucket(Construct):
           allowed_methods=[s3.HttpMethods.GET],
           allowed_origins=["*"],
           allowed_headers=["*"],
-        )
+        ),
+        s3.CorsRule(
+          allowed_methods=[s3.HttpMethods.PUT],
+          allowed_origins=["*"],
+          allowed_headers=["*"],
+          exposed_headers=["ETag"],
+        ),
       ],
       removal_policy=removal_policy,
       auto_delete_objects=removal_policy == RemovalPolicy.DESTROY,

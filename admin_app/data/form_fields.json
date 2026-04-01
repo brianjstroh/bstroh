@@ -1,0 +1,205 @@
+{
+  "form_fields": [
+    {
+      "id": "text",
+      "name": "Text Field",
+      "description": "Single-line text input",
+      "icon": "bi-input-cursor-text",
+      "editable_options": [
+        {"name": "label", "type": "text", "label": "Field Label", "required": true, "default": "Text"},
+        {"name": "placeholder", "type": "text", "label": "Placeholder", "default": ""},
+        {"name": "required", "type": "checkbox", "label": "Required", "default": false},
+        {"name": "max_length", "type": "number", "label": "Max Length", "default": 200}
+      ],
+      "default_data": {
+        "label": "Text",
+        "placeholder": "",
+        "required": false,
+        "max_length": 200
+      }
+    },
+    {
+      "id": "email",
+      "name": "Email",
+      "description": "Email address with validation",
+      "icon": "bi-envelope",
+      "editable_options": [
+        {"name": "label", "type": "text", "label": "Field Label", "required": true, "default": "Email"},
+        {"name": "placeholder", "type": "text", "label": "Placeholder", "default": "you@example.com"},
+        {"name": "required", "type": "checkbox", "label": "Required", "default": true}
+      ],
+      "default_data": {
+        "label": "Email",
+        "placeholder": "you@example.com",
+        "required": true
+      },
+      "validation": {
+        "pattern": "email",
+        "message": "Please enter a valid email address"
+      }
+    },
+    {
+      "id": "phone",
+      "name": "Phone",
+      "description": "Phone number with validation",
+      "icon": "bi-telephone",
+      "editable_options": [
+        {"name": "label", "type": "text", "label": "Field Label", "required": true, "default": "Phone"},
+        {"name": "placeholder", "type": "text", "label": "Placeholder", "default": "(555) 555-5555"},
+        {"name": "required", "type": "checkbox", "label": "Required", "default": false}
+      ],
+      "default_data": {
+        "label": "Phone",
+        "placeholder": "(555) 555-5555",
+        "required": false
+      },
+      "validation": {
+        "pattern": "phone",
+        "message": "Please enter a valid phone number (at least 10 digits)"
+      }
+    },
+    {
+      "id": "textarea",
+      "name": "Message / Long Text",
+      "description": "Multi-line text area",
+      "icon": "bi-text-paragraph",
+      "editable_options": [
+        {"name": "label", "type": "text", "label": "Field Label", "required": true, "default": "Message"},
+        {"name": "placeholder", "type": "text", "label": "Placeholder", "default": ""},
+        {"name": "required", "type": "checkbox", "label": "Required", "default": true},
+        {"name": "max_length", "type": "number", "label": "Max Length", "default": 5000},
+        {"name": "rows", "type": "select", "label": "Height (rows)", "options": ["3", "5", "8", "10"], "default": "5"}
+      ],
+      "default_data": {
+        "label": "Message",
+        "placeholder": "",
+        "required": true,
+        "max_length": 5000,
+        "rows": "5"
+      }
+    },
+    {
+      "id": "number",
+      "name": "Number",
+      "description": "Numeric input field",
+      "icon": "bi-123",
+      "editable_options": [
+        {"name": "label", "type": "text", "label": "Field Label", "required": true, "default": "Number"},
+        {"name": "required", "type": "checkbox", "label": "Required", "default": false},
+        {"name": "min", "type": "number", "label": "Minimum Value", "default": 0},
+        {"name": "max", "type": "number", "label": "Maximum Value", "default": 100},
+        {"name": "step", "type": "number", "label": "Step", "default": 1}
+      ],
+      "default_data": {
+        "label": "Number",
+        "required": false,
+        "min": 0,
+        "max": 100,
+        "step": 1
+      }
+    },
+    {
+      "id": "number_selector",
+      "name": "Number Selector",
+      "description": "Number picker with +/- buttons",
+      "icon": "bi-plus-slash-minus",
+      "editable_options": [
+        {"name": "label", "type": "text", "label": "Field Label", "required": true, "default": "Quantity"},
+        {"name": "required", "type": "checkbox", "label": "Required", "default": false},
+        {"name": "min", "type": "number", "label": "Minimum Value", "default": 0},
+        {"name": "max", "type": "number", "label": "Maximum Value", "default": 99},
+        {"name": "default_value", "type": "number", "label": "Default Value", "default": 1}
+      ],
+      "default_data": {
+        "label": "Quantity",
+        "required": false,
+        "min": 0,
+        "max": 99,
+        "default_value": 1
+      }
+    },
+    {
+      "id": "address",
+      "name": "Address",
+      "description": "Full address with street, city, state, zip",
+      "icon": "bi-geo-alt",
+      "editable_options": [
+        {"name": "label", "type": "text", "label": "Section Label", "required": true, "default": "Address"},
+        {"name": "required", "type": "checkbox", "label": "Required", "default": false},
+        {"name": "show_street2", "type": "checkbox", "label": "Show Street Line 2", "default": true},
+        {"name": "show_country", "type": "checkbox", "label": "Show Country", "default": false}
+      ],
+      "default_data": {
+        "label": "Address",
+        "required": false,
+        "show_street2": true,
+        "show_country": false
+      }
+    },
+    {
+      "id": "file_upload",
+      "name": "File Upload",
+      "description": "Upload images or documents",
+      "icon": "bi-upload",
+      "editable_options": [
+        {"name": "label", "type": "text", "label": "Field Label", "required": true, "default": "Upload File"},
+        {"name": "required", "type": "checkbox", "label": "Required", "default": false},
+        {"name": "accept_types", "type": "select", "label": "Allowed Files", "options": [
+          {"value": "images", "label": "Images only (JPG, PNG, GIF, WebP)"},
+          {"value": "documents", "label": "Documents (PDF, DOC, DOCX)"},
+          {"value": "images_documents", "label": "Images & Documents"},
+          {"value": "all", "label": "Any file type"}
+        ], "default": "images"},
+        {"name": "max_size_mb", "type": "select", "label": "Max File Size", "options": ["2", "5", "10", "25"], "default": "5"},
+        {"name": "max_files", "type": "select", "label": "Max Files", "options": ["1", "3", "5", "10"], "default": "5"}
+      ],
+      "default_data": {
+        "label": "Upload File",
+        "required": false,
+        "accept_types": "images",
+        "max_size_mb": "5",
+        "max_files": "5"
+      }
+    },
+    {
+      "id": "select",
+      "name": "Dropdown",
+      "description": "Selection from options",
+      "icon": "bi-list",
+      "editable_options": [
+        {"name": "label", "type": "text", "label": "Field Label", "required": true, "default": "Select Option"},
+        {"name": "required", "type": "checkbox", "label": "Required", "default": false},
+        {"name": "allow_multiple", "type": "checkbox", "label": "Allow Multiple Selections", "default": false},
+        {"name": "max_selections", "type": "number", "label": "Max Selections (0 = unlimited)", "default": 0},
+        {"name": "options_text", "type": "textarea", "label": "Options (one per line)", "default": "Option 1\nOption 2\nOption 3"}
+      ],
+      "default_data": {
+        "label": "Select Option",
+        "required": false,
+        "allow_multiple": false,
+        "max_selections": 0,
+        "options_text": "Option 1\nOption 2\nOption 3"
+      }
+    },
+    {
+      "id": "checkbox",
+      "name": "Checkbox",
+      "description": "Checkbox for agreement or multiple choice",
+      "icon": "bi-check-square",
+      "editable_options": [
+        {"name": "label", "type": "text", "label": "Field Label", "required": true, "default": "I agree to the terms"},
+        {"name": "required", "type": "checkbox", "label": "Required", "default": false},
+        {"name": "allow_multiple", "type": "checkbox", "label": "Multiple Options (checkbox group)", "default": false},
+        {"name": "max_selections", "type": "number", "label": "Max Selections (0 = unlimited)", "default": 0},
+        {"name": "options_text", "type": "textarea", "label": "Options (one per line, for checkbox group)", "default": ""}
+      ],
+      "default_data": {
+        "label": "I agree to the terms",
+        "required": false,
+        "allow_multiple": false,
+        "max_selections": 0,
+        "options_text": ""
+      }
+    }
+  ]
+}

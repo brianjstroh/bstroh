@@ -1,6 +1,13 @@
 """Main composite construct for complete static website infrastructure."""
 
-from aws_cdk import CfnOutput, RemovalPolicy, Stack
+from pathlib import Path
+
+from aws_cdk import CfnOutput, Duration, Fn, RemovalPolicy, Stack
+from aws_cdk import aws_cloudfront as cloudfront
+from aws_cdk import aws_cloudfront_origins as origins
+from aws_cdk import aws_iam as iam
+from aws_cdk import aws_lambda as lambda_
+from aws_cdk import aws_ses as ses
 from constructs import Construct
 
 from .certificate import DnsValidatedCertificate
@@ -104,6 +111,16 @@ class StaticSiteConstruct(Construct):
         resource_prefix=stack_name,
       )
 
+    # SES domain identity for sending contact form emails
+    self.ses_identity = ses.EmailIdentity(
+      self,
+      "SesEmailIdentity",
+      identity=ses.Identity.public_hosted_zone(self.dns.hosted_zone),
+    )
+
+    # Contact form Lambda
+    self._create_contact_form_lambda(domain_name, stack_name)
+
     # Outputs
     CfnOutput(
       self,
@@ -128,4 +145,70 @@ class StaticSiteConstruct(Construct):
       "HostedZoneId",
       value=self.dns.hosted_zone.hosted_zone_id,
       description="Route 53 hosted zone ID",
+    )
+
+  def _create_contact_form_lambda(self, domain_name: str, stack_name: str) -> None:
+    """Create Lambda function for contact form submissions."""
+    # Lambda function
+    lambda_path = Path(__file__).parent.parent / "lambda" / "form_submission"
+
+    self.contact_lambda = lambda_.Function(
+      self,
+      "ContactFormLambda",
+      runtime=lambda_.Runtime.PYTHON_3_11,
+      handler="index.handler",
+      code=lambda_.Code.from_asset(str(lambda_path)),
+      environment={
+        "DOMAIN": domain_name,
+        "LAMBDA_VERSION": "3",  # Increment to force redeployment
+      },
+      timeout=Duration.seconds(10),
+    )
+
+    # IAM permissions for SES and SSM
+    self.contact_lambda.add_to_role_policy(
+      iam.PolicyStatement(
+        actions=["ses:SendEmail"],
+        resources=["*"],
+      )
+    )
+    self.contact_lambda.add_to_role_policy(
+      iam.PolicyStatement(
+        actions=["ssm:GetParameter"],
+        resources=[f"arn:aws:ssm:*:*:parameter/sites/{domain_name}/contact-emails/*"],
+      )
+    )
+    # S3 permission for file upload pre-signed URLs and deletion after send
+    self.contact_lambda.add_to_role_policy(
+      iam.PolicyStatement(
+        actions=["s3:PutObject", "s3:DeleteObject"],
+        resources=[f"{self.bucket.bucket.bucket_arn}/form-uploads/*"],
+      )
+    )
+
+    # Function URL (no auth - public endpoint)
+    function_url = self.contact_lambda.add_function_url(
+      auth_type=lambda_.FunctionUrlAuthType.NONE,
+    )
+
+    # Extract just the domain from the function URL (remove https:// and trailing /)
+    # Function URL format: https://xxxx.lambda-url.region.on.aws/
+    lambda_domain = Fn.select(2, Fn.split("/", function_url.url))
+
+    # Add CloudFront behavior for /api/*
+    self.distribution.distribution.add_behavior(
+      "/api/*",
+      origins.HttpOrigin(lambda_domain),
+      allowed_methods=cloudfront.AllowedMethods.ALLOW_ALL,
+      cache_policy=cloudfront.CachePolicy.CACHING_DISABLED,
+      origin_request_policy=cloudfront.OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER,
+      viewer_protocol_policy=cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+    )
+
+    # Output
+    CfnOutput(
+      self,
+      "ContactFormLambdaUrl",
+      value=function_url.url,
+      description="Contact form Lambda function URL",
     )

@@ -1,0 +1,100 @@
+name: Fix S3 Content-Type
+
+on:
+  workflow_dispatch:
+    inputs:
+      bucket:
+        description: "S3 bucket name (e.g., giftedtestinglakenona.com)"
+        required: true
+        type: string
+      files:
+        description: "Space-separated file paths (e.g., index.html faq.html)"
+        required: true
+        type: string
+
+jobs:
+  fix-content-type:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Update Content-Type and invalidate cache
+        env:
+          BUCKET: ${{ inputs.bucket }}
+          FILES: ${{ inputs.files }}
+        run: |
+          # Find CloudFront distribution for this bucket/domain
+          echo "Finding CloudFront distribution for $BUCKET..."
+          DISTRIBUTION_ID=$(aws cloudfront list-distributions \
+            --query "DistributionList.Items[?Aliases.Items[?contains(@, '$BUCKET')]].Id | [0]" \
+            --output text)
+
+          if [ "$DISTRIBUTION_ID" == "None" ] || [ -z "$DISTRIBUTION_ID" ]; then
+            echo "Warning: No CloudFront distribution found for $BUCKET"
+            DISTRIBUTION_ID=""
+          else
+            echo "Found distribution: $DISTRIBUTION_ID"
+          fi
+
+          PATHS=()
+
+          for FILE in $FILES; do
+            echo ""
+            echo "Processing $FILE..."
+
+            # Determine content type based on file extension
+            case "${FILE##*.}" in
+              html|htm) CONTENT_TYPE="text/html" ;;
+              css) CONTENT_TYPE="text/css" ;;
+              js) CONTENT_TYPE="application/javascript" ;;
+              json) CONTENT_TYPE="application/json" ;;
+              png) CONTENT_TYPE="image/png" ;;
+              jpg|jpeg) CONTENT_TYPE="image/jpeg" ;;
+              gif) CONTENT_TYPE="image/gif" ;;
+              svg) CONTENT_TYPE="image/svg+xml" ;;
+              webp) CONTENT_TYPE="image/webp" ;;
+              ico) CONTENT_TYPE="image/x-icon" ;;
+              pdf) CONTENT_TYPE="application/pdf" ;;
+              xml) CONTENT_TYPE="application/xml" ;;
+              txt) CONTENT_TYPE="text/plain" ;;
+              woff) CONTENT_TYPE="font/woff" ;;
+              woff2) CONTENT_TYPE="font/woff2" ;;
+              ttf) CONTENT_TYPE="font/ttf" ;;
+              *) CONTENT_TYPE="application/octet-stream" ;;
+            esac
+
+            aws s3 cp "s3://$BUCKET/$FILE" "s3://$BUCKET/$FILE" \
+              --content-type "$CONTENT_TYPE" \
+              --metadata-directive REPLACE
+
+            echo "  Set Content-Type: $CONTENT_TYPE"
+
+            # Build path for invalidation
+            if [[ "$FILE" == /* ]]; then
+              PATHS+=("$FILE")
+            else
+              PATHS+=("/$FILE")
+            fi
+          done
+
+          # Invalidate CloudFront cache if distribution exists
+          if [ -n "$DISTRIBUTION_ID" ]; then
+            echo ""
+            echo "Invalidating CloudFront cache..."
+            aws cloudfront create-invalidation \
+              --distribution-id "$DISTRIBUTION_ID" \
+              --paths "${PATHS[@]}"
+            echo ""
+            echo "Cache invalidation in progress."
+          else
+            echo ""
+            echo "S3 metadata updated. No CloudFront invalidation performed."
+          fi

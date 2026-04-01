@@ -32,6 +32,7 @@ app.secret_key = os.environ.get("SECRET_KEY", os.urandom(24))
 # Initialize AWS clients
 s3 = boto3.client("s3")
 ssm = boto3.client("ssm")
+ses = boto3.client("ses")
 
 # Image extensions for preview
 IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg", ".bmp"}
@@ -46,6 +47,65 @@ def get_password_hash(domain: str) -> str | None:
     return value
   except ClientError:
     return None
+
+
+def check_email_verified(email: str) -> bool:
+  """Check if an email is verified in SES."""
+  try:
+    response = ses.get_identity_verification_attributes(Identities=[email])
+    attrs = response.get("VerificationAttributes", {}).get(email, {})
+    return bool(attrs.get("VerificationStatus") == "Success")
+  except ClientError:
+    return False
+
+
+def verify_email(email: str) -> dict[str, Any]:
+  """Send SES verification email. Returns status dict."""
+  try:
+    # First check if already verified
+    if check_email_verified(email):
+      return {"status": "verified", "message": "Email is already verified"}
+
+    # Send verification email
+    ses.verify_email_identity(EmailAddress=email)
+    return {
+      "status": "pending",
+      "message": f"Verification email sent to {email}. Please check your inbox.",
+    }
+  except ClientError as e:
+    return {"status": "error", "message": str(e)}
+
+
+def store_contact_email(domain: str, form_id: str, email: str) -> None:
+  """Store contact form destination email in SSM."""
+  param_name = f"/sites/{domain}/contact-emails/{form_id}"
+  ssm.put_parameter(
+    Name=param_name,
+    Value=email,
+    Type="String",
+    Overwrite=True,
+  )
+
+
+def extract_contact_forms(slots: dict[str, Any]) -> list[dict[str, Any]]:
+  """Extract all contact-form components from page slots."""
+  forms = []
+
+  def find_forms(components: list[dict[str, Any]]) -> None:
+    for comp in components:
+      if comp.get("type") == "contact-form":
+        forms.append(comp)
+      # Check nested slots (e.g., two-column layouts)
+      data = comp.get("data", {})
+      for key, value in data.items():
+        if isinstance(value, list) and key.endswith("_slot"):
+          find_forms(value)
+
+  for _slot_name, components in slots.items():
+    if isinstance(components, list):
+      find_forms(components)
+
+  return forms
 
 
 def login_required(f: Any) -> Any:
@@ -246,6 +306,7 @@ def builder_dashboard() -> Any:
       pages=pages,
       color_schemes=gen.get_color_schemes(),
       components=gen.get_components(),
+      form_fields=gen.get_form_fields(),
     )
 
 
@@ -459,6 +520,7 @@ def builder_edit_page(page_id: str) -> Any:
     page=page_config,
     components=gen.get_components(),
     color_schemes=gen.get_color_schemes(),
+    form_fields=gen.get_form_fields(),
   )
 
 
@@ -484,10 +546,49 @@ def builder_save_page(page_id: str) -> Any:
   if "meta_description" in data:
     page_config["meta_description"] = data["meta_description"]
 
+  # Process contact forms - store emails in SSM and trigger verification
+  domain = session["domain"]
+  email_verifications: list[dict[str, Any]] = []
+
+  if "slots" in data:
+    contact_forms = extract_contact_forms(data["slots"])
+    for form in contact_forms:
+      form_data = form.get("data", {})
+      email = form_data.get("email", "").strip()
+      form_id = form_data.get("anchor_id", "")
+      form_title = form_data.get("title", "Contact Form")
+
+      # Validate required fields for contact forms
+      if not email:
+        return jsonify(
+          {
+            "error": f'Contact form "{form_title}" is missing the destination email. '
+            f'Please fill in the "Send submissions to" field.'
+          }
+        ), 400
+      if not form_id:
+        return jsonify(
+          {"error": f'Contact form "{form_title}" is missing a Section ID.'}
+        ), 400
+
+      # Store email in SSM for Lambda to look up
+      try:
+        store_contact_email(domain, form_id, email)
+      except ClientError as e:
+        app.logger.error(f"Failed to store contact email: {e}")
+        return jsonify({"error": f"Failed to configure contact form: {e}"}), 500
+
+      # Trigger email verification
+      verification = verify_email(email)
+      email_verifications.append({"email": email, "form_id": form_id, **verification})
+
   try:
     gen.save_page_config(page_id, page_config)
     gen.publish_page(page_id)
-    return jsonify({"success": True})
+    response_data: dict[str, Any] = {"success": True}
+    if email_verifications:
+      response_data["email_verifications"] = email_verifications
+    return jsonify(response_data)
   except ClientError as e:
     return jsonify({"error": str(e)}), 500
 
@@ -927,6 +1028,7 @@ def ai_assistant(page_id: str | None = None) -> Any:
     pages=pages,
     models=get_available_models(),
     components=gen.get_components(),
+    form_fields=gen.get_form_fields(),
   )
 
 
@@ -1028,7 +1130,7 @@ def ai_apply_page() -> Any:
 
       # Check if page already exists and append number if needed
       site_config = gen.get_site_config()
-      existing_pages = site_config.get("pages", [])
+      existing_pages = site_config.get("pages", []) if site_config else []
       base_id = safe_id
       counter = 1
       while safe_id in existing_pages:
@@ -1074,6 +1176,33 @@ def ai_apply_page() -> Any:
 
   except Exception as e:
     return jsonify({"error": str(e)}), 500
+
+
+# Mock API endpoints for local preview testing
+@app.route("/api/contact", methods=["POST", "OPTIONS"])
+def api_contact_mock() -> Any:
+  """Mock contact form endpoint for local preview testing."""
+  if request.method == "OPTIONS":
+    return "", 204
+  return jsonify(
+    {"success": True, "message": "Form submission simulated (preview mode)"}
+  )
+
+
+@app.route("/api/form-upload-url", methods=["POST", "OPTIONS"])
+def api_upload_url_mock() -> Any:
+  """Mock file upload URL endpoint for local preview testing."""
+  if request.method == "OPTIONS":
+    return "", 204
+  # Return mock URLs for preview testing (actual upload will fail silently)
+  data = request.get_json() or {}
+  filename = data.get("filename", "file.txt")
+  return jsonify(
+    {
+      "upload_url": "data:text/plain,mock-upload-disabled-in-preview",
+      "file_url": f"https://example.com/preview-mock/{filename}",
+    }
+  )
 
 
 if __name__ == "__main__":

@@ -27,6 +27,7 @@ class SiteGenerator:
     self._components: dict[str, dict[str, Any]] = {}
     self._color_schemes: dict[str, dict[str, Any]] = {}
     self._templates: dict[str, dict[str, Any]] = {}
+    self._form_fields: dict[str, dict[str, Any]] = {}
     self._load_definitions()
 
   def _load_definitions(self) -> None:
@@ -54,6 +55,14 @@ class SiteGenerator:
         data = json.load(f)
         for tmpl in data.get("templates", []):
           self._templates[tmpl["id"]] = tmpl
+
+    # Load form field definitions
+    form_fields_file = self.data_dir / "form_fields.json"
+    if form_fields_file.exists():
+      with open(form_fields_file) as f:
+        data = json.load(f)
+        for field in data.get("form_fields", []):
+          self._form_fields[field["id"]] = field
 
   def get_site_config(self) -> dict[str, Any] | None:
     """Load site configuration from S3."""
@@ -393,6 +402,10 @@ class SiteGenerator:
   def get_color_schemes(self) -> list[dict[str, Any]]:
     """Get available color schemes."""
     return list(self._color_schemes.values())
+
+  def get_form_fields(self) -> list[dict[str, Any]]:
+    """Get available form field types."""
+    return list(self._form_fields.values())
 
   def add_page(self, page_id: str, title: str) -> dict[str, Any]:
     """Add a new page to the site."""

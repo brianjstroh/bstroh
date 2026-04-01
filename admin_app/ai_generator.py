@@ -128,14 +128,15 @@ Ready-to-use contact form. Requires an "email" field for submissions."""
   response_format = """## Response Format
 
 CRITICAL INSTRUCTIONS - READ CAREFULLY:
-1. The user CANNOT see any JSON or code you write - it is automatically hidden and parsed
+1. The user CANNOT see any JSON or code you write - it is automatically hidden
 2. Write ONLY a brief, friendly 1-2 sentence explanation of what you created
 3. Do NOT mention JSON, code, or technical details in your explanation
 4. Do NOT say "here's the page", "see below", "I've created the following" etc.
 5. Just describe what you made conversationally, then put the JSON in a code block
 
 GOOD example response:
-"I've designed an About Us page with a welcoming header, company story section, and team introduction. The layout uses a clean two-column format for the team members."
+"I've designed an About Us page with a welcoming header, company story section,
+and team introduction. The layout uses a clean two-column format."
 
 BAD example response:
 "Here's the JSON for your page:" or "I've generated the following code:"

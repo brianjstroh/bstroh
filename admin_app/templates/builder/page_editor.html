@@ -623,6 +623,8 @@
   console.log('pageData:', pageData);
   let componentsLib = {{ components | tojson | safe }};
   console.log('componentsLib:', componentsLib);
+  let formFieldsLib = {{ form_fields | tojson | safe }};
+  console.log('formFieldsLib:', formFieldsLib);
   let editModal;
   let deletePageModal;
   let currentEditingComponent = null;
@@ -1160,6 +1162,14 @@
     label.textContent = field.label;
     div.appendChild(label);
 
+    // Add help text if present
+    if (field.help_text) {
+      const helpText = document.createElement('small');
+      helpText.className = 'd-block text-muted mb-1';
+      helpText.textContent = field.help_text;
+      div.appendChild(helpText);
+    }
+
     let input;
 
     switch (field.type) {
@@ -1314,6 +1324,7 @@
       case 'select': {
         input = document.createElement('select');
         input.className = 'form-select';
+        const isFontSelect = field.name === 'font_family';
         (field.options || []).forEach(opt => {
           const option = document.createElement('option');
           // Handle both string options and {value, label} objects
@@ -1322,8 +1333,19 @@
           option.value = optValue;
           option.textContent = optLabel;
           option.selected = optValue === value;
+          // Apply font preview styling for font_family selects
+          if (isFontSelect && optValue) {
+            option.style.fontFamily = optValue;
+          }
           input.appendChild(option);
         });
+        // Style the select itself with the current font if it's a font selector
+        if (isFontSelect) {
+          input.style.fontFamily = value || 'inherit';
+          input.addEventListener('change', function() {
+            this.style.fontFamily = this.value || 'inherit';
+          });
+        }
         input.dataset.fieldKey = field.name;
         div.appendChild(input);
         return div;
@@ -1535,6 +1557,45 @@
         slotContainer.appendChild(addSlotBtn);
 
         div.appendChild(slotContainer);
+        return div;
+      }
+
+      case 'formfields': {
+        const formFieldsContainer = document.createElement('div');
+        formFieldsContainer.className = 'formfields-container border rounded p-2';
+        formFieldsContainer.dataset.fieldKey = field.name;
+        formFieldsContainer.style.background = '#f8f9fa';
+
+        // Initialize _formFields with existing data (deep copy to avoid mutations)
+        const formFields = Array.isArray(value) ? JSON.parse(JSON.stringify(value)) : [];
+        formFieldsContainer._formFields = formFields;
+
+        // List of form fields
+        const fieldList = document.createElement('div');
+        fieldList.className = 'form-field-list mb-2';
+
+        formFields.forEach((fieldDef, idx) => {
+          fieldList.appendChild(createFormFieldItem(fieldDef, idx));
+        });
+        formFieldsContainer.appendChild(fieldList);
+
+        // Empty state
+        if (formFields.length === 0) {
+          const emptyMsg = document.createElement('p');
+          emptyMsg.className = 'text-muted small mb-2 empty-fields-message';
+          emptyMsg.textContent = 'No fields yet - add your first field';
+          fieldList.appendChild(emptyMsg);
+        }
+
+        // Add field button
+        const addFieldBtn = document.createElement('button');
+        addFieldBtn.type = 'button';
+        addFieldBtn.className = 'btn btn-sm btn-outline-primary';
+        addFieldBtn.innerHTML = '<i class="bi bi-plus"></i> Add Field';
+        addFieldBtn.onclick = () => openFormFieldPicker();
+        formFieldsContainer.appendChild(addFieldBtn);
+
+        div.appendChild(formFieldsContainer);
         return div;
       }
 
@@ -1945,10 +2006,28 @@
       subLabel.textContent = subField.label;
       subDiv.appendChild(subLabel);
 
-      const subInput = document.createElement('input');
-      subInput.type = 'text';
-      subInput.className = 'form-control form-control-sm';
-      subInput.value = item[subField.key] || '';
+      let subInput;
+
+      // Support select type for array item fields
+      if (subField.type === 'select' && subField.options) {
+        subInput = document.createElement('select');
+        subInput.className = 'form-select form-select-sm';
+        subField.options.forEach(opt => {
+          const option = document.createElement('option');
+          option.value = opt;
+          option.textContent = opt;
+          if (item[subField.key] === opt || (!item[subField.key] && opt === subField.default)) {
+            option.selected = true;
+          }
+          subInput.appendChild(option);
+        });
+      } else {
+        subInput = document.createElement('input');
+        subInput.type = 'text';
+        subInput.className = 'form-control form-control-sm';
+        subInput.value = item[subField.key] || subField.default || '';
+      }
+
       subInput.dataset.subFieldKey = subField.key;
       subDiv.appendChild(subInput);
 
@@ -1963,7 +2042,7 @@
 
     // Regular fields (exclude containers that are handled separately)
     console.log('=== Saving component edits ===');
-    const allFieldElements = body.querySelectorAll('[data-field-key]:not(.imagelist-container):not(.array-field-container):not(.componentslot-container):not(.richtext-editor-container)');
+    const allFieldElements = body.querySelectorAll('[data-field-key]:not(.imagelist-container):not(.array-field-container):not(.componentslot-container):not(.formfields-container):not(.richtext-editor-container)');
     console.log('Found', allFieldElements.length, 'field elements');
     allFieldElements.forEach(input => {
       const key = input.dataset.fieldKey;
@@ -2017,6 +2096,12 @@
     body.querySelectorAll('.componentslot-container').forEach(container => {
       const key = container.dataset.fieldKey;
       currentEditingComponent.data[key] = container._nestedComponents || [];
+    });
+
+    // Form fields (for contact forms)
+    body.querySelectorAll('.formfields-container').forEach(container => {
+      const key = container.dataset.fieldKey;
+      currentEditingComponent.data[key] = container._formFields || [];
     });
 
     // Rich text fields
@@ -2922,6 +3007,294 @@
     showToast(`Duplicated "${compName}"`);
   }
 
+  // === Form Fields Helper Functions ===
+
+  function createFormFieldItem(fieldDef, idx) {
+    const fieldType = formFieldsLib.find(f => f.id === fieldDef.type);
+    const fieldName = fieldType ? fieldType.name : fieldDef.type;
+    const fieldIcon = fieldType ? fieldType.icon : 'bi-input-cursor-text';
+    const fieldLabel = fieldDef.data.label || fieldName;
+    const isRequired = fieldDef.data.required ? '<span class="badge bg-warning text-dark ms-2" style="font-size: 0.65rem;">Required</span>' : '';
+
+    const item = document.createElement('div');
+    item.className = 'form-field-item d-flex justify-content-between align-items-center p-2 mb-1 border rounded bg-white';
+    item.dataset.fieldIndex = idx;
+
+    item.innerHTML = `
+      <div class="d-flex align-items-center">
+        <i class="bi bi-grip-vertical text-muted me-2" style="cursor: grab;"></i>
+        <i class="${fieldIcon} me-2 text-primary"></i>
+        <span class="small fw-medium">${fieldLabel}</span>
+        <span class="text-muted small ms-2">(${fieldName})</span>
+        ${isRequired}
+      </div>
+      <div class="btn-group btn-group-sm">
+        <button type="button" class="btn btn-outline-secondary" onclick="duplicateFormField(${idx})" title="Duplicate">
+          <i class="bi bi-copy"></i>
+        </button>
+        <button type="button" class="btn btn-outline-primary" onclick="editFormField(${idx})" title="Edit">
+          <i class="bi bi-pencil"></i>
+        </button>
+        <button type="button" class="btn btn-outline-danger" onclick="removeFormField(${idx})" title="Remove">
+          <i class="bi bi-x"></i>
+        </button>
+      </div>
+    `;
+
+    return item;
+  }
+
+  function openFormFieldPicker() {
+    // Create picker modal content
+    let modalContent = `
+      <div class="modal fade" id="formFieldPickerModal" tabindex="-1">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title"><i class="bi bi-plus-square"></i> Add Form Field</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <div class="row g-2">
+    `;
+
+    formFieldsLib.forEach(fieldType => {
+      modalContent += `
+        <div class="col-6">
+          <button type="button" class="btn btn-outline-secondary w-100 h-100 text-start p-3" onclick="addFormField('${fieldType.id}')">
+            <i class="${fieldType.icon} fs-4 d-block mb-1 text-primary"></i>
+            <strong class="d-block">${fieldType.name}</strong>
+            <small class="text-muted">${fieldType.description}</small>
+          </button>
+        </div>
+      `;
+    });
+
+    modalContent += `
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Remove existing picker modal if any
+    const existingPicker = document.getElementById('formFieldPickerModal');
+    if (existingPicker) existingPicker.remove();
+
+    // Add new modal to DOM
+    document.body.insertAdjacentHTML('beforeend', modalContent);
+
+    // Show the modal
+    const pickerModal = new bootstrap.Modal(document.getElementById('formFieldPickerModal'));
+    pickerModal.show();
+  }
+
+  function addFormField(fieldTypeId) {
+    const fieldType = formFieldsLib.find(f => f.id === fieldTypeId);
+    if (!fieldType) return;
+
+    // Create new field with default data
+    const newField = {
+      id: 'field-' + Date.now(),
+      type: fieldTypeId,
+      data: JSON.parse(JSON.stringify(fieldType.default_data))
+    };
+
+    // Find the form fields container
+    const container = document.querySelector('.formfields-container');
+    if (!container) return;
+
+    // Add to data
+    container._formFields.push(newField);
+
+    // Re-render the list
+    renderFormFieldsList(container);
+
+    // Close picker modal
+    const pickerModal = bootstrap.Modal.getInstance(document.getElementById('formFieldPickerModal'));
+    if (pickerModal) pickerModal.hide();
+
+    showToast(`Added "${fieldType.name}" field`);
+  }
+
+  function renderFormFieldsList(container) {
+    const fieldList = container.querySelector('.form-field-list');
+    fieldList.innerHTML = '';
+
+    if (container._formFields.length === 0) {
+      const emptyMsg = document.createElement('p');
+      emptyMsg.className = 'text-muted small mb-2 empty-fields-message';
+      emptyMsg.textContent = 'No fields yet - add your first field';
+      fieldList.appendChild(emptyMsg);
+    } else {
+      container._formFields.forEach((fieldDef, idx) => {
+        fieldList.appendChild(createFormFieldItem(fieldDef, idx));
+      });
+    }
+  }
+
+  function editFormField(idx) {
+    const container = document.querySelector('.formfields-container');
+    if (!container || !container._formFields) return;
+
+    const fieldDef = container._formFields[idx];
+    if (!fieldDef) return;
+
+    const fieldType = formFieldsLib.find(f => f.id === fieldDef.type);
+    if (!fieldType) return;
+
+    // Build edit modal
+    let modalContent = `
+      <div class="modal fade" id="formFieldEditModal" tabindex="-1">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title"><i class="${fieldType.icon}"></i> Edit ${fieldType.name}</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="formFieldEditBody">
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+              <button type="button" class="btn btn-primary" onclick="saveFormFieldEdits(${idx})">Save</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Remove existing modal if any
+    const existingModal = document.getElementById('formFieldEditModal');
+    if (existingModal) existingModal.remove();
+
+    document.body.insertAdjacentHTML('beforeend', modalContent);
+
+    // Build form fields for editing
+    const body = document.getElementById('formFieldEditBody');
+
+    fieldType.editable_options.forEach(option => {
+      const currentValue = fieldDef.data[option.name] !== undefined ? fieldDef.data[option.name] : option.default;
+      const fieldDiv = document.createElement('div');
+      fieldDiv.className = 'mb-3';
+
+      if (option.type === 'checkbox') {
+        fieldDiv.innerHTML = `
+          <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="formfield_${option.name}" data-field-key="${option.name}" ${currentValue ? 'checked' : ''}>
+            <label class="form-check-label" for="formfield_${option.name}">${option.label}</label>
+          </div>
+        `;
+      } else if (option.type === 'select') {
+        let optionsHtml = '';
+        if (Array.isArray(option.options)) {
+          option.options.forEach(opt => {
+            if (typeof opt === 'object') {
+              const selected = currentValue === opt.value ? 'selected' : '';
+              optionsHtml += `<option value="${opt.value}" ${selected}>${opt.label}</option>`;
+            } else {
+              const selected = currentValue === opt ? 'selected' : '';
+              optionsHtml += `<option value="${opt}" ${selected}>${opt}</option>`;
+            }
+          });
+        }
+        fieldDiv.innerHTML = `
+          <label class="form-label">${option.label}</label>
+          <select class="form-select" data-field-key="${option.name}">${optionsHtml}</select>
+        `;
+      } else if (option.type === 'number') {
+        fieldDiv.innerHTML = `
+          <label class="form-label">${option.label}</label>
+          <input type="number" class="form-control" data-field-key="${option.name}" value="${currentValue}">
+        `;
+      } else if (option.type === 'textarea') {
+        fieldDiv.innerHTML = `
+          <label class="form-label">${option.label}</label>
+          <textarea class="form-control" data-field-key="${option.name}" rows="4">${currentValue}</textarea>
+        `;
+      } else {
+        // Default to text input
+        fieldDiv.innerHTML = `
+          <label class="form-label">${option.label}${option.required ? ' <span class="text-danger">*</span>' : ''}</label>
+          <input type="text" class="form-control" data-field-key="${option.name}" value="${currentValue}">
+        `;
+      }
+
+      body.appendChild(fieldDiv);
+    });
+
+    // Show the modal
+    const editModal = new bootstrap.Modal(document.getElementById('formFieldEditModal'));
+    editModal.show();
+  }
+
+  function saveFormFieldEdits(idx) {
+    const container = document.querySelector('.formfields-container');
+    if (!container || !container._formFields) return;
+
+    const fieldDef = container._formFields[idx];
+    if (!fieldDef) return;
+
+    const body = document.getElementById('formFieldEditBody');
+
+    // Collect field values
+    body.querySelectorAll('[data-field-key]').forEach(input => {
+      const key = input.dataset.fieldKey;
+      if (input.type === 'checkbox') {
+        fieldDef.data[key] = input.checked;
+      } else if (input.tagName === 'TEXTAREA') {
+        fieldDef.data[key] = input.value;
+      } else {
+        fieldDef.data[key] = input.value;
+      }
+    });
+
+    // Re-render the list
+    renderFormFieldsList(container);
+
+    // Close modal
+    const editModal = bootstrap.Modal.getInstance(document.getElementById('formFieldEditModal'));
+    if (editModal) editModal.hide();
+
+    showToast('Field updated');
+  }
+
+  function removeFormField(idx) {
+    const container = document.querySelector('.formfields-container');
+    if (!container || !container._formFields) return;
+
+    // Remove from data
+    container._formFields.splice(idx, 1);
+
+    // Re-render the list
+    renderFormFieldsList(container);
+
+    showToast('Field removed');
+  }
+
+  function duplicateFormField(idx) {
+    const container = document.querySelector('.formfields-container');
+    if (!container || !container._formFields) return;
+
+    const original = container._formFields[idx];
+    // Deep copy the field
+    const copy = JSON.parse(JSON.stringify(original));
+    // Generate new unique ID
+    copy.id = 'field-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+
+    // Insert copy right after the original
+    container._formFields.splice(idx + 1, 0, copy);
+
+    // Re-render the list
+    renderFormFieldsList(container);
+
+    const fieldType = formFieldsLib.find(f => f.id === copy.type);
+    const fieldName = fieldType ? fieldType.name : copy.type;
+    showToast(`Duplicated "${fieldName}"`);
+  }
+
+  // === End Form Fields Helper Functions ===
+
   async function uploadImageFile(file, inputElement, previewElement) {
     // Validate
     const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
@@ -2976,6 +3349,19 @@
         // Refresh preview to show published version
         refreshPreview();
         showToast('Page saved and published!', 'success');
+
+        // Show email verification status if present
+        if (data.email_verifications && data.email_verifications.length > 0) {
+          data.email_verifications.forEach(v => {
+            if (v.status === 'verified') {
+              showToast(`${v.email}: Already verified - form is ready!`, 'success');
+            } else if (v.status === 'pending') {
+              showToast(`Verification email sent to ${v.email}. Please check inbox.`, 'warning');
+            } else if (v.status === 'error') {
+              showToast(`Could not verify ${v.email}: ${v.message}`, 'error');
+            }
+          });
+        }
       } else {
         alert('Error: ' + data.error);
       }

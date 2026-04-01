@@ -2,6 +2,7 @@
 
 import sys
 from pathlib import Path
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 # Add admin_app to path for imports
@@ -135,13 +136,13 @@ class TestClaudeModelsConfig:
 
   def test_all_models_have_model_id(self) -> None:
     """Test that each model has a Bedrock model ID."""
-    for key, config in CLAUDE_MODELS.items():
+    for _key, config in CLAUDE_MODELS.items():
       assert "model_id" in config
       assert config["model_id"].startswith("us.anthropic.claude")
 
   def test_all_models_have_costs(self) -> None:
     """Test that each model has cost information."""
-    for key, config in CLAUDE_MODELS.items():
+    for _key, config in CLAUDE_MODELS.items():
       assert "input_cost_per_1k" in config
       assert "output_cost_per_1k" in config
       assert config["input_cost_per_1k"] > 0
@@ -159,7 +160,7 @@ class TestAIPageGeneratorInit:
   @patch("ai_generator.boto3.client")
   def test_creates_bedrock_client(self, mock_boto_client: MagicMock) -> None:
     """Test that Bedrock client is created with timeout config."""
-    generator = AIPageGenerator()
+    AIPageGenerator()
 
     mock_boto_client.assert_called_once()
     call_args = mock_boto_client.call_args
@@ -249,7 +250,10 @@ Let me know if you'd like changes!"""
   def test_extracts_raw_json_object(self, mock_boto: MagicMock) -> None:
     """Test extracting raw JSON without code block."""
     generator = AIPageGenerator()
-    text = """Here's the result: {"action": "suggest_components", "components": [{"type": "text-heading"}]}"""
+    text = (
+      'Here\'s the result: {"action": "suggest_components", '
+      '"components": [{"type": "text-heading"}]}'
+    )
 
     result = generator._parse_response(text)
 
@@ -398,7 +402,7 @@ class TestAIPageGeneratorPreparePageData:
   def test_uses_default_title_when_missing(self, mock_boto: MagicMock) -> None:
     """Test default title is used when not provided."""
     generator = AIPageGenerator()
-    parsed_data = {"components": []}
+    parsed_data: dict[str, Any] = {"components": []}
 
     page_data = generator.prepare_page_data(parsed_data)
 
@@ -408,7 +412,7 @@ class TestAIPageGeneratorPreparePageData:
   def test_uses_default_page_id_when_not_provided(self, mock_boto: MagicMock) -> None:
     """Test default page_id is used when not provided."""
     generator = AIPageGenerator()
-    parsed_data = {"components": []}
+    parsed_data: dict[str, Any] = {"components": []}
 
     page_data = generator.prepare_page_data(parsed_data)
 

@@ -1,0 +1,264 @@
+{# Macros for rendering form fields in contact forms #}
+
+{% macro render_field(field, component_id, index) %}
+  {% set field_id = component_id ~ '-field-' ~ index %}
+  {% set data = field.data %}
+
+  {% if field.type == 'text' %}
+    {{ render_text_field(field_id, data) }}
+  {% elif field.type == 'email' %}
+    {{ render_email_field(field_id, data) }}
+  {% elif field.type == 'phone' %}
+    {{ render_phone_field(field_id, data) }}
+  {% elif field.type == 'textarea' %}
+    {{ render_textarea_field(field_id, data) }}
+  {% elif field.type == 'number' %}
+    {{ render_number_field(field_id, data) }}
+  {% elif field.type == 'number_selector' %}
+    {{ render_number_selector_field(field_id, data) }}
+  {% elif field.type == 'address' %}
+    {{ render_address_field(field_id, data) }}
+  {% elif field.type == 'file_upload' %}
+    {{ render_file_upload_field(field_id, data) }}
+  {% elif field.type == 'select' %}
+    {{ render_select_field(field_id, data) }}
+  {% elif field.type == 'checkbox' %}
+    {{ render_checkbox_field(field_id, data) }}
+  {% endif %}
+{% endmacro %}
+
+{% macro render_text_field(field_id, data) %}
+<div class="form-group">
+  <label for="{{ field_id }}">{{ data.label }}{% if data.required %} *{% endif %}</label>
+  <input type="text"
+         id="{{ field_id }}"
+         name="{{ field_id }}"
+         data-field-type="text"
+         data-field-label="{{ data.label }}"
+         placeholder="{{ data.placeholder }}"
+         maxlength="{{ data.max_length }}"
+         {% if data.required %}required{% endif %}>
+</div>
+{% endmacro %}
+
+{% macro render_email_field(field_id, data) %}
+<div class="form-group">
+  <label for="{{ field_id }}">{{ data.label }}{% if data.required %} *{% endif %}</label>
+  <input type="email"
+         id="{{ field_id }}"
+         name="{{ field_id }}"
+         data-field-type="email"
+         data-field-label="{{ data.label }}"
+         placeholder="{{ data.placeholder }}"
+         {% if data.required %}required{% endif %}>
+</div>
+{% endmacro %}
+
+{% macro render_phone_field(field_id, data) %}
+<div class="form-group">
+  <label for="{{ field_id }}">{{ data.label }}{% if data.required %} *{% endif %}</label>
+  <input type="tel"
+         id="{{ field_id }}"
+         name="{{ field_id }}"
+         data-field-type="phone"
+         data-field-label="{{ data.label }}"
+         placeholder="{{ data.placeholder }}"
+         {% if data.required %}required{% endif %}>
+</div>
+{% endmacro %}
+
+{% macro render_textarea_field(field_id, data) %}
+<div class="form-group">
+  <label for="{{ field_id }}">{{ data.label }}{% if data.required %} *{% endif %}</label>
+  <textarea id="{{ field_id }}"
+            name="{{ field_id }}"
+            data-field-type="textarea"
+            data-field-label="{{ data.label }}"
+            placeholder="{{ data.placeholder }}"
+            maxlength="{{ data.max_length }}"
+            rows="{{ data.rows }}"
+            {% if data.required %}required{% endif %}></textarea>
+</div>
+{% endmacro %}
+
+{% macro render_number_field(field_id, data) %}
+<div class="form-group">
+  <label for="{{ field_id }}">{{ data.label }}{% if data.required %} *{% endif %}</label>
+  <input type="number"
+         id="{{ field_id }}"
+         name="{{ field_id }}"
+         data-field-type="number"
+         data-field-label="{{ data.label }}"
+         min="{{ data.min }}"
+         max="{{ data.max }}"
+         step="{{ data.step }}"
+         {% if data.required %}required{% endif %}>
+</div>
+{% endmacro %}
+
+{% macro render_number_selector_field(field_id, data) %}
+<div class="form-group">
+  <label>{{ data.label }}{% if data.required %} *{% endif %}</label>
+  <div class="number-selector">
+    <button type="button" class="number-selector-btn minus" onclick="adjustNumberSelector('{{ field_id }}', -1)">
+      <span>-</span>
+    </button>
+    <input type="number"
+           id="{{ field_id }}"
+           name="{{ field_id }}"
+           data-field-type="number_selector"
+           data-field-label="{{ data.label }}"
+           value="{{ data.default_value }}"
+           min="{{ data.min }}"
+           max="{{ data.max }}"
+           readonly
+           {% if data.required %}required{% endif %}>
+    <button type="button" class="number-selector-btn plus" onclick="adjustNumberSelector('{{ field_id }}', 1)">
+      <span>+</span>
+    </button>
+  </div>
+</div>
+{% endmacro %}
+
+{% macro render_address_field(field_id, data) %}
+<div class="form-group address-field-group" data-field-type="address" data-field-label="{{ data.label }}">
+  <label>{{ data.label }}{% if data.required %} *{% endif %}</label>
+  <input type="text"
+         id="{{ field_id }}-street"
+         name="{{ field_id }}-street"
+         data-address-part="street"
+         placeholder="Street Address"
+         class="mb-2"
+         {% if data.required %}required{% endif %}>
+  {% if data.show_street2 %}
+  <input type="text"
+         id="{{ field_id }}-street2"
+         name="{{ field_id }}-street2"
+         data-address-part="street2"
+         placeholder="Apt, Suite, Unit (optional)"
+         class="mb-2">
+  {% endif %}
+  <div class="address-row">
+    <input type="text"
+           id="{{ field_id }}-city"
+           name="{{ field_id }}-city"
+           data-address-part="city"
+           placeholder="City"
+           class="address-city"
+           {% if data.required %}required{% endif %}>
+    <input type="text"
+           id="{{ field_id }}-state"
+           name="{{ field_id }}-state"
+           data-address-part="state"
+           placeholder="State"
+           class="address-state"
+           maxlength="2"
+           {% if data.required %}required{% endif %}>
+    <input type="text"
+           id="{{ field_id }}-zip"
+           name="{{ field_id }}-zip"
+           data-address-part="zip"
+           placeholder="ZIP"
+           class="address-zip"
+           maxlength="10"
+           {% if data.required %}required{% endif %}>
+  </div>
+  {% if data.show_country %}
+  <input type="text"
+         id="{{ field_id }}-country"
+         name="{{ field_id }}-country"
+         data-address-part="country"
+         placeholder="Country"
+         class="mt-2">
+  {% endif %}
+</div>
+{% endmacro %}
+
+{% macro render_file_upload_field(field_id, data) %}
+{% set accept_map = {
+  'images': 'image/jpeg,image/png,image/gif,image/webp',
+  'documents': 'application/pdf,.doc,.docx',
+  'images_documents': 'image/jpeg,image/png,image/gif,image/webp,application/pdf,.doc,.docx',
+  'all': '*/*'
+} %}
+<div class="form-group">
+  <label for="{{ field_id }}">{{ data.label }}{% if data.required %} *{% endif %}</label>
+  <input type="file"
+         id="{{ field_id }}"
+         name="{{ field_id }}"
+         data-field-type="file_upload"
+         data-field-label="{{ data.label }}"
+         data-max-size="{{ data.max_size_mb }}"
+         accept="{{ accept_map[data.accept_types] }}"
+         {% if data.max_files|int > 1 %}multiple{% endif %}
+         {% if data.required %}required{% endif %}
+         onchange="handleFileSelect(this, {{ data.max_size_mb }}, {{ data.max_files }})">
+  <small class="form-text">Max {{ data.max_size_mb }}MB per file{% if data.max_files|int > 1 %}, up to {{ data.max_files }} files{% endif %}</small>
+  <div id="{{ field_id }}-preview" class="file-preview"></div>
+</div>
+{% endmacro %}
+
+{% macro render_select_field(field_id, data) %}
+{% set options = data.options_text.split('\n') if data.options_text else [] %}
+{% set is_multi = data.allow_multiple %}
+{% set max_sel = data.max_selections|default(0)|int %}
+<div class="form-group">
+  <label for="{{ field_id }}">{{ data.label }}{% if data.required %} *{% endif %}{% if is_multi %} <small>(hold Ctrl/Cmd to select multiple{% if max_sel > 0 %}, max {{ max_sel }}{% endif %})</small>{% endif %}</label>
+  <select id="{{ field_id }}"
+          name="{{ field_id }}"
+          data-field-type="{% if is_multi %}multi_select{% else %}select{% endif %}"
+          data-field-label="{{ data.label }}"
+          {% if is_multi %}multiple{% endif %}
+          {% if max_sel > 0 %}data-max-selections="{{ max_sel }}"{% endif %}
+          {% if data.required %}required{% endif %}
+          {% if is_multi and max_sel > 0 %}onchange="enforceMaxSelections(this, {{ max_sel }})"{% endif %}>
+    {% if not is_multi %}<option value="">Select...</option>{% endif %}
+    {% for option in options %}
+    {% set opt = option.strip() %}
+    {% if opt %}
+    <option value="{{ opt }}">{{ opt }}</option>
+    {% endif %}
+    {% endfor %}
+  </select>
+</div>
+{% endmacro %}
+
+{% macro render_checkbox_field(field_id, data) %}
+{% set options = data.options_text.split('\n') if data.options_text and data.allow_multiple else [] %}
+{% set has_options = options|length > 0 %}
+{% set max_sel = data.max_selections|default(0)|int %}
+{% if has_options %}
+{# Checkbox group with multiple options #}
+<div class="form-group">
+  <label>{{ data.label }}{% if data.required %} *{% endif %}{% if max_sel > 0 %} <small>(max {{ max_sel }})</small>{% endif %}</label>
+  <div class="checkbox-group" data-field-label="{{ data.label }}" data-required="{{ 'true' if data.required else 'false' }}" {% if max_sel > 0 %}data-max-selections="{{ max_sel }}"{% endif %}>
+    {% for option in options %}
+    {% set opt = option.strip() %}
+    {% if opt %}
+    <div class="checkbox-group-item">
+      <input type="checkbox"
+             id="{{ field_id }}-{{ loop.index }}"
+             name="{{ field_id }}[]"
+             value="{{ opt }}"
+             {% if max_sel > 0 %}onchange="enforceCheckboxMaxSelections(this, {{ max_sel }})"{% endif %}>
+      <label for="{{ field_id }}-{{ loop.index }}">{{ opt }}</label>
+    </div>
+    {% endif %}
+    {% endfor %}
+  </div>
+</div>
+{% else %}
+{# Single checkbox #}
+<div class="form-group form-checkbox">
+  <label class="checkbox-label">
+    <input type="checkbox"
+           id="{{ field_id }}"
+           name="{{ field_id }}"
+           data-field-type="checkbox"
+           data-field-label="{{ data.label }}"
+           {% if data.required %}required{% endif %}>
+    <span>{{ data.label }}{% if data.required %} *{% endif %}</span>
+  </label>
+</div>
+{% endif %}
+{% endmacro %}

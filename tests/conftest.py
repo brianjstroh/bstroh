@@ -1,7 +1,23 @@
 """Pytest fixtures for CDK construct tests."""
 
+import os
+from collections.abc import Generator
+from unittest.mock import MagicMock, patch
+
 import aws_cdk as cdk
 import pytest
+
+# Set default AWS region if not configured to prevent boto3 import errors
+if "AWS_DEFAULT_REGION" not in os.environ:
+  os.environ["AWS_DEFAULT_REGION"] = "us-east-1"
+
+
+@pytest.fixture(autouse=True)
+def mock_boto3_clients() -> Generator[MagicMock, None, None]:
+  """Mock boto3.client to avoid AWS calls during tests."""
+  with patch("boto3.client") as mock_client:
+    mock_client.return_value = MagicMock()
+    yield mock_client
 
 
 @pytest.fixture
