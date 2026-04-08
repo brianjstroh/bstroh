@@ -337,6 +337,9 @@ pip3.11 install -r /opt/admin-app/requirements.txt
 
 # Configure Caddy
 cat > /etc/caddy/Caddyfile << 'CADDYEOF'
+{{
+  email brianjstroh@gmail.com
+}}
 {admin_config.domain} {{
   reverse_proxy localhost:8000
 }}
