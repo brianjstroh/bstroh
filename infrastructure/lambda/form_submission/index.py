@@ -1,8 +1,11 @@
 """Lambda handler for contact form submissions with dynamic fields."""
 
+import hmac
 import html
 import json
+import os
 import re
+import time
 import uuid
 from typing import Any
 
@@ -19,15 +22,74 @@ MAX_FIELDS = 50
 EMAIL_REGEX = re.compile(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
 PHONE_REGEX = re.compile(r"^[\d\s\-\(\)\+\.]+$")
 
+# Best-effort per-container rate limit (each warm Lambda container keeps its own)
+RATE_LIMIT_MAX = 5
+RATE_LIMIT_WINDOW_SECONDS = 60
+_recent_requests: dict[str, list[float]] = {}
+
 
 def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
   """Route requests to appropriate handler based on path."""
   path = event.get("rawPath", "")
+  headers = event.get("headers") or {}
+
+  # Reject direct Function URL calls that did not come through CloudFront
+  expected_secret = os.environ.get("ORIGIN_SECRET", "")
+  if expected_secret and not hmac.compare_digest(
+    str(headers.get("x-origin-verify", "")), expected_secret
+  ):
+    log_rejection("origin", event)
+    return response(403, {"success": False, "error": "Forbidden"})
+
+  if is_rate_limited(client_ip(event)):
+    log_rejection("rate_limit", event)
+    return response(429, {"success": False, "error": "Too many requests"})
 
   if path == "/api/form-upload-url":
     return handle_upload_url_request(event)
   else:
     return handle_contact_form(event)
+
+
+def client_ip(event: dict[str, Any]) -> str:
+  """Best-effort client IP (CloudFront sets x-forwarded-for)."""
+  forwarded = (event.get("headers") or {}).get("x-forwarded-for", "")
+  if forwarded:
+    return str(forwarded).split(",")[0].strip()
+  http = event.get("requestContext", {}).get("http", {})
+  return str(http.get("sourceIp", "unknown"))
+
+
+def is_rate_limited(ip: str) -> bool:
+  """Record a request and report whether the IP exceeded the limit."""
+  now = time.time()
+  recent = [
+    t for t in _recent_requests.get(ip, []) if now - t < RATE_LIMIT_WINDOW_SECONDS
+  ]
+  limited = len(recent) >= RATE_LIMIT_MAX
+  if not limited:
+    recent.append(now)
+  if recent:
+    _recent_requests[ip] = recent
+  else:
+    _recent_requests.pop(ip, None)
+  return limited
+
+
+def log_rejection(reason: str, event: dict[str, Any]) -> None:
+  """Log a rejected request so abuse is visible in CloudWatch."""
+  headers = event.get("headers") or {}
+  print(
+    json.dumps(
+      {
+        "rejected": reason,
+        "ip": client_ip(event),
+        "path": event.get("rawPath", ""),
+        "host": headers.get("x-forwarded-host", headers.get("host", "")),
+        "user_agent": str(headers.get("user-agent", ""))[:100],
+      }
+    )
+  )
 
 
 def handle_upload_url_request(event: dict[str, Any]) -> dict[str, Any]:
@@ -93,7 +155,15 @@ def handle_contact_form(event: dict[str, Any]) -> dict[str, Any]:
   except json.JSONDecodeError:
     return response(400, {"success": False, "error": "Invalid JSON"})
 
+  if not isinstance(body, dict):
+    return response(400, {"success": False, "error": "Invalid JSON"})
+
   form_id = sanitize(body.get("form_id", ""), 100)
+
+  # Honeypot: real visitors never see or fill this field. Pretend success.
+  if sanitize(body.get("website", ""), 200):
+    log_rejection("honeypot", event)
+    return response(200, {"success": True})
 
   # Get domain from request headers
   headers = event.get("headers", {})
@@ -254,6 +324,11 @@ def send_form_email(
     param = ssm.get_parameter(Name=f"/sites/{domain}/contact-emails/{form_id}")
     destination_email = param["Parameter"]["Value"]
   except ssm.exceptions.ParameterNotFound:
+    print(
+      json.dumps(
+        {"rejected": "form_not_configured", "domain": domain, "form_id": form_id}
+      )
+    )
     return response(400, {"success": False, "error": "Form not configured"})
   except Exception as e:
     print(f"SSM error: {e}")

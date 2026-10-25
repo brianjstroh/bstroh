@@ -16,6 +16,15 @@ sys.path.insert(
 )
 
 
+@pytest.fixture(autouse=True)
+def reset_lambda_state(monkeypatch: pytest.MonkeyPatch) -> None:
+  """Clear Lambda rate limit state and origin secret between tests."""
+  from form_submission import index
+
+  index._recent_requests.clear()
+  monkeypatch.delenv("ORIGIN_SECRET", raising=False)
+
+
 class TestExtractContactForms:
   """Tests for extract_contact_forms function in app.py."""
 
@@ -634,3 +643,61 @@ class TestEmailBuilding:
 
     assert "<script>" not in result
     assert "&lt;script&gt;" in result
+
+
+class TestAbuseProtection:
+  """Tests for origin check, honeypot and rate limiting."""
+
+  def _event(self, body: str, **headers: str) -> dict[str, Any]:
+    return {
+      "body": body,
+      "headers": {"origin": "https://example.com", **headers},
+    }
+
+  def test_missing_origin_secret_is_forbidden(
+    self, monkeypatch: pytest.MonkeyPatch
+  ) -> None:
+    """Direct Function URL calls without the CloudFront header are rejected."""
+    from form_submission.index import handler
+
+    monkeypatch.setenv("ORIGIN_SECRET", "s3cret")
+    result = handler(self._event("{}"), None)
+    assert result["statusCode"] == 403
+
+  def test_valid_origin_secret_is_accepted(
+    self, monkeypatch: pytest.MonkeyPatch
+  ) -> None:
+    """Requests carrying the secret proceed to normal validation."""
+    from form_submission.index import handler
+
+    monkeypatch.setenv("ORIGIN_SECRET", "s3cret")
+    result = handler(self._event("{}", **{"x-origin-verify": "s3cret"}), None)
+    assert result["statusCode"] == 400
+
+  def test_honeypot_returns_fake_success_without_sending(self) -> None:
+    """Filled honeypot yields success but sends nothing."""
+    mock_ses = MagicMock()
+    mock_ssm = MagicMock()
+    with (
+      patch("form_submission.index.ssm", mock_ssm),
+      patch("form_submission.index.ses", mock_ses),
+    ):
+      from form_submission.index import handler
+
+      body = '{"form_id": "contact", "website": "http://spam", "fields": []}'
+      result = handler(self._event(body), None)
+
+    assert result["statusCode"] == 200
+    mock_ses.send_email.assert_not_called()
+    mock_ssm.get_parameter.assert_not_called()
+
+  def test_rate_limit_blocks_after_limit(self) -> None:
+    """Too many requests from one IP get 429."""
+    from form_submission.index import RATE_LIMIT_MAX, handler
+
+    statuses = [
+      handler(self._event("{}", **{"x-forwarded-for": "1.2.3.4"}), None)["statusCode"]
+      for _ in range(RATE_LIMIT_MAX + 1)
+    ]
+    assert statuses[:-1] == [400] * RATE_LIMIT_MAX
+    assert statuses[-1] == 429

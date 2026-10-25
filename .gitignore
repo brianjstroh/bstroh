@@ -211,3 +211,6 @@ cdk.out/
 .cdk.staging/
 cdk.context.json
 *.DS_Store
+
+# CDK contact form origin secret
+.origin_secret

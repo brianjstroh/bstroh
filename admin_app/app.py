@@ -418,6 +418,25 @@ def builder_site_sidebar() -> Any:
 
   data = request.get_json()
   if data and "sidebar" in data:
+    # Store destination emails for sidebar contact forms (same as page forms)
+    domain = session["domain"]
+    for comp in data["sidebar"]:
+      if comp.get("type") != "contact-form":
+        continue
+      form_data = comp.get("data", {})
+      email = form_data.get("email", "").strip()
+      form_id = form_data.get("anchor_id", "")
+      if not email or not form_id:
+        return jsonify(
+          {"error": "Sidebar contact form needs an email and a Section ID."}
+        ), 400
+      try:
+        store_contact_email(domain, form_id, email)
+      except ClientError as e:
+        app.logger.error(f"Failed to store contact email: {e}")
+        return jsonify({"error": f"Failed to configure contact form: {e}"}), 500
+      verify_email(email)
+
     site_config["sidebar"] = data["sidebar"]
     gen.save_site_config(site_config)
     # Republish all pages so sidebar changes take effect

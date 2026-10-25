@@ -70,7 +70,7 @@ module = ["infrastructure.*"]
 disallow_subclassing_any = false
 
 [[tool.mypy.overrides]]
-module = ["tests.*", "app", "generator", "ai_generator", "form_submission.*"]
+module = ["tests.*", "app", "generator", "ai_generator", "form_submission.*", "content_type_fixer.*"]
 ignore_missing_imports = true
 disallow_untyped_defs = false
 

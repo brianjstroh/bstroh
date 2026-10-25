@@ -26,6 +26,37 @@ class TestStaticSiteConstruct:
     )
     return Template.from_stack(stack)
 
+  def test_creates_content_type_fixer(self, template: Template) -> None:
+    """Verify uploads trigger the Content-Type fixer Lambda."""
+    template.has_resource_properties(
+      "AWS::Events::Rule",
+      {
+        "EventPattern": Match.object_like(
+          {
+            "source": ["aws.s3"],
+            "detail-type": ["Object Created"],
+          }
+        ),
+        "Targets": Match.array_with([Match.object_like({"Arn": Match.any_value()})]),
+      },
+    )
+    template.has_resource_properties(
+      "AWS::IAM::Policy",
+      {
+        "PolicyDocument": Match.object_like(
+          {
+            "Statement": Match.array_with(
+              [
+                Match.object_like(
+                  {"Action": ["s3:GetObject", "s3:PutObject"], "Effect": "Allow"}
+                )
+              ]
+            )
+          }
+        )
+      },
+    )
+
   def test_creates_s3_bucket(self, template: Template) -> None:
     """Verify S3 bucket is created with correct configuration."""
     template.has_resource_properties(
@@ -154,8 +185,13 @@ class TestStaticSiteWithoutInvalidation:
 
   def test_no_invalidation_lambda(self, template: Template) -> None:
     """Verify no invalidation Lambda is created."""
-    # Count Lambda functions - should only be for nameserver sync
-    template.resource_count_is("AWS::Events::Rule", 0)
+    # Only the Content-Type fixer rule (Object Created) should exist, not the
+    # invalidation rule (which also matches Object Deleted)
+    template.resource_count_is("AWS::Events::Rule", 1)
+    template.has_resource_properties(
+      "AWS::Events::Rule",
+      {"EventPattern": Match.object_like({"detail-type": ["Object Created"]})},
+    )
 
 
 class TestStaticSiteWithoutNameserverSync:

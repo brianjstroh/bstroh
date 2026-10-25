@@ -1,5 +1,7 @@
 """Main composite construct for complete static website infrastructure."""
 
+import os
+import secrets
 from pathlib import Path
 
 from aws_cdk import CfnOutput, Duration, Fn, RemovalPolicy, Stack
@@ -11,11 +13,29 @@ from aws_cdk import aws_ses as ses
 from constructs import Construct
 
 from .certificate import DnsValidatedCertificate
+from .content_type_fixer import ContentTypeFixer
 from .distribution import CloudFrontDistribution
 from .dns import DnsRecords
 from .invalidation import InvalidationHandler
 from .nameserver_sync import NameserverSync
 from .storage import StorageBucket
+
+ORIGIN_SECRET_FILE = Path(__file__).parent.parent.parent / ".origin_secret"
+
+
+def get_origin_secret() -> str:
+  """Shared secret CloudFront sends so the Lambda can reject direct calls.
+
+  Read from CONTACT_ORIGIN_SECRET, else from a gitignored local file that is
+  generated on first use.
+  """
+  env_secret = os.environ.get("CONTACT_ORIGIN_SECRET")
+  if env_secret:
+    return env_secret
+  if not ORIGIN_SECRET_FILE.exists():
+    ORIGIN_SECRET_FILE.write_text(secrets.token_urlsafe(32))
+    ORIGIN_SECRET_FILE.chmod(0o600)
+  return ORIGIN_SECRET_FILE.read_text().strip()
 
 
 class StaticSiteConstruct(Construct):
@@ -90,6 +110,13 @@ class StaticSiteConstruct(Construct):
       resource_prefix=stack_name,
     )
 
+    # Correct wrong Content-Type metadata on uploaded files
+    self.content_type_fixer = ContentTypeFixer(
+      self,
+      "ContentTypeFixer",
+      bucket=self.bucket.bucket,
+    )
+
     # CloudFront Invalidation on S3 changes
     if enable_invalidation:
       self.invalidation = InvalidationHandler(
@@ -152,6 +179,8 @@ class StaticSiteConstruct(Construct):
     # Lambda function
     lambda_path = Path(__file__).parent.parent / "lambda" / "form_submission"
 
+    origin_secret = get_origin_secret()
+
     self.contact_lambda = lambda_.Function(
       self,
       "ContactFormLambda",
@@ -160,7 +189,8 @@ class StaticSiteConstruct(Construct):
       code=lambda_.Code.from_asset(str(lambda_path)),
       environment={
         "DOMAIN": domain_name,
-        "LAMBDA_VERSION": "3",  # Increment to force redeployment
+        "LAMBDA_VERSION": "4",  # Increment to force redeployment
+        "ORIGIN_SECRET": origin_secret,
       },
       timeout=Duration.seconds(10),
     )
@@ -198,7 +228,10 @@ class StaticSiteConstruct(Construct):
     # Add CloudFront behavior for /api/*
     self.distribution.distribution.add_behavior(
       "/api/*",
-      origins.HttpOrigin(lambda_domain),
+      origins.HttpOrigin(
+        lambda_domain,
+        custom_headers={"x-origin-verify": origin_secret},
+      ),
       allowed_methods=cloudfront.AllowedMethods.ALLOW_ALL,
       cache_policy=cloudfront.CachePolicy.CACHING_DISABLED,
       origin_request_policy=cloudfront.OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER,

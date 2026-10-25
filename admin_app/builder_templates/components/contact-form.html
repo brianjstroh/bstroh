@@ -22,6 +22,12 @@
         {{ render_field(field, component_id, loop.index) }}
       {% endfor %}
 
+      <div aria-hidden="true" style="position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden;">
+        <label>Leave this field empty
+          <input type="text" name="website" tabindex="-1" autocomplete="off">
+        </label>
+      </div>
+
       <button type="submit" class="btn">{{ submit_text }}</button>
       <div id="form-status-{{ component_id }}" class="form-status"></div>
     </form>
@@ -408,7 +414,8 @@ window.submitContactForm = async function(event, componentId, formId) {
   let isValid = true;
   const confirmationMessage = form.dataset.confirmationMessage || '';
   const themeColors = window.extractThemeColors();
-  const formData = { form_id: formId, fields: [], confirmation_message: confirmationMessage, theme: themeColors };
+  const honeypot = form.querySelector('input[name="website"]');
+  const formData = { form_id: formId, website: honeypot ? honeypot.value : '', fields: [], confirmation_message: confirmationMessage, theme: themeColors };
 
   // Process regular fields
   form.querySelectorAll('[data-field-type]').forEach(input => {
